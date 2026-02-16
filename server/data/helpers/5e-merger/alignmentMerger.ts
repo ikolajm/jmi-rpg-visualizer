@@ -8,6 +8,7 @@ interface BaseAlignment {
     index: string
     name: string
     abbreviation: string
+    url: string
 }
 
 interface Alignment2014 extends BaseAlignment {
@@ -18,8 +19,12 @@ interface Alignment2024 extends BaseAlignment {
     description: string
 }
 
-export interface Alignment extends BaseAlignment {
+export interface Alignment {
+    index: string
+    name: string
+    abbreviation: string
     description: string[]
+    urls: string[]
 }
 
 function writeAlignment() {
@@ -36,12 +41,15 @@ function writeAlignment() {
                 index: al14.index,
                 name: al14.name,
                 abbreviation: al14.abbreviation,
-                description: [al14.desc]
+                description: [al14.desc],
+                urls: [al14.url]
             };
-            const al24: Alignment2024 | undefined = dataArray24.find(Alignment => Alignment.index === al14.index);
-            if (al24 && al24.description) {
-                newAlignment.description.push(al24.description);
+            const al24: Alignment2024 | undefined = dataArray24.find(item => item.index === al14.index);
+            if (al24) {
+                al24.description && newAlignment.description.push(al24.description);
+                al24.url && newAlignment.urls.push(al24.url);
             }
+            
             processedData.push(newAlignment);
         })
     

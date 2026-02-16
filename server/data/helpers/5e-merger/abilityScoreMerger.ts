@@ -9,7 +9,8 @@ interface BaseAbilityScore {
     index: string
     name: string
     full_name: string
-    skills: [APIReference]
+    skills: APIReference[]
+    url: string
 }
 
 interface AS2014 extends BaseAbilityScore {
@@ -23,9 +24,11 @@ interface AS2024 extends BaseAbilityScore {
 export interface AbilityScore {
     index: string
     name: string
-    skills: [APIReference]
+    full_name: string
+    skills: APIReference[]
     description: string[]
     description_short: string
+    urls: string[]
 }
 
 function writeAbilityScore() {
@@ -38,17 +41,31 @@ function writeAbilityScore() {
     
         let processedData: AbilityScore[] = [];
         dataArray14.forEach((as14: AS2014) => {
-            let newAbilityScore: AbilityScore = {
+            let temp: any = {
                 index: as14.index,
-                name: as14.full_name,
+                name: as14.name,
+                full_name: as14.full_name,
                 skills: as14.skills,
                 description: [...as14.desc],
-                description_short: ""
+                urls: [as14.url]
             };
-            const as24: AS2024 | undefined = dataArray24.find(abilityScore => abilityScore.index === as14.index);
-            if (as24 && as24.description) {
-                newAbilityScore.description_short = as24.description;
+            const as24: AS2024 | undefined = dataArray24.find(item => item.index === as14.index);
+            if (as24) {
+                temp.description_short = as24.description ?? "";
+                as24.url && temp.urls.push(as24.url);
+
+                as24.skills.forEach((skill: APIReference) => {
+                    const foundSkillIndex = temp.skills.findIndex((tempSkill: APIReference) => tempSkill.index === skill.index);
+                    if (foundSkillIndex !== -1) {
+                        const foundSkill = temp.skills[foundSkillIndex];
+                        foundSkill.url = [foundSkill.url, skill.url];
+                    } else {
+                        temp.skills.push(skill);
+                    }
+                });
             }
+
+            const newAbilityScore: AbilityScore = {...temp};
             processedData.push(newAbilityScore);
         })
     
@@ -63,4 +80,4 @@ function writeAbilityScore() {
       console.error('An error occurred:', err);
     }
 }
-// writeAbilityScore();
+writeAbilityScore();

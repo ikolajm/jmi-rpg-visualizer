@@ -1,0 +1,9 @@
+[In Prog] Map 2014 to GQL Schemas/Types/Enums
+[ ] Map 2024 to GQL Schemas/Types/Enums
+[ ] Between 2014 + 2024, find similarities and merge into single source
+
+---
+
+[ ] Schemas wired with merged data working in apollo
+[ ] PlayerCharacter able to be created through apollo
+[ ] All models have necessary resolvers and datasources if applicable, CRUD possible from DM POV

@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "rootDirs": ["src"],
+    "outDir": "server/dist",
+    "lib": ["es2023"],
+    "target": "es2023",
+    "module": "node16",
+    "moduleResolution": "node16",
+    "esModuleInterop": true,
+    "types": ["node"],
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  }
+}

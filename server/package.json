@@ -18,8 +18,6 @@
     "merge-skills": "npx ts-node ./data/helpers/5e-merger/skillsMerger.ts",
     "merge-weaponProperties": "npx ts-node ./data/helpers/5e-merger/weaponPropertyMerger.ts",
 
-    "checkNew-equipmentCategories": "npx ts-node ./data/helpers/5e-checkNewEntry/equipmentCategory.ts",
-
     "start-miscHelper": "npx ts-node ./data/helpers/misc/index.ts"
   },
   "keywords": [],

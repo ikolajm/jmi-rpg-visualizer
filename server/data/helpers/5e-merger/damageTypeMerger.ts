@@ -1,30 +1,9 @@
 import * as fs from 'fs';
+import { DamageType, DamageType2014, DamageType2024 } from '../../databases/types/damageType.types.ts';
 // ===
 const PATH2014 = './data/databases/5e-Databases/2014/5e-SRD-Damage-Types.json';
 const PATH2024 = './data/databases/5e-Databases/2024/5e-SRD-Damage-Types.json';
 const OUTPUTPATH = './data/databases/complete-data/damageTypes.json';
-
-interface BaseDamageType {
-    index: string
-    name: string
-    url: string
-}
-
-interface DamageType2014 extends BaseDamageType {
-    desc: string[]
-}
-
-interface DamageType2024 extends BaseDamageType {
-    description: string
-}
-
-export interface DamageType {
-    index: string
-    name: string
-    description: string[]
-    description_short: string
-    urls: string[]
-}
 
 function writeDamageType() {
     try {

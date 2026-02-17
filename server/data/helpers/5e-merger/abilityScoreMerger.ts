@@ -1,46 +1,21 @@
 import * as fs from 'fs';
 import type { APIReference } from "../../databases/types/general.types.ts";
+import type { AbilityScore, AbilityScore2014, AbilityScore2024 } from '../../databases/types/abilityScore.types.ts';
 // ===
 const PATH2014 = './data/databases/5e-Databases/2014/5e-SRD-Ability-Scores.json';
 const PATH2024 = './data/databases/5e-Databases/2024/5e-SRD-Ability-Scores.json';
 const OUTPUTPATH = './data/databases/complete-data/abilityScores.json';
 
-interface BaseAbilityScore {
-    index: string
-    name: string
-    full_name: string
-    skills: APIReference[]
-    url: string
-}
-
-interface AS2014 extends BaseAbilityScore {
-    desc: string[]
-}
-
-interface AS2024 extends BaseAbilityScore {
-    description: string
-}
-
-export interface AbilityScore {
-    index: string
-    name: string
-    full_name: string
-    skills: APIReference[]
-    description: string[]
-    description_short: string
-    urls: string[]
-}
-
 function writeAbilityScore() {
     try {
         // Read JSON content, make parsable
         const dataString14 = fs.readFileSync(PATH2014, 'utf8');
-        const dataArray14: AS2014[] = JSON.parse(dataString14);
+        const dataArray14: AbilityScore2014[] = JSON.parse(dataString14);
         const dataString24 = fs.readFileSync(PATH2024, 'utf8');
-        const dataArray24: AS2024[] = JSON.parse(dataString24);
+        const dataArray24: AbilityScore2024[] = JSON.parse(dataString24);
     
         let processedData: AbilityScore[] = [];
-        dataArray14.forEach((as14: AS2014) => {
+        dataArray14.forEach((as14: AbilityScore2014) => {
             let temp: any = {
                 index: as14.index,
                 name: as14.name,
@@ -49,7 +24,7 @@ function writeAbilityScore() {
                 description: [...as14.desc],
                 urls: [as14.url]
             };
-            const as24: AS2024 | undefined = dataArray24.find(item => item.index === as14.index);
+            const as24: AbilityScore2024 | undefined = dataArray24.find(item => item.index === as14.index);
             if (as24) {
                 temp.description_short = as24.description ?? "";
                 as24.url && temp.urls.push(as24.url);

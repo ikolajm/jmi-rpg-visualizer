@@ -1,31 +1,9 @@
 import * as fs from 'fs';
+import { Alignment, Alignment2014, Alignment2024 } from '../../databases/types/alignment.types.ts';
 // ===
 const PATH2014 = './data/databases/5e-Databases/2014/5e-SRD-Alignments.json';
 const PATH2024 = './data/databases/5e-Databases/2024/5e-SRD-Alignments.json';
 const OUTPUTPATH = './data/databases/complete-data/alignment.json';
-
-interface BaseAlignment {
-    index: string
-    name: string
-    abbreviation: string
-    url: string
-}
-
-interface Alignment2014 extends BaseAlignment {
-    desc: string
-}
-
-interface Alignment2024 extends BaseAlignment {
-    description: string
-}
-
-export interface Alignment {
-    index: string
-    name: string
-    abbreviation: string
-    description: string[]
-    urls: string[]
-}
 
 function writeAlignment() {
     try {

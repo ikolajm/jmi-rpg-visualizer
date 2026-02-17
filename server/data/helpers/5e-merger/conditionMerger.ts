@@ -1,30 +1,9 @@
 import * as fs from 'fs';
+import type { Condition, Condition2014, Condition2024 } from '../../databases/types/condition.types.ts';
 // ===
 const PATH2014 = './data/databases/5e-Databases/2014/5e-SRD-Conditions.json';
 const PATH2024 = './data/databases/5e-Databases/2024/5e-SRD-Conditions.json';
 const OUTPUTPATH = './data/databases/complete-data/conditions.json';
-
-interface BaseCondition {
-    index: string
-    name: string
-    url: string
-}
-
-interface Condition2014 extends BaseCondition {
-    desc: string[]
-}
-
-interface Condition2024 extends BaseCondition {
-    description: string
-}
-
-export interface Condition {
-    index: string
-    name: string
-    description_arr: string[]
-    desc_formatted: string
-    urls: string[]
-}
 
 function writeCondition() {
     try {

@@ -1,30 +1,9 @@
 import * as fs from 'fs';
+import { WeaponProperty, WeaponProperty2014, WeaponProperty2024 } from '../../databases/types/weaponProperty.types.ts';
 // ===
 const PATH2014 = './data/databases/5e-Databases/2014/5e-SRD-Weapon-Properties.json';
 const PATH2024 = './data/databases/5e-Databases/2024/5e-SRD-Weapon-Properties.json';
 const OUTPUTPATH = './data/databases/complete-data/weaponProperties.json';
-
-interface BaseWeaponProperty {
-    index: string
-    name: string
-    url: string
-}
-
-interface WeaponProperty2014 extends BaseWeaponProperty {
-    desc: string[]
-}
-
-interface WeaponProperty2024 extends BaseWeaponProperty {
-    description: string
-}
-
-export interface WeaponProperty {
-    index: string
-    name: string
-    description: string[]
-    description_short: string
-    urls: string[]
-}
 
 function writeWeaponProperty() {
     try {

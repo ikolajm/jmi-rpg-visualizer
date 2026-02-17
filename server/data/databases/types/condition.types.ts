@@ -1,4 +1,4 @@
-export interface BaseCondition {
+interface BaseCondition {
     index: string
     name: string
     url: string

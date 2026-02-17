@@ -1,6 +1,6 @@
 import { APIReference } from "./general.types.ts"
 
-export interface BaseProficiency {
+interface BaseProficiency {
     index: string
     type: string
     name: string

@@ -1,6 +1,6 @@
 import type { APIReference } from "./general.types.ts"
 
-export interface BaseEquipmentCategory {
+interface BaseEquipmentCategory {
     index: string
     name: string
     equipment: APIReference[]

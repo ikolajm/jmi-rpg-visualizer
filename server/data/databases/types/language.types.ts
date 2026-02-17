@@ -1,4 +1,4 @@
-export interface BaseLanguage {
+interface BaseLanguage {
     index: string
     name: string
     url: string

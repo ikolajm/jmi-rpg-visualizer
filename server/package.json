@@ -6,15 +6,21 @@
   "scripts": {
     "compile": "tsc",
     "start": "npm run compile && node ./dist/index.js",
+    
     "merge-abilityScores": "npx ts-node ./data/helpers/5e-merger/abilityScoreMerger.ts",
     "merge-alignment": "npx ts-node ./data/helpers/5e-merger/alignmentMerger.ts",
     "merge-conditions": "npx ts-node ./data/helpers/5e-merger/conditionMerger.ts",
     "merge-damageTypes": "npx ts-node ./data/helpers/5e-merger/damageTypeMerger.ts",
+    "merge-equipmentCategories": "npx ts-node ./data/helpers/5e-merger/equipmentCategoryMerger.ts",
     "merge-languages": "npx ts-node ./data/helpers/5e-merger/languagesMerger.ts",
     "merge-magicSchools": "npx ts-node ./data/helpers/5e-merger/magicSchoolMerger.ts",
     "merge-proficiencies": "npx ts-node ./data/helpers/5e-merger/proficiencyMerger.ts",
     "merge-skills": "npx ts-node ./data/helpers/5e-merger/skillsMerger.ts",
-    "merge-weaponProperties": "npx ts-node ./data/helpers/5e-merger/weaponPropertyMerger.ts"
+    "merge-weaponProperties": "npx ts-node ./data/helpers/5e-merger/weaponPropertyMerger.ts",
+
+    "checkNew-equipmentCategories": "npx ts-node ./data/helpers/5e-checkNewEntry/equipmentCategory.ts",
+
+    "start-miscHelper": "npx ts-node ./data/helpers/misc/index.ts"
   },
   "keywords": [],
   "author": "",

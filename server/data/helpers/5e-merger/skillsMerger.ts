@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import type { APIReference } from "./mergerTypes.ts";
+import type { APIReference } from "../../databases/types/general.types.ts";
 // ===
 const PATH2014 = './data/databases/5e-Databases/2014/5e-SRD-Skills.json';
 const PATH2024 = './data/databases/5e-Databases/2024/5e-SRD-Skills.json';

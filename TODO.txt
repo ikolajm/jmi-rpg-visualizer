@@ -1,15 +1,15 @@
 BACKEND
 =======
 
-[ ] Create "merger" functions to seed where data intersects between 2014 + 2024
-| - *** Merger currently uses existing 2014 data to look within 2024 ***
+[In Prog] Create "merger" functions to seed where data intersects between 2014 + 2024
+| - *** Merger currently uses existing 2014 data to look within 2024 for 'updates' ***
 
-[ ] Create seed functions to go over prior merger files where 2024 data was not a reiteration, but rather a new entry
-[ ] Create seed functions to format data where mergers were not necessary
+[ ] Create checkNewEntry functions to go over 2024 data and see what was not a reiteration, but rather a new entry
+[ ] Create, format seed functions for unchallenged data files
 
 ---
 
-[ ] With single data source, create PlayerCharacter schema
+[ ] Create PlayerCharacter schema
 | - Create all assc. enums, schemas involved in relationships
 [ ] Can view PlayerCharacter schema, etc. from apollo weblink
 

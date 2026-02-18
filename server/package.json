@@ -17,6 +17,15 @@
     "merge-proficiencies": "npx ts-node ./data/helpers/5e-merger/proficiencyMerger.ts",
     "merge-skills": "npx ts-node ./data/helpers/5e-merger/skillsMerger.ts",
     "merge-weaponProperties": "npx ts-node ./data/helpers/5e-merger/weaponPropertyMerger.ts",
+    
+    "seed-feats": "npx ts-node ./data/helpers/5e-seeder/feat5eSeed.ts",
+    "seed-features": "npx ts-node ./data/helpers/5e-seeder/feature5eSeed.ts",
+    "seed-magicItems": "npx ts-node ./data/helpers/5e-seeder/magicItem5eSeed.ts",
+    "seed-rules": "npx ts-node ./data/helpers/5e-seeder/rule5eSeed.ts",
+    "seed-ruleSections": "npx ts-node ./data/helpers/5e-seeder/ruleSection5eSeed.ts",
+    "seed-species": "npx ts-node ./data/helpers/5e-seeder/species5eSeed.ts",
+    "seed-subraces": "npx ts-node ./data/helpers/5e-seeder/subrace5eSeed.ts",
+    "seed-weaponMasteryProperties": "npx ts-node ./data/helpers/5e-seeder/weaponMasteryProperty5eSeed.ts",
 
     "start-miscHelper": "npx ts-node ./data/helpers/misc/index.ts"
   },

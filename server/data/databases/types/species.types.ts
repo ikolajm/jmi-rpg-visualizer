@@ -1,4 +1,4 @@
-import type { AbilityBonus, APIReference, BaseOptionSelection } from "./general.types.ts"
+import type { AbilityBonus, APIReference, OptionSelection } from "./general.types.ts"
 
 interface BaseSpecies {
     index: string
@@ -13,11 +13,11 @@ interface BaseSpecies {
     subraces: APIReference[]
     traits: APIReference[]
     ability_bonuses: AbilityBonus[]
-    abilityBonusOptions?: AbilityBonusOptions
+    ability_bonus_options?: AbilityBonusOptions
     url: string
 }
 
-interface AbilityBonusOptions extends BaseOptionSelection {}
+interface AbilityBonusOptions extends OptionSelection {}
 
 export interface Species2014 extends BaseSpecies {}
 export interface Species extends BaseSpecies {}

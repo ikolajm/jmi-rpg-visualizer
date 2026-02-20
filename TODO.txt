@@ -1,18 +1,3 @@
-BACKEND
-=======
-
-[In Prog] Create "merger" functions to seed where data intersects between 2014 + 2024
-| - *** Merger currently uses existing 2014 data to look within 2024 for 'updates' ***
-
-[ ] Create checkNewEntry functions to go over 2024 data and see what was not a reiteration, but rather a new entry
-[ ] Create, format seed functions for unchallenged data files
-
----
-
-[ ] Create PlayerCharacter schema
-| - Create all assc. enums, schemas involved in relationships
-[ ] Can view PlayerCharacter schema, etc. from apollo weblink
-
----
-
-[ ] Create reolvers, datasources to create and retrieve PlayerCharacters following traditional 5e flow
+Back
+=====
+MultiClassing?

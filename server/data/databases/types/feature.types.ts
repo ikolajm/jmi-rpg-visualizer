@@ -1,4 +1,4 @@
-import type { APIReference, BaseOptionSelection } from "./general.types.ts"
+import type { APIReference, OptionSelection } from "./general.types.ts"
 
 interface BaseFeature {
     index: string
@@ -15,14 +15,14 @@ interface BaseFeature {
     parent?: APIReference
 }
 
-interface FeatureSpecificKey {
+interface FeatureSpecificKey { // Here
     expertise_options?: ExpertiseOptionSelection
     subfeature_options?: SubfeatureOptionSelection
     invocations?: APIReference[]
 }
 
-interface ExpertiseOptionSelection extends BaseOptionSelection {}
-interface SubfeatureOptionSelection extends BaseOptionSelection {}
+interface ExpertiseOptionSelection extends OptionSelection {}
+interface SubfeatureOptionSelection extends OptionSelection {}
 
 export interface Feature2014 extends BaseFeature {}
 export interface Feature extends BaseFeature {}

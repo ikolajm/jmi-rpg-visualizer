@@ -10,25 +10,88 @@ export interface BaseOptionSelection {
     type: string
     from: OptionSet
 }
-interface OptionSet {
+export interface OptionSelection2014 extends BaseOptionSelection {
+    desc?: string | string[]
+    dc?: DifficultyClass2014
+}
+export interface OptionSelection extends BaseOptionSelection {
+    description?: string | string[]
+}
+
+export interface OptionSet {
     option_set_type: string
-    options: Option[]
+    options: OptionOptions[]
 }
-interface Option {
+
+interface BaseOption {
     option_type: string
-    item?: APIReference
-    choice?: ChoiceOption
-    items?: (APIReference | ChoiceOption)[]
-    ability_score?: APIReference
-    bonus?: number
 }
-interface ChoiceOption {
-    choose: number
+interface ActionOption extends BaseOption {
+    items: ActionOptionItem[]
+}
+interface ActionOptionItem {
+    option_type: string
+    action_name: string
+    count: number
     type: string
-    from: OptionSet
 }
+interface AbilityScoreOption extends BaseOption {
+    ability_score: APIReference
+    bonus: number
+}
+interface BreathOption extends BaseOption {
+    name: string
+    dc: DifficultyClass
+    damage?: {
+        damage_type: APIReference
+        damage_dice: string
+    }
+}
+interface ChoiceOption extends BaseOption {
+    item: APIReference
+}
+interface CountedReferenceOption extends BaseOption {
+    count: number
+    of: APIReference
+}
+interface ReferenceOption extends BaseOption {
+    item: APIReference
+}
+interface MultiActionOption {
+    items: ActionOptionItem
+}
+export type OptionOptions = (ActionOption | AbilityScoreOption | BreathOption | ChoiceOption | CountedReferenceOption | ReferenceOption | MultiActionOption)
 // =
 export interface AbilityBonus {
     ability_score: APIReference
     bonus: number
+}
+// 
+export interface AreaOfEffect {
+    type: string
+    size: number
+}
+// 
+export interface Usage {
+    type: string
+    times: number
+}
+// =
+export interface SpellDamage {
+    damage_type: APIReference
+    damage_at_slot_level?: { [x:string]: string }
+    damage_at_character_level?: { [x:string]: string }
+}
+// =
+export interface DifficultyClass2014 {
+    dc_type: APIReference
+    dc_value?: number
+    success_type?: string
+    desc?: string
+}
+export interface DifficultyClass {
+    dc_type: APIReference
+    dc_value?: number
+    dc_success?: string
+    dc_fail?: string
 }

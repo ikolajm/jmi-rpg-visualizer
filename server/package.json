@@ -18,13 +18,20 @@
     "merge-skills": "npx ts-node ./data/helpers/5e-merger/skillsMerger.ts",
     "merge-weaponProperties": "npx ts-node ./data/helpers/5e-merger/weaponPropertyMerger.ts",
     
+    "seed-classes": "npx ts-node ./data/helpers/5e-seeder/class5eSeed.ts",
+    "seed-equipment": "npx ts-node ./data/helpers/5e-seeder/equipment5eSeed.ts",
     "seed-feats": "npx ts-node ./data/helpers/5e-seeder/feat5eSeed.ts",
     "seed-features": "npx ts-node ./data/helpers/5e-seeder/feature5eSeed.ts",
+    "seed-levels": "npx ts-node ./data/helpers/5e-seeder/level5eSeed.ts",
     "seed-magicItems": "npx ts-node ./data/helpers/5e-seeder/magicItem5eSeed.ts",
+    "seed-monsters": "npx ts-node ./data/helpers/5e-seeder/monster5eSeed.ts",
     "seed-rules": "npx ts-node ./data/helpers/5e-seeder/rule5eSeed.ts",
     "seed-ruleSections": "npx ts-node ./data/helpers/5e-seeder/ruleSection5eSeed.ts",
     "seed-species": "npx ts-node ./data/helpers/5e-seeder/species5eSeed.ts",
+    "seed-spells": "npx ts-node ./data/helpers/5e-seeder/spell5eSeed.ts",
+    "seed-subclasses": "npx ts-node ./data/helpers/5e-seeder/subclass5eSeed.ts",
     "seed-subraces": "npx ts-node ./data/helpers/5e-seeder/subrace5eSeed.ts",
+    "seed-traits": "npx ts-node ./data/helpers/5e-seeder/trait5eSeed.ts",
     "seed-weaponMasteryProperties": "npx ts-node ./data/helpers/5e-seeder/weaponMasteryProperty5eSeed.ts",
 
     "start-miscHelper": "npx ts-node ./data/helpers/misc/index.ts"

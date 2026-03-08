@@ -57,8 +57,8 @@ interface CountedReferenceOption extends BaseOption {
 interface ReferenceOption extends BaseOption {
     item: APIReference
 }
-interface MultiActionOption {
-    items: ActionOptionItem
+interface MultiActionOption extends BaseOption {
+    items: ActionOptionItem[]
 }
 export type OptionOptions = (ActionOption | AbilityScoreOption | BreathOption | ChoiceOption | CountedReferenceOption | ReferenceOption | MultiActionOption)
 // =

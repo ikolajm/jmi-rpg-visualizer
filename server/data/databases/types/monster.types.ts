@@ -33,7 +33,7 @@ interface BaseMonster {
     proficiency_bonus: number
     xp: number
     // =
-    forms: APIReference[]
+    forms?: APIReference[]
     // =
     url: string
 }

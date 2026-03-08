@@ -15,7 +15,7 @@ interface BaseFeature {
     parent?: APIReference
 }
 
-interface FeatureSpecificKey { // Here
+interface FeatureSpecificKey {
     expertise_options?: ExpertiseOptionSelection
     subfeature_options?: SubfeatureOptionSelection
     invocations?: APIReference[]

@@ -1,4 +1,4 @@
-import { APIReference } from "./general.types.ts"
+import type { APIReference } from "./general.types.ts"
 
 interface BaseProficiency {
     index: string

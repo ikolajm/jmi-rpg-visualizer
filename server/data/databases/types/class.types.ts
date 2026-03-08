@@ -22,7 +22,7 @@ interface EquipmentItem {
 // =
 interface StartingEquipmentOption2014 extends OptionSelection2014 {}
 interface StartingEquipmentOption extends OptionSelection {}
-//= 
+// =
 interface BaseSpellcasting {
     level: number
     spellcasting_ability: APIReference
@@ -49,7 +49,7 @@ export interface Class2014 extends BaseClass {
     spellcasting?: Spellcasting2014
     starting_equipment_options: StartingEquipmentOption2014[]
 }
-export interface Class extends BaseClass { // Here
+export interface Class extends BaseClass {
     proficiency_choices: ProficiencyChoiceSelection[]
     spellcasting?: Spellcasting
     starting_equipment_options: StartingEquipmentOption[]

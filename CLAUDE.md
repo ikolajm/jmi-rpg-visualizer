@@ -16,16 +16,26 @@ party-wipe/
 ├── docs/
 │   ├── V1-SPEC.md          ← Full game design spec
 │   └── DATA-LICENSING.md   ← SRD licensing notes
-├── server/                 ← Data pipeline (current state — will restructure)
+├── engine/                 ← Game logic — utils and config
+│   ├── config/
+│   │   ├── encounters.ts   ← Floor tiers, CR pools, enemy counts, room weights
+│   │   ├── loot.ts         ← Rarity pools by floor, drop rates, category weights
+│   │   ├── spells.ts       ← Combat relevance filter, status effect mapping
+│   │   └── classes.ts      ← 6 class builds (stats, gear, spells, features)
+│   └── utils/
+│       ├── zone.ts         ← Spell/weapon/action → zone reach (melee/adjacent/any)
+│       └── monster-ai.ts   ← Monster tactical behavior classifier
+├── server/                 ← SRD data pipeline
 │   ├── data/
 │   │   ├── databases/
 │   │   │   ├── 5e-Databases/   ← Raw SRD source (2014 + 2024 editions)
 │   │   │   ├── complete-data/  ← Merged/seeded output (game reads from here)
-│   │   │   └── types/          ← TypeScript interfaces for all SRD entities
+│   │   │   ├── types/          ← TypeScript interfaces for all SRD entities
+│   │   │   └── read.txt
 │   │   └── helpers/
-│   │       ├── 5e-merger/      ← Scripts that normalize shared tables across eras
-│   │       └── 5e-seeder/      ← Scripts that transform raw SRD into complete-data
-│   ├── index.ts                ← Apollo server scaffold (unused, will remove)
+│   │       ├── 5e-merger/      ← Normalize shared tables across eras
+│   │       ├── 5e-seeder/      ← Transform raw SRD → complete-data
+│   │       └── misc/
 │   └── package.json
 └── frontend/               ← (future) Next.js app with design system scaffold
 ```

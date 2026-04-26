@@ -3,10 +3,8 @@ node_modules
 npm-debug.log*
 yarn-error.log*
 
-# expo
-.expo
-.expo-shared
-web-build
+# build
+dist
 
 # env
 .env

@@ -1,0 +1,157 @@
+/* =========================================================
+   Title Screen (ts- namespace)
+   Tokens from design system. Only animation timing and
+   letter-spacing are custom (no token equivalent).
+   ========================================================= */
+
+.ts-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #000;
+  gap: var(--space-8);
+  overflow: hidden;
+}
+
+/* Logo */
+.ts-logo {
+  opacity: 0;
+  animation: ts-fade-scale-in 1s ease-out 0.3s forwards;
+}
+
+.ts-logo-img {
+  filter: url(#pixelate-logo);
+}
+
+/* Title + tagline grouped tight */
+.ts-title-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.ts-heading {
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  color: var(--primary);
+  display: flex;
+}
+
+.ts-letter {
+  opacity: 0;
+  display: inline-block;
+  animation: ts-letter-in var(--transition-slow) ease-out forwards;
+}
+
+/* Tagline — extends text-body-sm, overrides spacing + case */
+.ts-tagline {
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+  opacity: 0;
+  animation: ts-fade-in 0.6s ease-out 2.2s forwards;
+}
+
+/* Button with breathing corner brackets */
+.ts-button {
+  position: relative;
+  padding: var(--space-4) var(--space-10);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  animation: ts-fade-in 0.6s ease-out 2.6s forwards;
+  transition: transform var(--transition-normal) var(--easing);
+}
+
+.ts-button:hover { transform: scale(1.05); }
+.ts-button:active { transform: scale(0.98); }
+
+/* Button label — extends text-body-md, overrides spacing + case */
+.ts-button-text {
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+/* Corner brackets — icon-scale size, border-width token, position breathes */
+.ts-corner {
+  position: absolute;
+  width: var(--icon-1);
+  height: var(--icon-1);
+  border-color: var(--primary);
+  border-style: solid;
+  border-width: 0;
+}
+
+.ts-corner-tl {
+  border-top-width: var(--bw-2);
+  border-left-width: var(--bw-2);
+  animation: ts-breathe-tl 2s ease-in-out infinite;
+}
+.ts-corner-tr {
+  border-top-width: var(--bw-2);
+  border-right-width: var(--bw-2);
+  animation: ts-breathe-tr 2s ease-in-out infinite;
+}
+.ts-corner-bl {
+  border-bottom-width: var(--bw-2);
+  border-left-width: var(--bw-2);
+  animation: ts-breathe-bl 2s ease-in-out infinite;
+}
+.ts-corner-br {
+  border-bottom-width: var(--bw-2);
+  border-right-width: var(--bw-2);
+  animation: ts-breathe-br 2s ease-in-out infinite;
+}
+
+/* Exit transition */
+.ts-exit {
+  animation: ts-fade-out 0.8s ease-in forwards;
+}
+
+/* --- Keyframes --- */
+
+@keyframes ts-fade-scale-in {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes ts-letter-in {
+  from { opacity: 0; transform: translateY(var(--space-2)); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ts-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ts-fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes ts-breathe-tl {
+  0%, 100% { top: 0; left: 0; opacity: 0.5; }
+  50% { top: calc(-1 * var(--space-1)); left: calc(-1 * var(--space-1)); opacity: 1; }
+}
+
+@keyframes ts-breathe-tr {
+  0%, 100% { top: 0; right: 0; opacity: 0.5; }
+  50% { top: calc(-1 * var(--space-1)); right: calc(-1 * var(--space-1)); opacity: 1; }
+}
+
+@keyframes ts-breathe-bl {
+  0%, 100% { bottom: 0; left: 0; opacity: 0.5; }
+  50% { bottom: calc(-1 * var(--space-1)); left: calc(-1 * var(--space-1)); opacity: 1; }
+}
+
+@keyframes ts-breathe-br {
+  0%, 100% { bottom: 0; right: 0; opacity: 0.5; }
+  50% { bottom: calc(-1 * var(--space-1)); right: calc(-1 * var(--space-1)); opacity: 1; }
+}

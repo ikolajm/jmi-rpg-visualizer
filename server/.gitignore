@@ -3,10 +3,3 @@ node_modules
 
 # env
 .env
-
-# 5e-SRD json
-data/databases/5e-Databases
-data/databases/complete-data
-
-# Dump
-outdated-ideas

@@ -1,0 +1,282 @@
+[
+  {
+    "index": "common",
+    "name": "Common",
+    "type": "Standard",
+    "typical_speakers": [
+      "Humans"
+    ],
+    "script": "Common",
+    "urls": [
+      "/api/2014/languages/common",
+      "/api/2024/languages/common"
+    ],
+    "isRare": false,
+    "notes": []
+  },
+  {
+    "index": "dwarvish",
+    "name": "Dwarvish",
+    "type": "Standard",
+    "typical_speakers": [
+      "Dwarves"
+    ],
+    "script": "Dwarvish",
+    "urls": [
+      "/api/2014/languages/dwarvish",
+      "/api/2024/languages/dwarvish"
+    ],
+    "isRare": false,
+    "notes": []
+  },
+  {
+    "index": "elvish",
+    "name": "Elvish",
+    "type": "Standard",
+    "typical_speakers": [
+      "Elves"
+    ],
+    "script": "Elvish",
+    "urls": [
+      "/api/2014/languages/elvish",
+      "/api/2024/languages/elvish"
+    ],
+    "isRare": false,
+    "notes": []
+  },
+  {
+    "index": "giant",
+    "name": "Giant",
+    "type": "Standard",
+    "typical_speakers": [
+      "Ogres",
+      "Giants"
+    ],
+    "script": "Dwarvish",
+    "urls": [
+      "/api/2014/languages/giant",
+      "/api/2024/languages/giant"
+    ],
+    "isRare": false,
+    "notes": []
+  },
+  {
+    "index": "gnomish",
+    "name": "Gnomish",
+    "type": "Standard",
+    "typical_speakers": [
+      "Gnomes"
+    ],
+    "script": "Dwarvish",
+    "urls": [
+      "/api/2014/languages/gnomish",
+      "/api/2024/languages/gnomish"
+    ],
+    "isRare": false,
+    "notes": []
+  },
+  {
+    "index": "goblin",
+    "name": "Goblin",
+    "type": "Standard",
+    "typical_speakers": [
+      "Goblinoids"
+    ],
+    "script": "Dwarvish",
+    "urls": [
+      "/api/2014/languages/goblin",
+      "/api/2024/languages/goblin"
+    ],
+    "isRare": false,
+    "notes": []
+  },
+  {
+    "index": "halfling",
+    "name": "Halfling",
+    "type": "Standard",
+    "typical_speakers": [
+      "Halflings"
+    ],
+    "script": "Common",
+    "urls": [
+      "/api/2014/languages/halfling",
+      "/api/2024/languages/halfling"
+    ],
+    "isRare": false,
+    "notes": []
+  },
+  {
+    "index": "orc",
+    "name": "Orc",
+    "type": "Standard",
+    "typical_speakers": [
+      "Orcs"
+    ],
+    "script": "Dwarvish",
+    "urls": [
+      "/api/2014/languages/orc",
+      "/api/2024/languages/orc"
+    ],
+    "isRare": false,
+    "notes": []
+  },
+  {
+    "index": "abyssal",
+    "name": "Abyssal",
+    "type": "Exotic",
+    "typical_speakers": [
+      "Demons"
+    ],
+    "script": "Infernal",
+    "urls": [
+      "/api/2014/languages/abyssal",
+      "/api/2024/languages/abyssal"
+    ],
+    "isRare": true,
+    "notes": []
+  },
+  {
+    "index": "celestial",
+    "name": "Celestial",
+    "type": "Exotic",
+    "typical_speakers": [
+      "Celestials"
+    ],
+    "script": "Celestial",
+    "urls": [
+      "/api/2014/languages/celestial",
+      "/api/2024/languages/celestial"
+    ],
+    "isRare": true,
+    "notes": []
+  },
+  {
+    "index": "draconic",
+    "name": "Draconic",
+    "type": "Exotic",
+    "typical_speakers": [
+      "Dragons",
+      "Dragonborn"
+    ],
+    "script": "Draconic",
+    "urls": [
+      "/api/2014/languages/draconic",
+      "/api/2024/languages/draconic"
+    ],
+    "isRare": false,
+    "notes": []
+  },
+  {
+    "index": "deep-speech",
+    "name": "Deep Speech",
+    "type": "Exotic",
+    "typical_speakers": [
+      "Aboleths",
+      "Cloakers"
+    ],
+    "urls": [
+      "/api/2014/languages/deep-speech",
+      "/api/2024/languages/deep-speech"
+    ],
+    "isRare": true,
+    "notes": []
+  },
+  {
+    "index": "infernal",
+    "name": "Infernal",
+    "type": "Exotic",
+    "typical_speakers": [
+      "Devils"
+    ],
+    "script": "Infernal",
+    "urls": [
+      "/api/2014/languages/infernal",
+      "/api/2024/languages/infernal"
+    ],
+    "isRare": true,
+    "notes": []
+  },
+  {
+    "index": "primordial",
+    "name": "Primordial",
+    "type": "Exotic",
+    "typical_speakers": [
+      "Elementals"
+    ],
+    "script": "Dwarvish",
+    "urls": [
+      "/api/2014/languages/primordial",
+      "/api/2024/languages/primordial"
+    ],
+    "isRare": true,
+    "notes": [
+      "Primordial includes the Aquan, Auran, Ignan, and Terran dialects. Creatures that know one of these dialects can communicate with those that know a different one."
+    ]
+  },
+  {
+    "index": "sylvan",
+    "name": "Sylvan",
+    "type": "Exotic",
+    "typical_speakers": [
+      "Fey creatures"
+    ],
+    "script": "Elvish",
+    "urls": [
+      "/api/2014/languages/sylvan",
+      "/api/2024/languages/sylvan"
+    ],
+    "isRare": true,
+    "notes": []
+  },
+  {
+    "index": "undercommon",
+    "name": "Undercommon",
+    "type": "Exotic",
+    "typical_speakers": [
+      "Underdark traders"
+    ],
+    "script": "Elvish",
+    "urls": [
+      "/api/2014/languages/undercommon",
+      "/api/2024/languages/undercommon"
+    ],
+    "isRare": true,
+    "notes": []
+  },
+  {
+    "index": "common-sign-language",
+    "name": "Common Sign Language",
+    "type": "",
+    "typical_speakers": [],
+    "script": "",
+    "urls": [
+      "/api/2024/languages/common-sign-language"
+    ],
+    "isRare": false,
+    "notes": []
+  },
+  {
+    "index": "druidic",
+    "name": "Druidic",
+    "type": "",
+    "typical_speakers": [],
+    "script": "",
+    "urls": [
+      "/api/2024/languages/druidic"
+    ],
+    "isRare": false,
+    "notes": []
+  },
+  {
+    "index": "thieves-cant",
+    "name": "Thieves' Cant",
+    "type": "",
+    "typical_speakers": [],
+    "script": "",
+    "urls": [
+      "/api/2024/languages/thieves-cant"
+    ],
+    "isRare": true,
+    "notes": []
+  }
+]

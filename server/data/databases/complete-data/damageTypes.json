@@ -1,0 +1,158 @@
+[
+  {
+    "index": "acid",
+    "name": "Acid",
+    "description": [
+      "The corrosive spray of a black dragon's breath and the dissolving enzymes secreted by a black pudding deal acid damage."
+    ],
+    "urls": [
+      "/api/2014/damage-types/acid",
+      "/api/2024/damage-types/acid"
+    ],
+    "description_short": "Corrosive liquids, digestive enzymes"
+  },
+  {
+    "index": "bludgeoning",
+    "name": "Bludgeoning",
+    "description": [
+      "Blunt force attacks, falling, constriction, and the like deal bludgeoning damage."
+    ],
+    "urls": [
+      "/api/2014/damage-types/bludgeoning",
+      "/api/2024/damage-types/bludgeoning"
+    ],
+    "description_short": "Blunt objects, constriction, falling"
+  },
+  {
+    "index": "cold",
+    "name": "Cold",
+    "description": [
+      "The infernal chill radiating from an ice devil's spear and the frigid blast of a white dragon's breath deal cold damage."
+    ],
+    "urls": [
+      "/api/2014/damage-types/cold",
+      "/api/2024/damage-types/cold"
+    ],
+    "description_short": "Freezing water, icy blasts"
+  },
+  {
+    "index": "fire",
+    "name": "Fire",
+    "description": [
+      "Red dragons breathe fire, and many spells conjure flames to deal fire damage."
+    ],
+    "urls": [
+      "/api/2014/damage-types/fire",
+      "/api/2024/damage-types/fire"
+    ],
+    "description_short": "Flames, unbearable heat"
+  },
+  {
+    "index": "force",
+    "name": "Force",
+    "description": [
+      "Force is pure magical energy focused into a damaging form. Most effects that deal force damage are spells, including magic missile and spiritual weapon."
+    ],
+    "urls": [
+      "/api/2014/damage-types/force",
+      "/api/2024/damage-types/force"
+    ],
+    "description_short": "Pure magical energy"
+  },
+  {
+    "index": "lightning",
+    "name": "Lightning",
+    "description": [
+      "A lightning bolt spell and a blue dragon's breath deal lightning damage."
+    ],
+    "urls": [
+      "/api/2014/damage-types/lightning",
+      "/api/2024/damage-types/lightning"
+    ],
+    "description_short": "Electricity"
+  },
+  {
+    "index": "necrotic",
+    "name": "Necrotic",
+    "description": [
+      "Necrotic damage, dealt by certain undead and a spell such as chill touch, withers matter and even the soul."
+    ],
+    "urls": [
+      "/api/2014/damage-types/necrotic",
+      "/api/2024/damage-types/necrotic"
+    ],
+    "description_short": "Life-draining energy"
+  },
+  {
+    "index": "piercing",
+    "name": "Piercing",
+    "description": [
+      "Puncturing and impaling attacks, including spears and monsters' bites, deal piercing damage."
+    ],
+    "urls": [
+      "/api/2014/damage-types/piercing",
+      "/api/2024/damage-types/piercing"
+    ],
+    "description_short": "Fangs, puncturing objects"
+  },
+  {
+    "index": "poison",
+    "name": "Poison",
+    "description": [
+      "Venomous stings and the toxic gas of a green dragon's breath deal poison damage."
+    ],
+    "urls": [
+      "/api/2014/damage-types/poison",
+      "/api/2024/damage-types/poison"
+    ],
+    "description_short": "Toxic gas, venom"
+  },
+  {
+    "index": "psychic",
+    "name": "Psychic",
+    "description": [
+      "Mental abilities such as a psionic blast deal psychic damage."
+    ],
+    "urls": [
+      "/api/2014/damage-types/psychic",
+      "/api/2024/damage-types/psychic"
+    ],
+    "description_short": "Mind-rending energy"
+  },
+  {
+    "index": "radiant",
+    "name": "Radiant",
+    "description": [
+      "Radiant damage, dealt by a cleric's flame strike spell or an angel's smiting weapon, sears the flesh like fire and overloads the spirit with power."
+    ],
+    "urls": [
+      "/api/2014/damage-types/radiant",
+      "/api/2024/damage-types/radiant"
+    ],
+    "description_short": "Holy energy, searing radiation"
+  },
+  {
+    "index": "slashing",
+    "name": "Slashing",
+    "description": [
+      "Swords, axes, and monsters' claws deal slashing damage."
+    ],
+    "urls": [
+      "/api/2014/damage-types/slashing",
+      "/api/2024/damage-types/slashing"
+    ],
+    "description_short": "Claws, cutting objects"
+  },
+  {
+    "index": "thunder",
+    "name": "Thunder",
+    "description": [
+      "A concussive burst of sound, such as the effect of the thunderwave spell, deals thunder damage."
+    ],
+    "urls": [
+      "/api/2014/damage-types/thunder",
+      "/api/2024/damage-types/thunder"
+    ],
+    "description_short": "Concussive sound"
+  }
+]

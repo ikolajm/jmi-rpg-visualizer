@@ -5,9 +5,9 @@ interface BaseLevel {
     class: APIReference
     subclass?: APIReference
     level: number
-    ability_score_bonuses: number
+    ability_score_bonuses?: number
     features: APIReference[]
-    class_specific: (BarbarianClassSpecificLevels | BardClassSpecificLevels | ClericClassSpecificLevels | DruidClassSpecificLevels | FighterClassSpecificLevels | MonkClassSpecificLevels | PaladinClassSpecificLevels | RangerClassSpecificLevels | RogueClassSpecificLevels | SorcererClassSpecificLevels | WarlockClassSpecificLevels | WizardClassSpecificLevels)
+    class_specific?: (BarbarianClassSpecificLevels | BardClassSpecificLevels | ClericClassSpecificLevels | DruidClassSpecificLevels | FighterClassSpecificLevels | MonkClassSpecificLevels | PaladinClassSpecificLevels | RangerClassSpecificLevels | RogueClassSpecificLevels | SorcererClassSpecificLevels | WarlockClassSpecificLevels | WizardClassSpecificLevels)
     spellcasting?: Spellcasting
     url: string
 }

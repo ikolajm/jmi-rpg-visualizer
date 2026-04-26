@@ -1,9 +1,8 @@
 import type { APIReference, OptionSelection } from "./general.types.ts"
 
-interface BaseFeature {
+interface FeatureBase {
     index: string
     name: string
-    desc: string[]
     prerequisites: APIReference[]
     class: APIReference
     subclass?: APIReference
@@ -24,5 +23,9 @@ interface FeatureSpecificKey {
 interface ExpertiseOptionSelection extends OptionSelection {}
 interface SubfeatureOptionSelection extends OptionSelection {}
 
-export interface Feature2014 extends BaseFeature {}
-export interface Feature extends BaseFeature {}
+export interface Feature2014 extends FeatureBase {
+    desc: string[]
+}
+export interface Feature extends FeatureBase {
+    description: string[]
+}

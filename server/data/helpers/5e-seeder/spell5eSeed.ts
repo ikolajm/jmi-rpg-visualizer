@@ -32,7 +32,7 @@ function seedSpells() {
                 };
             } else {
                 temp = {
-                    ...s14,
+                    ...trimmedSpell,
                     description: desc
                 };
             }

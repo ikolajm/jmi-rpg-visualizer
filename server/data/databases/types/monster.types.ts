@@ -7,7 +7,7 @@ interface BaseMonster {
     // =
     size: string
     alignment: string
-    armor_class: ArmorClass
+    armor_class: ArmorClass[]
     hit_points: number
     hit_dice: string
     hit_points_roll: string
@@ -41,6 +41,7 @@ interface BaseMonster {
 interface ArmorClass {
     type: string
     value: number
+    spell?: APIReference
 }
 // =
 interface MonsterSpeed {
@@ -93,7 +94,7 @@ interface MonsterSpellcasting {
     modifier: number
     components: string[]
     school: string
-    slots: MonsterSpellSlot[]
+    slots?: MonsterSpellSlot[]
     spells: MonsterSpell[]
 }
 interface MonsterSpellSlot {

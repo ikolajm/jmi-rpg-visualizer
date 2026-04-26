@@ -55,7 +55,7 @@ interface EquipmentThrowRange {
 interface ArmorClass {
     base: number
     dex_bonus: boolean
-    max_bonus: number
+    max_bonus?: number
 }
 // =
 interface PackContentItem {
@@ -73,5 +73,5 @@ export interface Equipment2014 extends BaseEquipment {
 }
 
 export interface Equipment extends BaseEquipment {
-    description: string[]
+    description?: string[]
 }

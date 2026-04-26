@@ -1,7 +1,7 @@
 {
-  "name": "rpg_manager",
-  "version": "1.0.0",
-  "description": "",
+  "name": "party-wipe",
+  "version": "0.1.0",
+  "description": "D&D 5e roguelike survival game — SRD data pipeline + game engine",
   "main": "index.js",
   "scripts": {
     "compile": "tsc",

@@ -12,7 +12,11 @@ function seedFeatures() {
     
         let processedData: Feature[] = [];
         dataArray24.forEach((f24: Feature2014) => {
-            let newFeat: Feature = {...f24};
+            const { desc, ...rest } = f24 as any;
+            let newFeat: Feature = {
+                ...rest,
+                description: desc
+            };
 
             processedData.push(newFeat);
         });

@@ -37,7 +37,19 @@ party-wipe/
 │   │       ├── 5e-seeder/      ← Transform raw SRD → complete-data
 │   │       └── misc/
 │   └── package.json
-└── frontend/               ← (future) Next.js app with design system scaffold
+└── frontend/               ← Next.js 16 + React 19 + Tailwind
+    ├── src/
+    │   ├── app/             ← Pages (page.tsx = title screen)
+    │   ├── assets/          ← Source SVGs (logo.svg)
+    │   ├── components/
+    │   │   ├── atoms/       ← Design system atoms (55 generated + Logo.tsx)
+    │   │   ├── molecules/   ← Composed components (empty, for game UI)
+    │   │   ├── playground/  ← Design system playground (ColorsView, TypographyView)
+    │   │   └── providers/   ← ThemeProvider, ThemeToggle
+    │   ├── config/          ← Runtime config (colors.json, typography.json, standards.json)
+    │   ├── stories/         ← Component stories + registry
+    │   └── tokens.css       ← Design system tokens
+    └── public/              ← Static assets
 ```
 
 ## Data Pipeline
@@ -69,23 +81,50 @@ Shared types in `general.types.ts`: `APIReference`, `DifficultyClass`, `OptionSe
 
 ## V1 Scope
 
-See `docs/V1-SPEC.md` for the full game design spec. Key constraints:
+See `docs/V1-SPEC.md` for the full game design spec, `docs/ENGINE-RULES.md` for settled mechanics. Key constraints:
 
 - 6 classes: Fighter, Rogue, Wizard, Cleric, Ranger, Barbarian
 - Zone combat (melee/ranged/far), not grid
-- Monsters CR 1/4 through 10, spells level 0-5
+- Full SRD dataset available — no arbitrary cutoffs, game logic filters at runtime
 - Level cap 10
 - Solo play only (multiplayer is v2)
 - Text/icon/dashboard UI — no sprites, no character-specific art
-- Status effect animations on placards ARE in scope
+- CSS/Motion.js/Three.js status effect animations on placards ARE in scope
+- Damage types + resistances/immunities tracked (data already on all monsters)
+- Cantrip scaling tracked (data already in spells)
+- Ability checks in non-combat rooms (trap, treasure, rest)
 
 ## Data Source
 
 5e SRD (CC-BY-4.0). All data from the official SRD API. See `docs/DATA-LICENSING.md`.
 
+## UI Architecture
+
+Persistent dashboard layout — NOT discrete screen navigation:
+- **Party panel** (left/persistent) — 4 character placards always visible with HP, status effects, equipment
+- **Center stage** (contextual) — swaps content based on game phase (draft, combat zones, loot, rest, etc.)
+- **Action bar** (bottom/contextual) — phase-appropriate actions
+- **Game log** (collapsible) — combat events, loot, ability checks
+
+Title screen is the exception — standalone, transitions into the dashboard shell.
+
+NES/SNES-inspired aesthetic. Corner bracket motif. Lucide icons for v1, custom icons later.
+
+## Design System
+
+Generated via jmi-hub pipeline. Brand: amber/gold primary (#DAA520), Cinzel headings, JetBrains Mono body, dark mode default.
+
+- Tokens in `frontend/src/tokens.css` — use `var(--space-*)`, `var(--primary)`, `var(--font-heading)`, etc.
+- Typography classes: `text-display-*`, `text-title-*`, `text-body-*`, `text-label-*`
+- 55 generated atoms in `components/atoms/`
+- Game-specific styles in per-screen CSS files (e.g., `title.css`), NOT in globals
+- Game-specific color system (rarity colors, item type colors) is a separate layer — not in design tokens
+
 ## Conventions
 
 - TypeScript throughout
+- Dogfood design system tokens — no hardcoded spacing, colors, or typography when a token exists
 - Types have dual interfaces: `Monster2014` (raw) and `Monster` (unified) — game code uses unified only
 - `complete-data/` is the single read path for game logic — never read from `5e-Databases/` directly
 - SRD data is committed to the repo (small, ~1-3MB for v1 subset)
+- Per-screen CSS files with namespaced classes (e.g., `ts-` for title screen)

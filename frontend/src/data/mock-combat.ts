@@ -96,6 +96,8 @@ export function createMockCombat(party: Character[]): CombatState {
     enemies,
     initiativeOrder,
     currentTurnIndex: 0,
+    turnResources: { actionUsed: false, bonusActionUsed: false, movementUsed: false },
+    dodging: [],
     roundNumber: 1,
   };
 }

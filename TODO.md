@@ -163,7 +163,8 @@ Core logic, no UI. Everything testable in isolation.
 
 - [x] Dice rolling utilities (`data/dice.ts` — rollD20, rollDice expression parser, statMod)
 - [x] Attack resolution (d20 + mod + prof vs AC → hit/miss → damage roll)
-- [ ] Spell resolution (spell save DC vs target save → effect/damage)
+- [x] Spell casting (attack roll spells, auto-hit, healing, slot consumption, cantrip at-will)
+- [ ] Spell save DC resolution (save-based spells like Burning Hands)
 - [x] HP tracking, death at 0 HP
 - [ ] Status effect application, duration tracking, turn-start/end resolution
 - [x] Initiative system (d20 + DEX mod, sort descending)
@@ -174,6 +175,11 @@ Core logic, no UI. Everything testable in isolation.
 - [x] Critical hit (nat 20 = double damage dice)
 - [x] Critical miss (nat 1 = auto-miss)
 - [ ] Fumble flavor pool (weighted fumble text on nat 1)
+- [x] Dodge action (proper 5e — enemies roll with disadvantage against dodging character)
+- [x] Bonus action system (Second Wind heal, Rage, Healing Word as bonus)
+- [x] Consumable items (Health Potions with quantity tracking, use in combat costs Action)
+- [x] Turn resource tracking (action/bonus/movement used/available per turn, auto-advance when spent)
+- [x] Feature use tracking (Second Wind 1/rest, Rage 2/day — tracked per character)
 
 ### Room generation
 
@@ -218,7 +224,9 @@ Persistent dashboard layout with design system components. NES/SNES-inspired, te
 - [x] Party token component — compact placard with class icon, HP bar, AC shield, spell slot pips, status stack
 - [x] Combat zone layout — 3-column grid (Zone 1/2/3), ally + enemy tokens with HP bars and AC
 - [x] Initiative bar — horizontal turn order strip with class/monster icons
-- [x] Action menu — JRPG two-panel (Attack → target select, Move → zone select, End Turn)
+- [x] Action bar — DD-style icon tiles (Attack, Cast, Move, Defend, Item, Bonus) + selection panel + separated End Turn
+- [x] Combat resource tracker — action/bonus/movement/spell slots as shape pips (●▲↗◆)
+- [x] Zone tokens — vertical card style with 32px icons, prominent HP bars, active turn glow, dead state grayscale
 - [x] Game log — WoW-style absolute overlay, auto-scroll to bottom, color-coded (party names gold, enemy names red, system messages, death messages)
 - [x] Inspect sheet — universal sidebar for character + enemy details (stats, resistances, actions)
 - [ ] Level-up view — before/after stat comparison, new features/spells, confirm
@@ -226,6 +234,39 @@ Persistent dashboard layout with design system components. NES/SNES-inspired, te
 - [ ] Rest view — rest vs. search choice
 - [ ] Game over view — full run stats in center stage, save to scoreboard
 - [ ] Scoreboard view — top 10 runs, expandable details
+
+---
+
+### Architecture
+
+Game page modularized (1207→426 lines):
+- `components/game/` — InitiativeBar, ZoneLayout, ActionBar, GameLog, PartyStrip
+- `data/weapon-helpers.ts` — weapon icon/dice/damage lookups
+- `data/bonus-actions.ts` — bonus action availability helpers
+- `data/consumables.ts` — consumable item definitions
+- `data/game-colors.ts` — centralized game color tokens
+- `data/zones.ts` — numeric zone system with reach helpers
+
+### Reference docs
+
+- `docs/UI-SPEC.md` — component specs, icon sizes, token layouts, disabled states, tooltips
+- `docs/UI-DEEP-DIVE.md` — per-game analysis (FF, BG3, D&D Beyond, DD, StS), turn flow, availability rules
+
+---
+
+## Phase 5.5 — UI Polish Pass (NEXT)
+
+Refine modular components, styling, and user flows before adding more features.
+
+- [ ] Style pass on ZoneTokens — test visual weight, spacing, active state glow
+- [ ] Style pass on ActionBar — tile sizing, selection panel polish, disabled state clarity
+- [ ] Style pass on InitiativeBar — active turn emphasis, dead entity treatment
+- [ ] Style pass on GameLog — font sizing, entry spacing, expand/collapse UX
+- [ ] Style pass on Party Strip — alignment, hover states, info density
+- [ ] Keyword highlighting in spell/feature descriptions (damage types, conditions colored)
+- [ ] Draft page polish — class cards, sheet tabs, overall flow
+- [ ] Title screen → draft → game transition animations
+- [ ] Responsive layout audit (min viewport, overflow handling)
 
 ---
 

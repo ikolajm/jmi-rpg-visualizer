@@ -47,7 +47,7 @@ export interface Character {
     armor: string;
     shield: boolean;
   };
-  consumables: string[];
+  consumables: { id: string; name: string; quantity: number; effect: string; value: number }[];
 
   // Spellcasting (null for non-casters)
   spellcasting: {
@@ -62,6 +62,9 @@ export interface Character {
 
   // Class features active at current level
   features: string[];
+
+  // Limited-use feature tracking (resets on rest)
+  featureUses: Record<string, { used: number; max: number }>;
 
   // Combat state
   zone: Zone;
@@ -128,11 +131,19 @@ export type CombatEntity = {
   initiative: number;
 };
 
+export interface TurnResources {
+  actionUsed: boolean;
+  bonusActionUsed: boolean;
+  movementUsed: boolean;
+}
+
 export interface CombatState {
   enemies: Enemy[];
   initiativeOrder: CombatEntity[];
   currentTurnIndex: number;
   roundNumber: number;
+  turnResources: TurnResources;
+  dodging: string[]; // character IDs currently dodging (cleared on their next turn start)
 }
 
 // ─── Rooms ───────────────────────────────────────────────────

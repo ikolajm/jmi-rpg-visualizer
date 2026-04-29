@@ -30,6 +30,23 @@ const INITIAL_STATE: GameState = {
   stats: INITIAL_STATS,
 };
 
+// ─── Feature Uses Factory ────────────────────────────────────
+
+function buildFeatureUses(classIndex: string): Record<string, { used: number; max: number }> {
+  const uses: Record<string, { used: number; max: number }> = {};
+  switch (classIndex) {
+    case 'fighter':
+      uses['second-wind'] = { used: 0, max: 1 };
+      break;
+    case 'barbarian':
+      uses['rage'] = { used: 0, max: 2 };
+      break;
+    // Rogue's Cunning Action is unlimited (no tracking needed)
+    // Caster bonus action spells use spell slots (tracked separately)
+  }
+  return uses;
+}
+
 // ─── Character Factory ──────────────────────────────────────
 
 function createCharacter(build: ClassBuild, slotIndex: number): Character {
@@ -52,7 +69,9 @@ function createCharacter(build: ClassBuild, slotIndex: number): Character {
       armor: build.startingEquipment.armor,
       shield: build.startingEquipment.shield,
     },
-    consumables: [...build.startingConsumables],
+    consumables: [
+      { id: 'health-potion', name: 'Health Potion', quantity: 2, effect: 'heal', value: 7 },
+    ],
     spellcasting: build.spellcasting ? {
       ability: build.spellcasting.ability,
       spellSaveDC: build.spellcasting.spellSaveDC,
@@ -63,6 +82,7 @@ function createCharacter(build: ClassBuild, slotIndex: number): Character {
       slotsUsed: 0,
     } : null,
     features: [...build.features],
+    featureUses: buildFeatureUses(build.index),
     zone: 2,
     statusEffects: [],
     isAlive: true,

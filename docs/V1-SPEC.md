@@ -42,7 +42,7 @@ Everything else is auto-derived from class selection — HP, base stats, startin
 
 **Stat generation:** Fixed array per class, not random rolls. Predictable, balanced, no reroll-fishing.
 
-**Open question:** Do players pick from a pool of pre-built characters, or just pick 4 classes and stats are auto-assigned? Former gives a draft feel, latter is faster.
+**Decided:** Players draft from a pool of 6 class cards. The draft screen shows 4 empty placards (party slots) and 6 class cards in a bottom row. Selecting a class card opens a sheet pull-out with a tabbed breakdown: movesets, spells, equipment selection, and level progression preview. Confirm to fill a placard. Repeat for all 4 slots. Duplicates allowed (e.g., 2 Fighters + Cleric + Wizard).
 
 ---
 
@@ -226,19 +226,32 @@ Local scoreboard. Top 10 runs with expandable details.
 
 ---
 
-## Screens
+## UI Layout — Persistent Dashboard
 
-| Screen | What | Key Components |
-|--------|------|---------------|
-| **Title** | Start game, view scores | Logo, start button, scoreboard button |
-| **Party Draft** | Pick 4 classes | Class cards with stats preview, confirm |
-| **Dungeon View** | Room sequence, floor indicator | Room type icon, floor counter, party HP summary |
-| **Combat** | Zone view, turn order, action menu | Three zone panels, initiative bar, action buttons, game log |
-| **Character Placard** | Detailed character state | HP bar, status effects (animated), equipment, spells/abilities |
-| **Level Up** | Stat increases, new abilities | Before/after comparison, confirm |
-| **Loot** | Pick reward | 3 options with stats, pick 1, assign to character |
-| **Game Over** | TPK score summary | Full run stats, save to scoreboard |
-| **Scoreboard** | Top runs | Expandable run details |
+NES/SNES-inspired aesthetic. Text + icons, no sprites. Corner bracket motif (established on title screen). Lucide icons for v1, custom icons + Three.js status effects added during polish.
+
+The game uses a **persistent dashboard layout**, NOT discrete screen navigation:
+
+- **Party panel** (left, always visible) — 4 character placards with HP bars, status effects, equipment summary
+- **Center stage** (contextual) — swaps content based on game phase (draft, combat zones, loot, rest, level-up, etc.)
+- **Action bar** (bottom, contextual) — phase-appropriate actions
+- **Game log** (collapsible) — combat events, loot drops, ability check results
+
+Title screen is the only standalone screen — it transitions into the dashboard shell on "Start."
+
+## Screens / Phases
+
+| Phase | Center Stage Content | Key Components |
+|-------|---------------------|---------------|
+| **Title** | Standalone screen (no dashboard) | Logo (pixelated → letter reveal), breathing corner bracket "Start" button, scoreboard button |
+| **Party Draft** | 6 class cards in bottom row, 4 empty placards up top | Select card → sheet pull-out with tabbed breakdown (movesets, spells, equipment, level progression) → confirm to fill placard |
+| **Dungeon View** | Room sequence, floor indicator | Room type icon, floor counter, party HP summary in left panel |
+| **Combat** | Three zone panels (melee / ranged / far) | Initiative bar at top, action menu, game log. Chips represent characters/enemies in zones |
+| **Level Up** | Before/after stat comparison | New features, spell slots, HP increase. Confirm to proceed |
+| **Loot** | 3 item options | Pick 1, assign to character via party panel |
+| **Rest** | Rest vs. Search choice | Heal % + restore spell slot, or ability check for bonus loot |
+| **Game Over** | Full run stats | Rooms cleared, damage dealt/taken, characters lost, score. Save to local scoreboard |
+| **Scoreboard** | Top 10 runs | Expandable run details |
 
 ---
 

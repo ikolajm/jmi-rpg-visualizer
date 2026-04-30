@@ -26,7 +26,7 @@ export function SpellSlotPips({ total, used = 0, size = 'md', className }: Spell
           className={cn(
             'rounded-full border transition-colors',
             pipSize[size],
-            i >= remaining && 'bg-transparent border-[var(--outline-subtle)]',
+            i >= remaining && 'bg-transparent border-outline-subtle',
           )}
           style={i < remaining ? { backgroundColor: resourceColors.spellSlot, borderColor: resourceColors.spellSlot } : undefined}
         />

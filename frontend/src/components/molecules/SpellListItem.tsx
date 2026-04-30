@@ -26,7 +26,7 @@ export function SpellListItem({ spellIndex, className }: SpellListItemProps) {
   const reach = meta?.range ? spellReach(meta.range) : null;
 
   const header = (
-    <div className="flex items-center gap-[var(--space-3)] flex-1 min-w-0 text-left">
+    <div className="flex items-center gap-3 flex-1 min-w-0 text-left">
       {/* School icon */}
       {meta?.school && (
         <GameIcon
@@ -40,10 +40,10 @@ export function SpellListItem({ spellIndex, className }: SpellListItemProps) {
 
       {/* Name + stat indicators */}
       <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-        <span className="text-body-sm font-medium text-[var(--on-surface)] truncate">
+        <span className="text-body-sm font-medium text-on-surface truncate">
           {formatSpellName(spellIndex)}
         </span>
-        <div className="flex items-center gap-[var(--space-3)] flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap">
           {/* Damage with type icon */}
           {meta?.damage && meta?.damageType && (
             <DamageInline type={meta.damageType} damage={meta.damage} />
@@ -51,7 +51,7 @@ export function SpellListItem({ spellIndex, className }: SpellListItemProps) {
 
           {/* Zone range */}
           {reach && reach !== 'melee' && (
-            <span className="inline-flex items-center gap-0.5 text-[10px] text-[var(--on-surface-variant)]">
+            <span className="inline-flex items-center gap-0.5 text-[10px] text-on-surface-variant">
               <MoveDiagonal className="size-2.5" />
               {reachLabels[reach]}
             </span>
@@ -72,7 +72,7 @@ export function SpellListItem({ spellIndex, className }: SpellListItemProps) {
   if (!hasDescription) {
     return (
       <div className={cn(
-        'flex items-center gap-[var(--space-3)] p-[var(--space-2)] px-[var(--space-3)] rounded-[var(--radius-component)] bg-[var(--surface-2)]',
+        'flex items-center gap-3 p-2 px-3 rounded-component bg-surface-2',
         className,
       )}>
         {header}
@@ -84,13 +84,13 @@ export function SpellListItem({ spellIndex, className }: SpellListItemProps) {
     <Accordion type="single" collapsible className={cn('border-0 bg-transparent', className)}>
       <AccordionItem
         value={spellIndex}
-        className="rounded-[var(--radius-component)] bg-[var(--surface-2)] overflow-hidden"
+        className="rounded-component bg-surface-2 overflow-hidden"
       >
-        <AccordionTrigger size="sm" className="hover:bg-[var(--surface-3)] px-[var(--space-3)]">
+        <AccordionTrigger size="sm" className="hover:bg-surface-3 px-3">
           {header}
         </AccordionTrigger>
-        <AccordionContent size="sm" className="px-[var(--space-3)] pb-[var(--space-3)] pt-0">
-          <p className="text-body-sm text-[var(--on-surface-variant)] leading-relaxed">
+        <AccordionContent size="sm" className="px-3 pb-3 pt-0">
+          <p className="text-body-sm text-on-surface-variant leading-relaxed">
             {meta.description}
           </p>
         </AccordionContent>
@@ -106,11 +106,11 @@ export function SpellLevelHeader({ level, className }: { level: number | 'cantri
     : `Level ${'I,II,III,IV,V,VI,VII,VIII,IX'.split(',')[level - 1] || level}`;
 
   return (
-    <div className={cn('flex items-center gap-[var(--space-2)] py-[var(--space-1)]', className)}>
-      <span className="text-[10px] uppercase tracking-[0.12em] font-semibold text-[var(--on-surface-variant)]">
+    <div className={cn('flex items-center gap-2 py-1', className)}>
+      <span className="text-[10px] uppercase tracking-[0.12em] font-semibold text-on-surface-variant">
         {label}
       </span>
-      <div className="flex-1 h-px bg-[var(--outline-subtle)]" />
+      <div className="flex-1 h-px bg-outline-subtle" />
     </div>
   );
 }

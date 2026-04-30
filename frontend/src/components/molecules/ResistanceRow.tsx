@@ -54,9 +54,9 @@ function ResistanceGroup({ label, icon, entries, variant }: {
   if (types.length === 0) return null;
 
   const variantColors = {
-    neutral: 'text-[var(--on-surface-variant)]',
-    danger: 'text-[var(--error)]',
-    warning: 'text-[var(--warning)]',
+    neutral: 'text-on-surface-variant',
+    danger: 'text-error',
+    warning: 'text-warning',
   };
 
   return (
@@ -65,7 +65,7 @@ function ResistanceGroup({ label, icon, entries, variant }: {
         {icon}
         {label}
       </div>
-      <div className="flex items-center gap-[var(--space-2)] flex-wrap pl-[var(--space-4)]">
+      <div className="flex items-center gap-2 flex-wrap pl-4">
         {types.map((type) => {
           const isKnown = KNOWN_TYPES.includes(type);
           return (
@@ -80,7 +80,7 @@ function ResistanceGroup({ label, icon, entries, variant }: {
           );
         })}
         {qualifier && (
-          <span className="text-[10px] text-[var(--on-surface-variant)] italic">({qualifier})</span>
+          <span className="text-[10px] text-on-surface-variant italic">({qualifier})</span>
         )}
       </div>
     </div>
@@ -92,14 +92,14 @@ export function ResistanceRow({ resistances = [], immunities = [], vulnerabiliti
 
   if (!hasAny) {
     return (
-      <div className={cn('text-[10px] text-[var(--on-surface-variant)] italic', className)}>
+      <div className={cn('text-[10px] text-on-surface-variant italic', className)}>
         No resistances, immunities, or vulnerabilities
       </div>
     );
   }
 
   return (
-    <div className={cn('flex flex-col gap-[var(--space-2)]', className)}>
+    <div className={cn('flex flex-col gap-2', className)}>
       {resistances.length > 0 && (
         <ResistanceGroup
           label="Resistant"

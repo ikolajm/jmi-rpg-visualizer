@@ -46,6 +46,8 @@ export interface Character {
     weapon: string;
     armor: string;
     shield: boolean;
+    ring1: string | null;
+    ring2: string | null;
   };
   consumables: { id: string; name: string; quantity: number; effect: string; value: number }[];
 

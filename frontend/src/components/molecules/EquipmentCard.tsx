@@ -27,26 +27,26 @@ export function EquipmentCard({ slot, iconName, label, stats, note, acValue, cla
 
   return (
     <div className={cn(
-      'flex items-center gap-[var(--space-3)] p-[var(--space-3)] rounded-[var(--radius-component)] bg-[var(--surface-2)]',
+      'flex items-center gap-3 p-3 rounded-component bg-surface-2',
       className,
     )}>
-      <GameIcon category="item" name={iconName} size="lg" className="text-[var(--on-surface-variant)] shrink-0" />
+      <GameIcon category="item" name={iconName} size="lg" className="text-on-surface-variant shrink-0" />
 
       <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-        <span className="text-body-sm font-medium text-[var(--on-surface)] truncate">{label}</span>
+        <span className="text-body-sm font-medium text-on-surface truncate">{label}</span>
         {stats && (
-          <span className="text-[10px] text-[var(--on-surface-variant)]">{stats}</span>
+          <span className="text-[10px] text-on-surface-variant">{stats}</span>
         )}
         {note && (
-          <span className="text-[10px] text-[var(--on-surface-variant)] italic">{note}</span>
+          <span className="text-[10px] text-on-surface-variant italic">{note}</span>
         )}
       </div>
 
-      <div className="flex items-center gap-[var(--space-2)] shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
         {acValue !== undefined && (
           <AcShield value={acValue} size="sm" />
         )}
-        <span className="inline-flex items-center gap-1 text-[10px] text-[var(--on-surface-variant)]">
+        <span className="inline-flex items-center gap-1 text-[10px] text-on-surface-variant">
           {slotInfo.icon}
           {slotInfo.label}
         </span>

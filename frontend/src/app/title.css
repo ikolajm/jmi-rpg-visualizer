@@ -112,7 +112,7 @@
 
 /* Exit transition */
 .ts-exit {
-  animation: ts-fade-out 0.8s ease-in forwards;
+  animation: ts-fade-out 0.5s ease-out forwards;
 }
 
 /* --- Keyframes --- */

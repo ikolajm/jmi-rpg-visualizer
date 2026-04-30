@@ -21,12 +21,12 @@ export function CreatureHeader({ iconCategory, iconName, name, type, level, cr, 
   ].filter(Boolean).join(' · ');
 
   return (
-    <div className={cn('flex items-center gap-[var(--space-3)]', className)}>
-      <GameIcon category={iconCategory} name={iconName} size="xl" className="text-[var(--primary)] shrink-0" />
+    <div className={cn('flex items-center gap-3', className)}>
+      <GameIcon category={iconCategory} name={iconName} size="xl" className="text-primary shrink-0" />
       <div className="flex flex-col min-w-0">
-        <span className="text-title-md font-semibold text-[var(--on-surface)] truncate">{name}</span>
+        <span className="text-title-md font-semibold text-on-surface truncate">{name}</span>
         {subtitle && (
-          <span className="text-label-sm text-[var(--on-surface-variant)]">{subtitle}</span>
+          <span className="text-label-sm text-on-surface-variant">{subtitle}</span>
         )}
       </div>
     </div>

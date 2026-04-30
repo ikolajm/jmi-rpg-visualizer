@@ -8,8 +8,7 @@ export function InitiativeBar() {
   if (!state.combat) return null;
 
   return (
-    <div className="flex items-center gap-[var(--space-1)] px-[var(--space-4)] py-[var(--space-2)] bg-[var(--surface-1)] border-b border-[var(--outline-subtle)] overflow-x-auto">
-      <span className="text-[10px] uppercase tracking-[0.1em] text-[var(--on-surface-variant)] shrink-0 mr-[var(--space-2)]">Turn Order</span>
+    <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 px-3 py-2 rounded-card bg-black/60 backdrop-blur-md border border-outline-subtle">
       {state.combat.initiativeOrder.map((entity, i) => {
         const isActive = i === state.combat!.currentTurnIndex;
         const isChar = entity.type === 'character';
@@ -21,25 +20,26 @@ export function InitiativeBar() {
           <div
             key={entity.id}
             className={`
-              flex flex-col items-center gap-0.5 px-[var(--space-2)] py-[var(--space-1)] rounded-[var(--radius-component)] shrink-0 transition-all min-w-[48px]
-              ${isActive ? 'bg-[var(--primary-container)] border border-[var(--primary)] scale-110' : 'bg-[var(--surface-2)] border border-transparent'}
-              ${isDead ? 'opacity-20 line-through' : ''}
+              flex flex-col items-center gap-0.5 px-2 py-1 rounded-component shrink-0 transition-all min-w-[44px]
+              ${isActive ? 'bg-white/15 ring-1 ring-primary scale-110' : 'bg-transparent'}
+              ${isDead ? 'opacity-20' : ''}
             `}
           >
             <GameIcon
               category={isChar ? 'class' : 'monster'}
               name={isChar ? (char?.classIndex || 'fighter') : (enemy?.type || 'humanoid')}
               size="md"
-              className={isChar ? 'text-[var(--primary)]' : 'text-[var(--error)]'}
+              className={isChar ? 'text-primary' : 'text-error'}
             />
-            <span className="text-[9px] font-medium text-[var(--on-surface)] truncate max-w-[48px] text-center">
+            <span className="text-[9px] font-medium text-on-surface truncate max-w-[44px] text-center">
               {isChar ? char?.name : enemy?.name}
             </span>
           </div>
         );
       })}
-      <span className="text-[10px] text-[var(--on-surface-variant)] ml-auto shrink-0">
-        Round {state.combat.roundNumber}
+      <div className="w-px h-6 bg-outline-subtle mx-1" />
+      <span className="text-[10px] text-on-surface-variant whitespace-nowrap">
+        R{state.combat.roundNumber}
       </span>
     </div>
   );

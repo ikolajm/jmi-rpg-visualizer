@@ -28,7 +28,7 @@ export function AcShield({ value, size = 'md', className }: AcShieldProps) {
           strokeWidth="1.5"
         />
       </svg>
-      <span className={cn('relative z-10 font-bold tabular-nums text-[var(--primary)]', s.text)}>
+      <span className={cn('relative z-10 font-bold tabular-nums text-primary', s.text)}>
         {value}
       </span>
     </div>

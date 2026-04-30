@@ -239,13 +239,18 @@ Persistent dashboard layout with design system components. NES/SNES-inspired, te
 
 ### Architecture
 
-Game page modularized (1207→426 lines):
-- `components/game/` — InitiativeBar, ZoneLayout, ActionBar, GameLog, PartyStrip
-- `data/weapon-helpers.ts` — weapon icon/dice/damage lookups
-- `data/bonus-actions.ts` — bonus action availability helpers
-- `data/consumables.ts` — consumable item definitions
-- `data/game-colors.ts` — centralized game color tokens
-- `data/zones.ts` — numeric zone system with reach helpers
+Game page modularized (1207→109 lines):
+- `hooks/useCombat.ts` — all combat logic (attack, cast, defend, items, bonus, move, enemy AI, turn advancement)
+- `components/game/` — InitiativeBar, ZoneLayout, ActionBar, GameLog, PartyStrip, InspectSheet
+- `data/weapon-helpers.ts`, `data/bonus-actions.ts`, `data/consumables.ts`, `data/game-colors.ts`, `data/zones.ts`
+
+### Design system dogfooding
+
+- [x] Replaced ~250 raw `[var(--*)]` bracket references with Tailwind utility classes across all components and pages
+- [x] All colors use `bg-surface-2`, `text-primary`, `border-outline-subtle` etc.
+- [x] All spacing uses `px-3`, `gap-4`, `p-2` etc.
+- [x] All radii use `rounded-card`, `rounded-component` etc.
+- Only `--bw-2` (border width) and `--font-heading` (font family) remain as legitimate custom property references
 
 ### Reference docs
 
@@ -258,10 +263,15 @@ Game page modularized (1207→426 lines):
 
 Refine modular components, styling, and user flows before adding more features.
 
-- [ ] Style pass on ZoneTokens — test visual weight, spacing, active state glow
-- [ ] Style pass on ActionBar — tile sizing, selection panel polish, disabled state clarity
-- [ ] Style pass on InitiativeBar — active turn emphasis, dead entity treatment
-- [ ] Style pass on GameLog — font sizing, entry spacing, expand/collapse UX
+- [x] Layout overhaul — sidebar removed, full-viewport game board, all HUD elements as absolute overlays
+- [x] Action bar — floating bottom-center, panels expand upward, resource tracker above tiles
+- [x] Game log — FAB overlay card with compact (3 entries) and expanded (scrollable) states
+- [x] Zone tokens — heart icon + HP numerics + AC shield, ally/enemy divider with "vs" label, alphabetical sort
+- [x] Initiative bar — floating top-center overlay
+- [x] Inspect sheet — full character tabs (stats, combat, spells, gear with ring slots) + enemy view (resistances, actions)
+- [x] Token dogfooding — all var() replaced with Tailwind utility classes
+- [ ] Style pass on ZoneTokens — further visual weight, spacing refinement
+- [ ] Style pass on ActionBar — tile sizing, selection panel polish
 - [ ] Style pass on Party Strip — alignment, hover states, info density
 - [ ] Keyword highlighting in spell/feature descriptions (damage types, conditions colored)
 - [ ] Draft page polish — class cards, sheet tabs, overall flow

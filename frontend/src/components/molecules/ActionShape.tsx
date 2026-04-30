@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/components/atoms/cn';
-import { actionColors } from '@/data/game-colors';
+import { actionColors, resourceColors, featureColors } from '@/data/game-colors';
 
 type ActionType = 'action' | 'bonusAction' | 'reaction' | 'free';
 
@@ -97,14 +97,14 @@ export function ResourceTracker({ actionUsed, bonusUsed, moveUsed, spellSlotsTot
   className?: string;
 }) {
   return (
-    <div className={cn('flex items-center gap-[var(--space-4)]', className)}>
+    <div className={cn('flex items-center gap-4', className)}>
       <ActionShape type="action" used={actionUsed} size="md" showLabel />
       <ActionShape type="bonusAction" used={bonusUsed} size="md" showLabel />
       <span className={cn('inline-flex items-center gap-1', moveUsed && 'opacity-40')}>
         <svg width={14} height={14} viewBox="0 0 16 16" className="shrink-0">
-          <path d="M3 13L13 3M13 3H6M13 3V10" fill="none" stroke={moveUsed ? '#9a9590' : '#5bad5a'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M3 13L13 3M13 3H6M13 3V10" fill="none" stroke={moveUsed ? featureColors.passive : actionColors.free} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <span className="text-[10px] font-medium" style={{ color: moveUsed ? '#9a9590' : '#5bad5a' }}>
+        <span className="text-[10px] font-medium" style={{ color: moveUsed ? featureColors.passive : actionColors.free }}>
           Movement
         </span>
       </span>
@@ -113,11 +113,11 @@ export function ResourceTracker({ actionUsed, bonusUsed, moveUsed, spellSlotsTot
           {Array.from({ length: spellSlotsTotal }, (_, i) => (
             <svg key={i} width={10} height={10} viewBox="0 0 16 16" className="shrink-0">
               <rect x="3" y="3" width="10" height="10" rx="2"
-                fill={i < spellSlotsTotal - (spellSlotsUsed || 0) ? '#4a7fd4' : 'none'}
-                stroke="#4a7fd4" strokeWidth="1.5" />
+                fill={i < spellSlotsTotal - (spellSlotsUsed || 0) ? resourceColors.spellSlot : 'none'}
+                stroke={resourceColors.spellSlot} strokeWidth="1.5" />
             </svg>
           ))}
-          <span className="text-[10px] font-medium text-[#4a7fd4]">Slots</span>
+          <span className="text-[10px] font-medium" style={{ color: resourceColors.spellSlot }}>Slots</span>
         </span>
       )}
     </div>

@@ -15,18 +15,20 @@ export function ZoneLayout({ onSelectTarget }: {
   const zones: Zone[] = [1, 2, 3];
 
   return (
-    <div className="grid grid-cols-3 gap-[var(--space-3)] h-full p-[var(--space-4)]">
+    <div className="grid grid-cols-3 gap-4 h-full p-6 pt-[88px] pb-[180px]">
       {zones.map((zone) => {
-        const zoneChars = state.party.filter(c => c.zone === zone);
-        const zoneEnemies = state.combat!.enemies.filter(e => e.zone === zone);
+        const zoneChars = state.party.filter(c => c.zone === zone).sort((a, b) => a.name.localeCompare(b.name));
+        const zoneEnemies = state.combat!.enemies.filter(e => e.zone === zone).sort((a, b) => a.name.localeCompare(b.name));
+        const hasBoth = zoneChars.length > 0 && zoneEnemies.length > 0;
 
         return (
-          <div key={zone} className="flex flex-col gap-[var(--space-3)] p-[var(--space-3)] rounded-[var(--radius-card)] bg-[var(--surface-1)] border border-[var(--outline-subtle)]">
-            <h3 className="text-[10px] uppercase tracking-[0.12em] font-semibold text-[var(--on-surface-variant)] text-center">
+          <div key={zone} className="flex flex-col gap-3 p-4 rounded-card bg-surface-1/50 backdrop-blur-sm border border-outline-subtle/50">
+            <h3 className="text-label-sm uppercase tracking-[0.12em] font-semibold text-on-surface-variant text-center">
               {zoneLabel(zone)}
             </h3>
 
-            <div className="flex flex-wrap justify-center gap-[var(--space-2)] flex-1 content-start">
+            {/* Allies */}
+            <div className="flex flex-wrap justify-center gap-2 content-start">
               {zoneChars.map((char) => (
                 <ZoneToken
                   key={char.id}
@@ -43,6 +45,19 @@ export function ZoneLayout({ onSelectTarget }: {
                   onClick={() => onSelectTarget(char.id, 'character')}
                 />
               ))}
+            </div>
+
+            {/* Divider */}
+            {hasBoth && (
+              <div className="flex items-center gap-2 px-2">
+                <div className="flex-1 h-px bg-outline-subtle/50" />
+                <span className="text-[8px] uppercase tracking-[0.1em] text-outline-subtle">vs</span>
+                <div className="flex-1 h-px bg-outline-subtle/50" />
+              </div>
+            )}
+
+            {/* Enemies */}
+            <div className="flex flex-wrap justify-center gap-2 content-start">
               {zoneEnemies.map((enemy) => (
                 <ZoneToken
                   key={enemy.id}
@@ -62,7 +77,7 @@ export function ZoneLayout({ onSelectTarget }: {
             </div>
 
             {zoneChars.length === 0 && zoneEnemies.length === 0 && (
-              <div className="flex items-center justify-center flex-1 text-[10px] text-[var(--outline-subtle)] italic">
+              <div className="flex items-center justify-center flex-1 text-label-sm text-outline-subtle italic">
                 Empty
               </div>
             )}

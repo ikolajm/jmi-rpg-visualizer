@@ -10,7 +10,7 @@ export default function TitleScreen() {
 
   function handleStart() {
     setExiting(true);
-    setTimeout(() => router.push('/draft'), 800);
+    setTimeout(() => router.push('/draft'), 500);
   }
 
   return (
@@ -37,7 +37,7 @@ export default function TitleScreen() {
       </div>
 
       {/* Start button with breathing corner brackets */}
-      <button className="ts-button" onClick={handleStart}>
+      <button className="ts-button" onClick={handleStart} disabled={exiting}>
         <span className="ts-corner ts-corner-tl" />
         <span className="ts-corner ts-corner-tr" />
         <span className="ts-corner ts-corner-bl" />

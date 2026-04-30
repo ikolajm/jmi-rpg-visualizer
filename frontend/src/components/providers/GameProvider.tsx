@@ -68,6 +68,8 @@ function createCharacter(build: ClassBuild, slotIndex: number): Character {
       weapon: build.startingEquipment.weapon,
       armor: build.startingEquipment.armor,
       shield: build.startingEquipment.shield,
+      ring1: null,
+      ring2: null,
     },
     consumables: [
       { id: 'health-potion', name: 'Health Potion', quantity: 2, effect: 'heal', value: 7 },

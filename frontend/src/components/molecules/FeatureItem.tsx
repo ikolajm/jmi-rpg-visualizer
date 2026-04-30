@@ -84,19 +84,19 @@ export function FeatureItem({ name, description, id, className }: FeatureItemPro
   const typeIcon = TYPE_ICONS[featureType];
 
   const header = (
-    <div className="flex items-center gap-[var(--space-2)] flex-1 min-w-0 text-left">
+    <div className="flex items-center gap-2 flex-1 min-w-0 text-left">
       {/* Feature type icon */}
       <span className="shrink-0" style={{ color: featureColors[featureType] }}>
         {typeIcon}
       </span>
 
       {/* Name */}
-      <span className="text-body-sm font-medium text-[var(--on-surface)] truncate">
+      <span className="text-body-sm font-medium text-on-surface truncate">
         {name}
       </span>
 
       {/* Tags as icon+text pairs */}
-      <div className="flex items-center gap-[var(--space-2)] ml-auto shrink-0">
+      <div className="flex items-center gap-2 ml-auto shrink-0">
         {tags.map((tag) => (
           <span
             key={tag.label}
@@ -116,7 +116,7 @@ export function FeatureItem({ name, description, id, className }: FeatureItemPro
     return (
       <div
         className={cn(
-          'border-l-[3px] rounded-[var(--radius-component)] bg-[var(--surface-2)] px-[var(--space-3)] py-[var(--space-2)]',
+          'border-l-[3px] rounded-component bg-surface-2 px-3 py-2',
           className,
         )}
         style={borderStyle}
@@ -130,14 +130,14 @@ export function FeatureItem({ name, description, id, className }: FeatureItemPro
     <Accordion type="single" collapsible className={cn('border-0 bg-transparent', className)}>
       <AccordionItem
         value={itemId}
-        className="border-l-[3px] rounded-[var(--radius-component)] bg-[var(--surface-2)] overflow-hidden"
+        className="border-l-[3px] rounded-component bg-surface-2 overflow-hidden"
         style={borderStyle}
       >
-        <AccordionTrigger size="sm" className="hover:bg-[var(--surface-3)] px-[var(--space-3)]">
+        <AccordionTrigger size="sm" className="hover:bg-surface-3 px-3">
           {header}
         </AccordionTrigger>
-        <AccordionContent size="sm" className="px-[var(--space-3)] pb-[var(--space-3)] pt-0">
-          <p className="text-body-sm text-[var(--on-surface-variant)] leading-relaxed">{desc}</p>
+        <AccordionContent size="sm" className="px-3 pb-3 pt-0">
+          <p className="text-body-sm text-on-surface-variant leading-relaxed">{desc}</p>
         </AccordionContent>
       </AccordionItem>
     </Accordion>

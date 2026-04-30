@@ -78,6 +78,19 @@ export const featureColors: Record<string, string> = {
   stat:     '#5bad5a',
 };
 
+// ─── Status Effects ──────────────────────────────────────────
+
+export const statusColors: Record<string, string> = {
+  poisoned:       '#5bad5a',
+  burning:        '#e8723a',
+  frozen:         '#5b9bd5',
+  cursed:         '#9b7fd4',
+  blessed:        '#e8c263',
+  stunned:        '#9a9590',
+  raging:         '#c43c3c',
+  concentrating:  '#4a7fd4',
+};
+
 // ─── Resources ───────────────────────────────────────────────
 
 export const resourceColors = {
@@ -86,6 +99,16 @@ export const resourceColors = {
   hpCritical: '#d42b2b',
   spellSlot:  '#4a7fd4',
   xp:         '#5bad5a',
+};
+
+// ─── Surfaces / Overlays ─────────────────────────────────────
+
+export const surfaceColors = {
+  overlay:      'rgba(0, 0, 0, 0.50)',
+  overlayHeavy: 'rgba(0, 0, 0, 0.70)',
+  overlayLight: 'rgba(0, 0, 0, 0.40)',
+  glassHover:   'rgba(255, 255, 255, 0.10)',
+  glassActive:  'rgba(255, 255, 255, 0.15)',
 };
 
 // ─── Tailwind class helpers ──────────────────────────────────

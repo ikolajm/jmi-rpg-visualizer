@@ -34,13 +34,13 @@ export function ResourceBar({
   return (
     <div
       className={cn(
-        'relative w-full rounded-[var(--radius-component)] bg-[var(--surface-3)] overflow-hidden',
+        'relative w-full rounded-component bg-surface-3 overflow-hidden',
         trackSize[size],
         className,
       )}
     >
       <div
-        className="absolute inset-y-0 left-0 transition-all duration-300 rounded-[var(--radius-component)]"
+        className="absolute inset-y-0 left-0 transition-all duration-300 rounded-component"
         style={{ width: `${pct}%`, backgroundColor: barColor }}
       />
       <span className="relative z-10 flex items-center justify-center h-full font-semibold text-white tabular-nums">

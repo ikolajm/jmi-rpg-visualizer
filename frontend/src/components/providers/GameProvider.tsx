@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import type {
   GameState, Character, GamePhase, Room, CombatState, LogEntry, RunStats,
+  EquippedWeapon, EquippedArmor,
 } from '@/data/game-types';
 import type { ClassBuild } from '@/data/classes';
 
@@ -47,6 +48,24 @@ function buildFeatureUses(classIndex: string): Record<string, { used: number; ma
   return uses;
 }
 
+// ─── Starting Equipment Data ────────────────────────────────
+
+const STARTING_WEAPONS: Record<string, EquippedWeapon> = {
+  longsword: { index: 'longsword', name: 'Longsword', damage: '1d8', damageType: 'slashing', weaponRange: 'melee', properties: [] },
+  shortsword: { index: 'shortsword', name: 'Shortsword', damage: '1d6', damageType: 'piercing', weaponRange: 'melee', properties: ['finesse', 'light'] },
+  greataxe: { index: 'greataxe', name: 'Greataxe', damage: '1d12', damageType: 'slashing', weaponRange: 'melee', properties: ['heavy', 'two-handed'] },
+  mace: { index: 'mace', name: 'Mace', damage: '1d6', damageType: 'bludgeoning', weaponRange: 'melee', properties: [] },
+  longbow: { index: 'longbow', name: 'Longbow', damage: '1d8', damageType: 'piercing', weaponRange: 'ranged', properties: ['ammunition', 'heavy', 'two-handed'] },
+  quarterstaff: { index: 'quarterstaff', name: 'Quarterstaff', damage: '1d6', damageType: 'bludgeoning', weaponRange: 'melee', properties: [] },
+};
+
+const STARTING_ARMOR: Record<string, EquippedArmor | null> = {
+  'chain-mail': { index: 'chain-mail', name: 'Chain Mail', acBase: 16, acDexCap: 0 },
+  'leather-armor': { index: 'leather-armor', name: 'Leather Armor', acBase: 11 },
+  'scale-mail': { index: 'scale-mail', name: 'Scale Mail', acBase: 14, acDexCap: 2 },
+  'none': null,
+};
+
 // ─── Character Factory ──────────────────────────────────────
 
 function createCharacter(build: ClassBuild, slotIndex: number): Character {
@@ -65,8 +84,8 @@ function createCharacter(build: ClassBuild, slotIndex: number): Character {
     stats: { ...build.stats },
     savingThrows: [...build.savingThrows],
     equipment: {
-      weapon: build.startingEquipment.weapon,
-      armor: build.startingEquipment.armor,
+      weapon: STARTING_WEAPONS[build.startingEquipment.weapon] || STARTING_WEAPONS.longsword,
+      armor: STARTING_ARMOR[build.startingEquipment.armor] ?? null,
       shield: build.startingEquipment.shield,
       ring1: null,
       ring2: null,
@@ -102,6 +121,7 @@ interface GameContextValue {
   addLog: (message: string, type: LogEntry['type']) => void;
   updateCharacter: (id: string, updates: Partial<Character>) => void;
   updateStats: (updates: Partial<RunStats>) => void;
+  advanceRoom: () => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -177,9 +197,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const advanceRoom = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      currentRoom: null,
+      phase: 'room-preview' as GamePhase,
+    }));
+  }, []);
+
   return (
     <GameContext value={{
-      state, initParty, setPhase, setRoom, setCombat, addLog, updateCharacter, updateStats,
+      state, initParty, setPhase, setRoom, setCombat, addLog, updateCharacter, updateStats, advanceRoom,
     }}>
       {children}
     </GameContext>

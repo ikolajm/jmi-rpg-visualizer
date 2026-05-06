@@ -14,6 +14,24 @@ import type { StatusEffect } from '@/components/molecules/StatusStack';
 
 export type Zone = 1 | 2 | 3;
 
+// ─── Equipment ──────────────────────────────────────────────
+
+export interface EquippedWeapon {
+  index: string;
+  name: string;
+  damage: string;        // dice expression, e.g. '1d8'
+  damageType: string;    // 'slashing', 'piercing', 'bludgeoning', etc.
+  weaponRange: string;   // 'melee' | 'ranged'
+  properties: string[];  // 'finesse', 'light', 'two-handed', etc.
+}
+
+export interface EquippedArmor {
+  index: string;
+  name: string;
+  acBase: number;
+  acDexCap?: number;     // undefined = no cap (light), 2 = medium, 0 = heavy
+}
+
 // ─── Characters (Player Party) ──────────────────────────────
 
 export interface Character {
@@ -43,8 +61,8 @@ export interface Character {
 
   // Equipment
   equipment: {
-    weapon: string;
-    armor: string;
+    weapon: EquippedWeapon;
+    armor: EquippedArmor | null;
     shield: boolean;
     ring1: string | null;
     ring2: string | null;
@@ -82,6 +100,8 @@ export interface Enemy {
   name: string;
   type: string;
   cr: number;
+  xp: number;
+  behavior: string;
 
   hp: number;
   maxHp: number;
@@ -108,6 +128,14 @@ export interface Enemy {
     damage?: string;
     damageType?: string;
     reach: string;
+    // Condition on hit (parsed from description)
+    conditionDC?: number;
+    conditionSave?: string;
+    conditionApplied?: string;
+    // Save-based damage (breath weapons, AoE)
+    saveDC?: number;
+    saveType?: string;
+    saveSuccess?: string; // 'half' | 'none'
   }[];
 
   specialAbilities: {
@@ -139,13 +167,29 @@ export interface TurnResources {
   movementUsed: boolean;
 }
 
+export interface BoundaryEffect {
+  id: string;
+  name: string;
+  element: 'fire' | 'ice' | 'force';
+  damage?: string;
+  damageType?: string;
+  saveDC?: number;
+  saveAbility?: string;
+  sourceId: string;
+  blocksMovement?: boolean;
+}
+
+export type BoundaryKey = '1|2' | '2|3';
+
 export interface CombatState {
   enemies: Enemy[];
   initiativeOrder: CombatEntity[];
   currentTurnIndex: number;
   roundNumber: number;
   turnResources: TurnResources;
-  dodging: string[]; // character IDs currently dodging (cleared on their next turn start)
+  dodging: string[];
+  activeEffects: import('@/data/status-effects').ActiveEffect[];
+  boundaries: Record<BoundaryKey, BoundaryEffect | null>;
 }
 
 // ─── Rooms ───────────────────────────────────────────────────
@@ -167,6 +211,7 @@ export type GamePhase =
   | 'combat'
   | 'loot'
   | 'rest'
+  | 'trap'
   | 'level-up'
   | 'game-over';
 

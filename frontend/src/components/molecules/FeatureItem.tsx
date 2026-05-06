@@ -1,11 +1,8 @@
 'use client';
 
-import { cn } from '@/components/atoms/cn';
-import {
-  Accordion, AccordionItem, AccordionTrigger, AccordionContent,
-} from '@/components/atoms/Accordion';
 import { CircleDot, Triangle, Zap, Clock, Eye, TrendingUp, Swords, Shield, Sparkles } from 'lucide-react';
 import { featureColors, actionColors } from '@/data/game-colors';
+import { DetailItem } from './DetailItem';
 
 type FeatureType = 'attack' | 'defense' | 'resource' | 'passive' | 'stat';
 
@@ -38,7 +35,6 @@ function extractTags(name: string, desc: string): Tag[] {
   const d = desc.toLowerCase();
   const n = name.toLowerCase();
 
-  // Action economy — BG3 style: colored icon + label
   if (d.includes('bonus action')) {
     tags.push({ label: 'Bonus Action', icon: <Triangle className="size-2.5 fill-current" />, color: actionColors.bonusAction });
   } else if (d.includes('reaction')) {
@@ -47,7 +43,6 @@ function extractTags(name: string, desc: string): Tag[] {
     tags.push({ label: 'Action', icon: <CircleDot className="size-2.5" />, color: actionColors.action });
   }
 
-  // Recovery
   if (/\b(once|1 use|one use)\b/.test(d) && /\b(short|long) rest\b/.test(d)) {
     if (d.includes('short rest') || d.includes('short or long rest')) {
       tags.push({ label: '1/rest', icon: <Clock className="size-2.5" />, color: actionColors.reaction });
@@ -56,7 +51,6 @@ function extractTags(name: string, desc: string): Tag[] {
     }
   }
 
-  // Passive indicator
   if (tags.length === 0) {
     if (d.includes('you gain') || d.includes('you have') || d.includes('while you') || d.includes('whenever') || !d.includes('on your turn')) {
       tags.push({ label: 'Passive', icon: <Eye className="size-2.5" />, color: featureColors.passive });
@@ -80,66 +74,26 @@ export function FeatureItem({ name, description, id, className }: FeatureItemPro
   const tags = extractTags(name, desc);
   const itemId = id || name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-  const borderStyle = { borderLeftColor: featureColors[featureType] || featureColors.passive };
-  const typeIcon = TYPE_ICONS[featureType];
-
-  const header = (
-    <div className="flex items-center gap-2 flex-1 min-w-0 text-left">
-      {/* Feature type icon */}
-      <span className="shrink-0" style={{ color: featureColors[featureType] }}>
-        {typeIcon}
-      </span>
-
-      {/* Name */}
-      <span className="text-body-sm font-medium text-on-surface truncate">
-        {name}
-      </span>
-
-      {/* Tags as icon+text pairs */}
-      <div className="flex items-center gap-2 ml-auto shrink-0">
-        {tags.map((tag) => (
-          <span
-            key={tag.label}
-            className="inline-flex items-center gap-0.5 text-[10px] font-medium"
-            style={{ color: tag.color }}
-          >
-            {tag.icon}
-            {tag.label}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-
-  // If no description, render without accordion
-  if (!desc) {
-    return (
-      <div
-        className={cn(
-          'border-l-[3px] rounded-component bg-surface-2 px-3 py-2',
-          className,
-        )}
-        style={borderStyle}
-      >
-        {header}
-      </div>
-    );
-  }
-
   return (
-    <Accordion type="single" collapsible className={cn('border-0 bg-transparent', className)}>
-      <AccordionItem
-        value={itemId}
-        className="border-l-[3px] rounded-component bg-surface-2 overflow-hidden"
-        style={borderStyle}
-      >
-        <AccordionTrigger size="sm" className="hover:bg-surface-3 px-3">
-          {header}
-        </AccordionTrigger>
-        <AccordionContent size="sm" className="px-3 pb-3 pt-0">
-          <p className="text-body-sm text-on-surface-variant leading-relaxed">{desc}</p>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+    <DetailItem
+      id={itemId}
+      icon={<span style={{ color: featureColors[featureType] }}>{TYPE_ICONS[featureType]}</span>}
+      title={name}
+      meta={
+        tags.length > 0 ? (
+          <>
+            {tags.map((tag) => (
+              <span key={tag.label} className="inline-flex items-center gap-0.5 text-[10px] font-medium" style={{ color: tag.color }}>
+                {tag.icon}
+                {tag.label}
+              </span>
+            ))}
+          </>
+        ) : undefined
+      }
+      description={desc || undefined}
+      borderColor={featureColors[featureType] || featureColors.passive}
+      className={className}
+    />
   );
 }

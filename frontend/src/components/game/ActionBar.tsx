@@ -7,7 +7,8 @@ import { ResourceTracker, SpellSlotPips } from '@/components/molecules';
 import { DamageIcon } from '@/components/molecules/DamageIcon';
 import { Swords, Shield, ArrowRight, Sparkles, SkipForward } from 'lucide-react';
 import { spellMeta } from '@/data/spell-meta';
-import { canReach, movableZones, weaponReach, spellReach, zoneLabel } from '@/data/zones';
+import { isSpellCastable, getSpellCastType } from '@/data/spell-engine';
+import { canReach, movableZones, weaponReach, spellReach, reachLabels, zoneLabel } from '@/data/zones';
 import { hasBonusActions, getBonusActions } from '@/data/bonus-actions';
 import { actionColors, resourceColors } from '@/data/game-colors';
 import type { Zone } from '@/data/game-types';
@@ -59,56 +60,78 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
 
           {mode === 'cast-select' && character.spellcasting && (
             <PanelSection label="Select Spell">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] text-on-surface-variant">Slots:</span>
-                <SpellSlotPips total={character.spellcasting.slotsTotal} used={character.spellcasting.slotsUsed} size="md" />
-              </div>
               <div className="flex flex-col gap-1">
-                {character.spellcasting.cantrips.map((spell) => (
-                  <SpellRow key={spell} spell={spell} available onClick={() => { setSelectedSpell(spell); setMode('cast-target'); }}>
-                    <span className="text-[10px] italic" style={{ color: actionColors.action }}>At Will</span>
-                  </SpellRow>
+                <div className="flex items-center gap-2 py-1">
+                  <span className="text-[10px] uppercase tracking-[0.12em] font-semibold text-on-surface-variant">At Will</span>
+                  <div className="flex-1 h-px bg-outline-subtle" />
+                </div>
+                {[...character.spellcasting.cantrips].filter(isSpellCastable).sort().map((spell) => (
+                  <SpellRow key={spell} spell={spell} available onClick={() => { setSelectedSpell(spell); setMode('cast-target'); }} />
                 ))}
-                {character.spellcasting.preparedSpells.map((spell) => {
+                {(() => {
+                  const castableSlotSpells = [...character.spellcasting.preparedSpells].filter(isSpellCastable).sort();
+                  if (castableSlotSpells.length === 0) return null;
                   const hasSlots = (character.spellcasting!.slotsTotal - character.spellcasting!.slotsUsed) > 0;
                   return (
-                    <SpellRow key={spell} spell={spell} available={hasSlots}
-                      onClick={() => { if (hasSlots) { setSelectedSpell(spell); setMode('cast-target'); } }}>
-                      {!hasSlots && <span className="text-[10px] text-error">No slots</span>}
-                    </SpellRow>
+                    <>
+                      <div className="flex items-center gap-2 py-1 mt-1">
+                        <span className="text-[10px] uppercase tracking-[0.12em] font-semibold text-on-surface-variant">Level I</span>
+                        <div className="flex-1 h-px bg-outline-subtle" />
+                        <SpellSlotPips total={character.spellcasting!.slotsTotal} used={character.spellcasting!.slotsUsed} size="md" />
+                      </div>
+                      {castableSlotSpells.map((spell) => (
+                        <SpellRow key={spell} spell={spell} available={hasSlots}
+                          onClick={() => { if (hasSlots) { setSelectedSpell(spell); setMode('cast-target'); } }}>
+                          {!hasSlots && <span className="text-[10px] text-error">No slots</span>}
+                        </SpellRow>
+                      ))}
+                    </>
                   );
-                })}
+                })()}
               </div>
             </PanelSection>
           )}
 
           {mode === 'cast-target' && selectedSpell && (() => {
             const meta = spellMeta[selectedSpell];
-            const isHealing = meta?.damageType === 'healing';
+            const castType = getSpellCastType(selectedSpell);
             const r = meta?.range ? spellReach(meta.range) : 'any';
             const spellName = selectedSpell.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            const isEnemyBuff = selectedSpell === 'hunters-mark';
+            const targetsAllies = (castType === 'healing' || castType === 'buff') && !isEnemyBuff;
+            const targetsEnemies = castType === 'damage' || castType === 'condition' || isEnemyBuff;
+            const targetsBoundary = castType === 'boundary';
 
             return (
-              <PanelSection label={`Cast ${spellName} — select target`}>
+              <PanelSection label={`Cast ${spellName}${targetsBoundary ? ' — select wall' : ' — select target'}`}>
                 <div className="flex flex-wrap gap-2">
-                  {isHealing
-                    ? state.party.filter(c => c.isAlive).map((ally) => (
-                      <TargetButton key={ally.id} variant="ally"
-                        onClick={() => { onCast(selectedSpell, ally.id); setMode('idle'); setSelectedSpell(null); }}
-                        icon={<GameIcon category="class" name={ally.classIndex} size="lg" className="text-primary" />}
-                        name={ally.name} detail={`${ally.hp}/${ally.maxHp} HP`} />
-                    ))
-                    : (() => {
-                      const targets = state.combat!.enemies.filter(e => e.isAlive && canReach(character.zone, e.zone, r));
-                      if (targets.length === 0) return <EmptyHint>No targets in range</EmptyHint>;
-                      return targets.map((e) => (
-                        <TargetButton key={e.id} variant="enemy"
-                          onClick={() => { onCast(selectedSpell, e.id); setMode('idle'); setSelectedSpell(null); }}
-                          icon={<GameIcon category="monster" name={e.type} size="lg" className="text-error" />}
-                          name={e.name} detail={`${e.hp}/${e.maxHp} HP`} />
-                      ));
-                    })()
-                  }
+                  {targetsBoundary && (['1|2', '2|3'] as const).map(key => {
+                    const [a, b] = key.split('|');
+                    const existing = state.combat!.boundaries[key];
+                    return (
+                      <TargetButton key={key} variant="ally"
+                        onClick={() => { onCast(selectedSpell, key); setMode('idle'); setSelectedSpell(null); }}
+                        icon={<span className="text-lg">🔥</span>}
+                        name={`Zone ${a} | Zone ${b}`}
+                        detail={existing ? `${existing.name} (replace)` : 'Empty'} />
+                    );
+                  })}
+                  {targetsAllies && state.party.filter(c => c.isAlive).map((ally) => (
+                    <TargetButton key={ally.id} variant="ally"
+                      onClick={() => { onCast(selectedSpell, ally.id); setMode('idle'); setSelectedSpell(null); }}
+                      icon={<GameIcon category="class" name={ally.classIndex} size="lg" className="text-primary" />}
+                      name={ally.name} detail={`${ally.hp}/${ally.maxHp} HP`} />
+                  ))}
+                  {targetsEnemies && (() => {
+                    const targets = state.combat!.enemies.filter(e => e.isAlive && canReach(character.zone, e.zone, r));
+                    if (targets.length === 0) return <EmptyHint>No targets in range</EmptyHint>;
+                    return targets.map((e) => (
+                      <TargetButton key={e.id} variant="enemy"
+                        onClick={() => { onCast(selectedSpell, e.id); setMode('idle'); setSelectedSpell(null); }}
+                        icon={<GameIcon category="monster" name={e.type} size="lg" className="text-error" />}
+                        name={e.name} detail={`${e.hp}/${e.maxHp} HP`} />
+                    ));
+                  })()}
                 </div>
               </PanelSection>
             );
@@ -304,6 +327,8 @@ function SpellRow({ spell, available, onClick, children }: {
   spell: string; available: boolean; onClick: () => void; children?: React.ReactNode;
 }) {
   const meta = spellMeta[spell];
+  const reach = meta?.range ? spellReach(meta.range) : null;
+  const reachLabel = reach ? reachLabels[reach] : null;
   return (
     <button onClick={onClick} disabled={!available}
       className={`flex items-center gap-3 px-3 py-2 rounded-component transition-all text-left
@@ -314,7 +339,7 @@ function SpellRow({ spell, available, onClick, children }: {
         {spell.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
       </span>
       {meta?.damageType && <DamageIcon type={meta.damageType} size="size-4" />}
-      {meta?.range && <span className="text-[10px] text-on-surface-variant">{meta.range}</span>}
+      {reachLabel && <span className="text-[10px] text-on-surface-variant">{reachLabel}</span>}
       {children}
     </button>
   );

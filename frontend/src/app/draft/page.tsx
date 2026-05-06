@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import { classBuilds, casterProgression, type ClassBuild } from '@/data/classes';
 import { classFeatures } from '@/data/feature-meta';
+import { V1_FEATURES, V1_WEAPONS } from '@/data/v1-roster';
+import { getWeaponIcon } from '@/data/weapon-helpers';
+import { statMod } from '@/data/dice';
 import { Button } from '@/components/atoms/Button';
 import { GameIcon } from '@/components/atoms/GameIcon';
 import {
@@ -21,67 +24,41 @@ function formatIndex(index: string) {
   return index.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
+/** Resolve a weapon index to its roster data */
+function getWeaponData(index: string) {
+  return V1_WEAPONS.find(w => w.index === index) || { index, name: formatIndex(index), damage: '1d6', damageType: 'slashing', weaponRange: 'melee' as const, properties: [] };
+}
+
 function getHp(build: ClassBuild) {
-  return build.hitDie + Math.floor((build.stats.con - 10) / 2);
+  return build.hitDie + statMod(build.stats.con);
 }
 
 function getToHit(build: ClassBuild) {
-  const prof = 2;
-  // Melee uses STR, ranged uses DEX, finesse uses higher
-  const strMod = Math.floor((build.stats.str - 10) / 2);
-  const dexMod = Math.floor((build.stats.dex - 10) / 2);
-  const weapon = build.startingEquipment.weapon;
-  const isRanged = ['longbow', 'shortbow', 'light-crossbow', 'hand-crossbow'].includes(weapon);
-  const isFinesse = ['shortsword', 'dagger', 'rapier'].includes(weapon);
-  const mod = isRanged ? dexMod : isFinesse ? Math.max(strMod, dexMod) : strMod;
-  return prof + mod;
+  const w = getWeaponData(build.startingEquipment.weapon);
+  const isRanged = w.weaponRange === 'ranged';
+  const isFinesse = w.properties.includes('finesse');
+  const mod = isRanged ? statMod(build.stats.dex) : isFinesse ? Math.max(statMod(build.stats.str), statMod(build.stats.dex)) : statMod(build.stats.str);
+  return 2 + mod;
 }
 
 function getWeaponDamage(build: ClassBuild): string {
-  const strMod = Math.floor((build.stats.str - 10) / 2);
-  const dexMod = Math.floor((build.stats.dex - 10) / 2);
-  const weapon = build.startingEquipment.weapon;
-  const isRanged = ['longbow', 'shortbow', 'light-crossbow', 'hand-crossbow'].includes(weapon);
-  const isFinesse = ['shortsword', 'dagger', 'rapier'].includes(weapon);
-  const mod = isRanged ? dexMod : isFinesse ? Math.max(strMod, dexMod) : strMod;
-
-  const dice: Record<string, string> = {
-    'longsword': '1d8', 'shortsword': '1d6', 'greataxe': '1d12',
-    'mace': '1d6', 'longbow': '1d8', 'quarterstaff': '1d6',
-  };
-  const die = dice[weapon] || '1d6';
-  const modStr = mod >= 0 ? `+${mod}` : `${mod}`;
-  return `${die}${modStr}`;
-}
-
-function getWeaponIcon(weapon: string): string {
-  const map: Record<string, string> = {
-    'longsword': 'sword', 'shortsword': 'sword', 'greataxe': 'axe',
-    'mace': 'mace', 'longbow': 'bow', 'quarterstaff': 'orb-wand',
-  };
-  return map[weapon] || 'sword';
+  const w = getWeaponData(build.startingEquipment.weapon);
+  const isRanged = w.weaponRange === 'ranged';
+  const isFinesse = w.properties.includes('finesse');
+  const mod = isRanged ? statMod(build.stats.dex) : isFinesse ? Math.max(statMod(build.stats.str), statMod(build.stats.dex)) : statMod(build.stats.str);
+  return `${w.damage}${mod >= 0 ? '+' : ''}${mod}`;
 }
 
 function getWeaponZone(weapon: string): string {
-  const ranged = ['longbow', 'shortbow', 'light-crossbow', 'hand-crossbow'];
-  const thrown = ['handaxe', 'javelin', 'dagger'];
-  if (ranged.includes(weapon)) return 'any';
-  if (thrown.includes(weapon)) return 'melee+adjacent';
-  return 'melee';
+  return getWeaponData(weapon).weaponRange === 'ranged' ? 'any' : 'melee';
 }
 
 function isTwoHanded(weapon: string): boolean {
-  return ['greataxe', 'greatsword', 'longbow', 'shortbow', 'light-crossbow',
-    'hand-crossbow', 'quarterstaff', 'pike', 'halberd', 'glaive', 'heavy-crossbow',
-    'maul'].includes(weapon);
+  return getWeaponData(weapon).properties.includes('two-handed');
 }
 
 function getWeaponDamageType(weapon: string): string {
-  const types: Record<string, string> = {
-    'longsword': 'slashing', 'shortsword': 'piercing', 'greataxe': 'slashing',
-    'mace': 'bludgeoning', 'longbow': 'piercing', 'quarterstaff': 'bludgeoning',
-  };
-  return types[weapon] || 'slashing';
+  return getWeaponData(weapon).damageType;
 }
 
 export default function DraftPage() {
@@ -306,18 +283,20 @@ export default function DraftPage() {
                       zone={getWeaponZone(inspecting.startingEquipment.weapon)}
                     />
 
-                    <div className="flex flex-col gap-2">
-                      <h4 className="text-label-md uppercase tracking-[0.08em] text-on-surface-variant">Features</h4>
-                      {(classFeatures[inspecting.index]?.[1] || [])
-                        .filter(f => !f.hasParent)
-                        .map((feat) => (
-                          <FeatureItem
-                            key={feat.index}
-                            name={feat.name}
-                            description={feat.description}
-                          />
-                        ))}
-                    </div>
+                    {(() => {
+                      const allowed = V1_FEATURES[inspecting.index];
+                      const feats = (classFeatures[inspecting.index]?.[1] || [])
+                        .filter(f => !f.hasParent && (!allowed || allowed.has(f.index)));
+                      if (feats.length === 0) return null;
+                      return (
+                        <div className="flex flex-col gap-2">
+                          <h4 className="text-label-md uppercase tracking-[0.08em] text-on-surface-variant">Features</h4>
+                          {feats.map((feat) => (
+                            <FeatureItem key={feat.index} name={feat.name} description={feat.description} />
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </TabsContent>
 
@@ -326,7 +305,7 @@ export default function DraftPage() {
                   {inspecting.spellcasting ? (
                     <div className="flex flex-col gap-3">
                       <SpellLevelHeader level="cantrip" />
-                      {inspecting.spellcasting.cantrips.map((spell) => (
+                      {[...inspecting.spellcasting.cantrips].sort().map((spell) => (
                         <SpellListItem key={spell} spellIndex={spell} />
                       ))}
 
@@ -334,7 +313,7 @@ export default function DraftPage() {
                         <SpellLevelHeader level={1} className="flex-1" />
                         <SpellSlotPips total={inspecting.spellcasting.spellSlotsLevel1} size="md" className="ml-3" />
                       </div>
-                      {inspecting.spellcasting.preparedSpells.map((spell) => (
+                      {[...inspecting.spellcasting.preparedSpells].sort().map((spell) => (
                         <SpellListItem key={spell} spellIndex={spell} />
                       ))}
                     </div>
@@ -424,7 +403,7 @@ export default function DraftPage() {
                       <AcShield value={inspecting.ac} size="lg" />
                       <div className="flex flex-col">
                         <span className="text-body-sm font-semibold text-on-surface">Total Armor Class</span>
-                        <span className="text-[10px] text-on-surface-variant">{inspecting.acSource}{inspecting.startingEquipment.shield ? ' + Shield' : ''}</span>
+                        <span className="text-[10px] text-on-surface-variant">{inspecting.acSource}</span>
                       </div>
                     </div>
                   </div>
@@ -433,26 +412,32 @@ export default function DraftPage() {
                 {/* Progression Tab */}
                 <TabsContent value="progression">
                   <div className="flex flex-col gap-5">
-                    {/* Features by level from SRD */}
-                    {classFeatures[inspecting.index] && (
-                      <div className="flex flex-col gap-4">
-                        <h4 className="text-label-md uppercase tracking-[0.08em] text-on-surface-variant">Features by Level</h4>
-                        {Object.entries(classFeatures[inspecting.index])
-                          .sort(([a], [b]) => Number(a) - Number(b))
-                          .map(([level, feats]) => (
+                    {/* Combat features by level */}
+                    {classFeatures[inspecting.index] && (() => {
+                      const allowed = V1_FEATURES[inspecting.index];
+                      const levels = Object.entries(classFeatures[inspecting.index])
+                        .sort(([a], [b]) => Number(a) - Number(b))
+                        .map(([level, feats]) => ({
+                          level,
+                          feats: feats.filter(f => !f.hasParent && (!allowed || allowed.has(f.index))),
+                        }))
+                        .filter(l => l.feats.length > 0);
+
+                      if (levels.length === 0) return null;
+                      return (
+                        <div className="flex flex-col gap-4">
+                          <h4 className="text-label-md uppercase tracking-[0.08em] text-on-surface-variant">Features by Level</h4>
+                          {levels.map(({ level, feats }) => (
                             <div key={level} className="flex flex-col gap-2">
                               <span className="text-label-sm font-semibold text-primary">Level {level}</span>
-                              {feats.filter(f => !f.hasParent).map((feat) => (
-                                <FeatureItem
-                                  key={feat.index}
-                                  name={feat.name}
-                                  description={feat.description}
-                                />
+                              {feats.map((feat) => (
+                                <FeatureItem key={feat.index} name={feat.name} description={feat.description} />
                               ))}
                             </div>
                           ))}
-                      </div>
-                    )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Spell progression for casters */}
                     {casterProgression[inspecting.index] && (

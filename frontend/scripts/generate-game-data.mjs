@@ -7,8 +7,10 @@
  * Run: node scripts/generate-game-data.mjs
  *
  * Outputs:
- *   src/data/spell-meta.ts   — spell school, damage, range, concentration
- *   src/data/feature-meta.ts — class features with descriptions by level
+ *   src/data/spell-meta.ts    — spell school, damage, range, concentration
+ *   src/data/feature-meta.ts  — class features with descriptions by level
+ *   src/data/monster-pool.ts  — monster templates grouped by CR
+ *   src/data/loot-pool.ts     — loot items by rarity and category
  */
 
 import { readFileSync, writeFileSync } from 'fs';
@@ -179,7 +181,390 @@ function generateFeatureMeta() {
   console.log(`✓ feature-meta.ts — ${totalFeatures} features across ${V1_CLASSES.length} classes`);
 }
 
+// ─── Monster Pool ───────────────────────────────────────────
+
+function inferReach(desc) {
+  if (desc.includes('Melee or Ranged')) return 'any';
+  if (desc.includes('Melee Weapon Attack') || desc.includes('Melee Spell Attack')) return 'melee';
+  if (desc.includes('Ranged Weapon Attack') || desc.includes('Ranged Spell Attack')) return 'any';
+  if (/\bDC\b/.test(desc)) return 'any';
+  return 'melee';
+}
+
+function classifyMonster(monster) {
+  const hasLegendary = (monster.legendary_actions || []).length > 0;
+  const hasSpellcasting = (monster.special_abilities || []).some(sa => sa.spellcasting);
+  if (!monster.actions || !monster.actions.length) return 'passive';
+
+  let hasMelee = false, hasRanged = false;
+  for (const action of monster.actions) {
+    if (action.name === 'Multiattack') continue;
+    const desc = action.description || '';
+    if (desc.includes('Melee Weapon Attack') || desc.includes('Melee Spell Attack')) hasMelee = true;
+    if (desc.includes('Ranged Weapon Attack') || desc.includes('Ranged Spell Attack')) hasRanged = true;
+    if (desc.includes('Melee or Ranged')) { hasMelee = true; hasRanged = true; }
+  }
+
+  if (hasLegendary) return hasSpellcasting ? 'boss-caster' : 'boss';
+  if (hasSpellcasting) return 'caster';
+  if (hasRanged && !hasMelee) return 'flexible';
+  if (hasMelee && hasRanged) return 'flexible';
+  return 'melee-aggro';
+}
+
+function generateMonsterPool() {
+  const monsters = JSON.parse(readFileSync(join(DATA_DIR, 'monsters.json'), 'utf-8'));
+
+  // Use JSON.stringify for all string values to avoid quote escaping issues
+  const S = (v) => JSON.stringify(v);
+
+  // Group transformed monsters by CR
+  const byCR = {};
+  let total = 0;
+  let skipped = 0;
+
+  for (const m of monsters) {
+    if (m.challenge_rating === 0) { skipped++; continue; }
+
+    const actions = [];
+    for (const a of (m.actions || [])) {
+      if (a.name === 'Multiattack') continue;
+      const desc = (a.description || '').replace(/\n/g, ' ');
+      const entry = {
+        name: a.name,
+        description: desc,
+        reach: inferReach(desc),
+      };
+      if (a.attack_bonus !== undefined) entry.toHit = a.attack_bonus;
+      if (a.damage && a.damage.length > 0) {
+        if (a.damage[0].damage_dice) entry.damage = a.damage[0].damage_dice;
+        if (a.damage[0].damage_type?.index) entry.damageType = a.damage[0].damage_type.index;
+      }
+
+      // Parse condition-on-hit from description (e.g., "DC 10 Constitution saving throw or be paralyzed")
+      const condMatch = desc.match(/DC (\d+) (\w+) saving throw.*?(poisoned|paralyzed|frightened|petrified|restrained|prone|stunned|blinded|charmed|unconscious|incapacitated|grappled)/i);
+      if (condMatch) {
+        entry.conditionDC = parseInt(condMatch[1], 10);
+        entry.conditionSave = condMatch[2].toLowerCase().slice(0, 3); // str, dex, con, int, wis, cha
+        entry.conditionApplied = condMatch[3].toLowerCase();
+      }
+
+      // Parse structured DC field (breath weapons, AoE saves)
+      if (a.dc && a.dc.dc_value && !entry.toHit) {
+        entry.saveDC = a.dc.dc_value;
+        entry.saveType = a.dc.dc_type?.index || 'dex';
+        entry.saveSuccess = a.dc.dc_success || 'half';
+        // Get damage from the damage array if not already set
+        if (!entry.damage && a.damage && a.damage.length > 0) {
+          if (a.damage[0].damage_dice) entry.damage = a.damage[0].damage_dice;
+          if (a.damage[0].damage_type?.index) entry.damageType = a.damage[0].damage_type.index;
+        }
+      }
+
+      actions.push(entry);
+    }
+
+    if (actions.length === 0) { skipped++; continue; }
+
+    const behavior = classifyMonster(m);
+    const cr = m.challenge_rating;
+
+    if (!byCR[cr]) byCR[cr] = [];
+    byCR[cr].push({
+      monsterIndex: m.index,
+      name: m.name,
+      type: m.type,
+      cr,
+      xp: m.xp || 0,
+      hp: m.hit_points,
+      ac: Array.isArray(m.armor_class) ? m.armor_class[0].value : m.armor_class,
+      stats: {
+        str: m.strength, dex: m.dexterity, con: m.constitution,
+        int: m.intelligence, wis: m.wisdom, cha: m.charisma,
+      },
+      damageResistances: m.damage_resistances || [],
+      damageImmunities: m.damage_immunities || [],
+      damageVulnerabilities: m.damage_vulnerabilities || [],
+      conditionImmunities: (m.condition_immunities || []).map(ci => typeof ci === 'string' ? ci : ci.index),
+      actions,
+      specialAbilities: (m.special_abilities || []).map(sa => ({
+        name: sa.name,
+        description: (sa.description || '').replace(/\n/g, ' '),
+      })),
+      behavior,
+    });
+    total++;
+  }
+
+  const lines = [
+    '/**',
+    ' * Monster Pool — Auto-generated from SRD monsters.json',
+    ' * Do not edit manually. Run: node scripts/generate-game-data.mjs',
+    ' */',
+    '',
+    "export type MonsterBehavior = 'melee-aggro' | 'flexible' | 'caster' | 'boss' | 'boss-caster' | 'passive';",
+    '',
+    'export interface MonsterTemplate {',
+    '  monsterIndex: string;',
+    '  name: string;',
+    '  type: string;',
+    '  cr: number;',
+    '  xp: number;',
+    '  hp: number;',
+    '  ac: number;',
+    '  stats: { str: number; dex: number; con: number; int: number; wis: number; cha: number };',
+    '  damageResistances: string[];',
+    '  damageImmunities: string[];',
+    '  damageVulnerabilities: string[];',
+    '  conditionImmunities: string[];',
+    '  actions: { name: string; description: string; toHit?: number; damage?: string; damageType?: string; reach: string; conditionDC?: number; conditionSave?: string; conditionApplied?: string; saveDC?: number; saveType?: string; saveSuccess?: string }[];',
+    '  specialAbilities: { name: string; description: string }[];',
+    '  behavior: MonsterBehavior;',
+    '}',
+    '',
+    'export const monstersByCR: Record<number, MonsterTemplate[]> = {',
+  ];
+
+  for (const cr of Object.keys(byCR).sort((a, b) => Number(a) - Number(b))) {
+    lines.push(`  ${cr}: [`);
+    for (const t of byCR[cr]) {
+      const actionsStr = t.actions.map(a => {
+        let s = `{ name: ${S(a.name)}, description: ${S(a.description)}, reach: ${S(a.reach)}`;
+        if (a.toHit !== undefined) s += `, toHit: ${a.toHit}`;
+        if (a.damage) s += `, damage: ${S(a.damage)}`;
+        if (a.damageType) s += `, damageType: ${S(a.damageType)}`;
+        if (a.conditionDC) s += `, conditionDC: ${a.conditionDC}, conditionSave: ${S(a.conditionSave)}, conditionApplied: ${S(a.conditionApplied)}`;
+        if (a.saveDC) s += `, saveDC: ${a.saveDC}, saveType: ${S(a.saveType)}, saveSuccess: ${S(a.saveSuccess)}`;
+        s += ' }';
+        return s;
+      }).join(', ');
+
+      const saStr = t.specialAbilities.map(sa =>
+        `{ name: ${S(sa.name)}, description: ${S(sa.description)} }`
+      ).join(', ');
+
+      lines.push(`    {`);
+      lines.push(`      monsterIndex: ${S(t.monsterIndex)}, name: ${S(t.name)}, type: ${S(t.type)},`);
+      lines.push(`      cr: ${t.cr}, xp: ${t.xp}, hp: ${t.hp}, ac: ${t.ac},`);
+      lines.push(`      stats: { str: ${t.stats.str}, dex: ${t.stats.dex}, con: ${t.stats.con}, int: ${t.stats.int}, wis: ${t.stats.wis}, cha: ${t.stats.cha} },`);
+      lines.push(`      damageResistances: [${t.damageResistances.map(r => S(r)).join(', ')}],`);
+      lines.push(`      damageImmunities: [${t.damageImmunities.map(r => S(r)).join(', ')}],`);
+      lines.push(`      damageVulnerabilities: [${t.damageVulnerabilities.map(r => S(r)).join(', ')}],`);
+      lines.push(`      conditionImmunities: [${t.conditionImmunities.map(r => S(r)).join(', ')}],`);
+      lines.push(`      actions: [${actionsStr}],`);
+      lines.push(`      specialAbilities: [${saStr}],`);
+      lines.push(`      behavior: ${S(t.behavior)},`);
+      lines.push(`    },`);
+    }
+    lines.push(`  ],`);
+  }
+
+  lines.push('};');
+  lines.push('');
+
+  const outPath = join(OUT_DIR, 'monster-pool.ts');
+  writeFileSync(outPath, lines.join('\n'));
+  console.log(`✓ monster-pool.ts — ${total} monsters across ${Object.keys(byCR).length} CR tiers (${skipped} skipped)`);
+}
+
+// ─── Loot Pool ──────────────────────────────────────────────
+
+function generateLootPool() {
+  const equipment = JSON.parse(readFileSync(join(DATA_DIR, 'equipment.json'), 'utf-8'));
+  const magicItems = JSON.parse(readFileSync(join(DATA_DIR, 'magicItems.json'), 'utf-8'));
+
+  const items = [];
+
+  // Base weapons from equipment.json
+  for (const e of equipment) {
+    if (e.equipment_category?.index !== 'weapon') continue;
+    if (!e.damage?.damage_dice) continue;
+
+    items.push({
+      index: e.index,
+      name: e.name,
+      category: 'weapon',
+      rarity: 'Common',
+      isMagic: false,
+      damage: e.damage.damage_dice,
+      damageType: e.damage.damage_type?.index || 'bludgeoning',
+      weaponRange: (e.weapon_range || 'Melee').toLowerCase(),
+      properties: (e.properties || []).map(p => p.index),
+      description: `${e.category_range || ''} weapon. ${e.damage.damage_dice} ${e.damage.damage_type?.name || ''} damage.`,
+    });
+  }
+
+  // Base armor from equipment.json
+  for (const e of equipment) {
+    if (e.equipment_category?.index !== 'armor') continue;
+    if (!e.armor_class) continue;
+    // Skip shields for now (they're a separate slot)
+    if (e.armor_category === 'Shield') continue;
+
+    items.push({
+      index: e.index,
+      name: e.name,
+      category: 'armor',
+      rarity: 'Common',
+      isMagic: false,
+      acBase: e.armor_class.base,
+      acDexCap: e.armor_class.dex_bonus ? (e.armor_class.max_bonus ?? undefined) : 0,
+      description: `${e.armor_category} armor. AC ${e.armor_class.base}${e.armor_class.dex_bonus ? ' + DEX' : ''}${e.armor_class.max_bonus ? ` (max ${e.armor_class.max_bonus})` : ''}.`,
+    });
+  }
+
+  // Magic weapons from magicItems.json
+  for (const mi of magicItems) {
+    if (mi.equipment_category?.index !== 'weapon') continue;
+    if (mi.rarity === 'Varies' || mi.rarity === 'Artifact') continue;
+
+    const desc = Array.isArray(mi.description) ? mi.description.join(' ') : (mi.description || '');
+    items.push({
+      index: mi.index,
+      name: mi.name,
+      category: 'weapon',
+      rarity: mi.rarity,
+      isMagic: true,
+      damage: '1d8',
+      damageType: 'slashing',
+      weaponRange: 'melee',
+      properties: [],
+      description: desc.replace(/\n/g, ' ').slice(0, 200),
+    });
+  }
+
+  // Magic armor from magicItems.json
+  for (const mi of magicItems) {
+    if (mi.equipment_category?.index !== 'armor') continue;
+    if (mi.rarity === 'Varies' || mi.rarity === 'Artifact') continue;
+
+    const desc = Array.isArray(mi.description) ? mi.description.join(' ') : (mi.description || '');
+    items.push({
+      index: mi.index,
+      name: mi.name,
+      category: 'armor',
+      rarity: mi.rarity,
+      isMagic: true,
+      acBase: 16, // default for magic armor
+      acDexCap: 0,
+      description: desc.replace(/\n/g, ' ').slice(0, 200),
+    });
+  }
+
+  // Potions from magicItems.json
+  for (const mi of magicItems) {
+    if (mi.equipment_category?.index !== 'potion') continue;
+    if (mi.rarity === 'Varies' || mi.rarity === 'Artifact') continue;
+
+    const desc = Array.isArray(mi.description) ? mi.description.join(' ') : (mi.description || '');
+    items.push({
+      index: mi.index,
+      name: mi.name,
+      category: 'consumable',
+      rarity: mi.rarity,
+      isMagic: true,
+      description: desc.replace(/\n/g, ' ').slice(0, 200),
+    });
+  }
+
+  // Scrolls from magicItems.json
+  for (const mi of magicItems) {
+    if (mi.equipment_category?.index !== 'scroll') continue;
+    if (mi.rarity === 'Varies' || mi.rarity === 'Artifact') continue;
+
+    const desc = Array.isArray(mi.description) ? mi.description.join(' ') : (mi.description || '');
+    items.push({
+      index: mi.index,
+      name: mi.name,
+      category: 'consumable',
+      rarity: mi.rarity,
+      isMagic: true,
+      description: desc.replace(/\n/g, ' ').slice(0, 200),
+    });
+  }
+
+  // Build indexes
+  const byRarity = {};
+  const byCategory = {};
+  for (const item of items) {
+    if (!byRarity[item.rarity]) byRarity[item.rarity] = [];
+    byRarity[item.rarity].push(item);
+    if (!byCategory[item.category]) byCategory[item.category] = [];
+    byCategory[item.category].push(item);
+  }
+
+  // Write TypeScript file
+  const lines = [
+    '/**',
+    ' * Loot Pool — Auto-generated from SRD equipment.json + magicItems.json',
+    ' * Do not edit manually. Run: node scripts/generate-game-data.mjs',
+    ' */',
+    '',
+    'export interface LootItem {',
+    '  index: string;',
+    '  name: string;',
+    "  category: 'weapon' | 'armor' | 'consumable';",
+    '  rarity: string;',
+    '  isMagic: boolean;',
+    '  damage?: string;',
+    '  damageType?: string;',
+    '  weaponRange?: string;',
+    '  properties?: string[];',
+    '  acBase?: number;',
+    '  acDexCap?: number;',
+    '  description: string;',
+    '}',
+    '',
+  ];
+
+  const S = (v) => JSON.stringify(v);
+
+  // Write individual item entries as a flat array
+  lines.push('export const lootItems: LootItem[] = [');
+  for (const item of items) {
+    let entry = `  { index: ${S(item.index)}, name: ${S(item.name)}, category: ${S(item.category)} as const, rarity: ${S(item.rarity)}, isMagic: ${item.isMagic}`;
+    if (item.damage) entry += `, damage: ${S(item.damage)}`;
+    if (item.damageType) entry += `, damageType: ${S(item.damageType)}`;
+    if (item.weaponRange) entry += `, weaponRange: ${S(item.weaponRange)}`;
+    if (item.properties && item.properties.length > 0) entry += `, properties: [${item.properties.map(p => S(p)).join(', ')}]`;
+    if (item.acBase !== undefined) entry += `, acBase: ${item.acBase}`;
+    if (item.acDexCap !== undefined) entry += `, acDexCap: ${item.acDexCap}`;
+    entry += `, description: ${S(item.description)} },`;
+    lines.push(entry);
+  }
+  lines.push('];');
+  lines.push('');
+
+  // Pre-built indexes
+  lines.push('/** Items grouped by rarity */');
+  lines.push('export const lootByRarity: Record<string, LootItem[]> = {};');
+  lines.push('/** Items grouped by category */');
+  lines.push('export const lootByCategory: Record<string, LootItem[]> = {};');
+  lines.push('/** Items grouped by category then rarity */');
+  lines.push('export const lootByCategoryAndRarity: Record<string, Record<string, LootItem[]>> = {};');
+  lines.push('');
+  lines.push('for (const item of lootItems) {');
+  lines.push('  if (!lootByRarity[item.rarity]) lootByRarity[item.rarity] = [];');
+  lines.push('  lootByRarity[item.rarity].push(item);');
+  lines.push('  if (!lootByCategory[item.category]) lootByCategory[item.category] = [];');
+  lines.push('  lootByCategory[item.category].push(item);');
+  lines.push('  if (!lootByCategoryAndRarity[item.category]) lootByCategoryAndRarity[item.category] = {};');
+  lines.push('  if (!lootByCategoryAndRarity[item.category][item.rarity]) lootByCategoryAndRarity[item.category][item.rarity] = [];');
+  lines.push('  lootByCategoryAndRarity[item.category][item.rarity].push(item);');
+  lines.push('}');
+  lines.push('');
+
+  const outPath = join(OUT_DIR, 'loot-pool.ts');
+  writeFileSync(outPath, lines.join('\n'));
+
+  const catCounts = {};
+  for (const item of items) catCounts[item.category] = (catCounts[item.category] || 0) + 1;
+  console.log(`✓ loot-pool.ts — ${items.length} items (${Object.entries(catCounts).map(([k,v]) => `${v} ${k}`).join(', ')})`);
+}
+
 // ─── Run ─────────────────────────────────────────────────────
 
 generateSpellMeta();
 generateFeatureMeta();
+generateMonsterPool();
+// generateLootPool(); // Replaced by curated v1-roster.ts + loot-generator.ts

@@ -70,14 +70,14 @@ export const classBuilds: ClassBuild[] = [
     },
     startingConsumables: [],
     features: [
-      'Fighting Style: Defense',  // +1 AC when wearing armor → AC 19
+      'Fighting Style: Defense',  // +1 AC when wearing armor
       'Second Wind',              // bonus action: heal 1d10 + level HP, 1/rest
     ],
     spellcasting: null,
   },
 
   // ═══════════════════════════════════════════════════════════
-  // ROGUE — Melee Burst / Utility
+  // ROGUE — Melee Burst
   // ═══════════════════════════════════════════════════════════
   {
     name: 'Rogue',
@@ -86,7 +86,6 @@ export const classBuilds: ClassBuild[] = [
     role: 'Melee Burst',
     stats: { str: 8, dex: 15, con: 13, int: 12, wis: 14, cha: 10 },
     savingThrows: ['DEX', 'INT'],
-    // Leather Armor (11 + DEX +2) = 13
     ac: 13,
     acSource: 'Leather Armor',
     startingEquipment: {
@@ -96,8 +95,7 @@ export const classBuilds: ClassBuild[] = [
     },
     startingConsumables: [],
     features: [
-      'Sneak Attack',    // 1d6 extra damage when advantage or ally adjacent
-      'Expertise',       // double proficiency on 2 skills (less relevant in combat)
+      'Sneak Attack',    // +1d6 extra damage when advantage or ally in zone
     ],
     spellcasting: null,
   },
@@ -122,7 +120,7 @@ export const classBuilds: ClassBuild[] = [
     },
     startingConsumables: [],
     features: [
-      'Arcane Recovery', // recover spell slots on short rest (1/day)
+      'Arcane Recovery', // recover spell slots on rest
     ],
     spellcasting: {
       ability: 'INT',
@@ -137,8 +135,7 @@ export const classBuilds: ClassBuild[] = [
       spellSlotsLevel1: 2,
       preparedSpells: [
         'magic-missile',     // auto-hit ranged damage (3×1d4+1)
-        'shield',            // reaction: +5 AC until next turn
-        'mage-armor',        // AC becomes 13 + DEX (8 hours)
+        'shield',            // +5 AC until next turn
         'sleep',             // incapacitate low-HP enemies (no save)
         'burning-hands',     // AoE cone fire (3d6, DEX save)
         'thunderwave',       // AoE push + damage (2d8, CON save)
@@ -166,8 +163,7 @@ export const classBuilds: ClassBuild[] = [
     },
     startingConsumables: [],
     features: [
-      'Spellcasting: Cleric',
-      'Divine Domain',        // subclass (Life domain for v1 — bonus healing)
+      'Disciple of Life',     // healing spells restore +2+spell level
     ],
     spellcasting: {
       ability: 'WIS',
@@ -176,8 +172,6 @@ export const classBuilds: ClassBuild[] = [
       cantripsKnown: 3,
       cantrips: [
         'sacred-flame',      // ranged damage (1d8, 60ft, DEX save)
-        'spare-the-dying',   // stabilize at 0 HP (touch) — less useful w/o death saves, but thematic
-        'resistance',        // +1d4 to one save (concentration)
       ],
       spellSlotsLevel1: 2,
       preparedSpells: [
@@ -186,7 +180,7 @@ export const classBuilds: ClassBuild[] = [
         'bless',             // +1d4 to attacks/saves for 3 targets (concentration)
         'guiding-bolt',      // ranged damage (4d6) + advantage on next attack
         'shield-of-faith',   // +2 AC to one target (concentration)
-        'sanctuary',         // force attackers to save or pick new target
+        'command',           // WIS save or skip turn
       ],
     },
   },
@@ -210,10 +204,7 @@ export const classBuilds: ClassBuild[] = [
       shield: false,
     },
     startingConsumables: [],
-    features: [
-      'Favored Enemy',        // advantage on tracking/knowledge (less relevant in combat)
-      'Natural Explorer',     // terrain benefits (less relevant in dungeon)
-    ],
+    features: [],  // Ranger combat features come at L2 (Fighting Style, Spellcasting)
     // Ranger gets spellcasting at level 2 — starts without spells
     spellcasting: null,
   },
@@ -271,47 +262,26 @@ export const casterProgression: Record<string, {
 }> = {
   wizard: {
     newSpellsPerLevel: {
-      // Level 2: learn 2 more L1 spells
-      2: ['fog-cloud', 'color-spray'],
-      // Level 3: L2 spells unlock
-      3: ['misty-step', 'scorching-ray'],
-      // Level 4: 1 more
-      4: ['web'],
-      // Level 5: L3 spells unlock
-      5: ['fireball', 'counterspell'],
-      // Level 6+
-      6: ['haste'],
+      2: ['sleep'],              // extra L1 if not already known
+      3: ['scorching-ray', 'web'],
+      5: ['fireball'],
       7: ['wall-of-fire'],
-      8: ['polymorph'],
       9: ['cone-of-cold'],
-      10: ['wall-of-force'],
     },
   },
   cleric: {
     newSpellsPerLevel: {
-      2: ['inflict-wounds', 'command'],
+      2: ['inflict-wounds'],
       3: ['spiritual-weapon', 'hold-person'],
       4: ['aid'],
-      5: ['spirit-guardians', 'dispel-magic'],
-      6: ['death-ward'],
-      7: ['banishment'],
+      5: ['spirit-guardians'],
       8: ['flame-strike'],
-      9: ['greater-restoration'],
-      10: ['heal'],
     },
   },
   ranger: {
-    // Ranger gets spellcasting at level 2
     newSpellsPerLevel: {
-      2: ['hunters-mark', 'cure-wounds'],
-      3: ['fog-cloud'],
-      4: ['goodberry'],
-      5: ['spike-growth', 'pass-without-trace'],
-      6: ['lesser-restoration'],
-      7: ['barkskin'],
-      8: ['silence'],
-      9: ['conjure-animals'],
-      10: ['protection-from-energy'],
+      // L2 spells come from rangerSpellcasting.startingSpells (hunters-mark, cure-wounds)
+      5: ['spike-growth'],
     },
   },
 };

@@ -13,6 +13,8 @@ type AttackLineProps = {
   damage: string;
   damageType?: string;
   zone?: string;
+  conditionInfo?: string; // e.g. "DC 10 CON → paralyzed"
+  saveInfo?: string;      // e.g. "DC 12 DEX, half"
   className?: string;
 };
 
@@ -23,7 +25,7 @@ const zoneLabels: Record<string, string> = {
   'melee+adjacent': 'Melee / Thrown',
 };
 
-export function AttackLine({ iconName, label, toHit, damage, damageType, zone, className }: AttackLineProps) {
+export function AttackLine({ iconName, label, toHit, damage, damageType, zone, conditionInfo, saveInfo, className }: AttackLineProps) {
   return (
     <div className={cn('flex items-center gap-3 p-3 rounded-component bg-surface-2', className)}>
       <GameIcon category="item" name={iconName} size="lg" className="text-on-surface-variant shrink-0" />
@@ -50,6 +52,16 @@ export function AttackLine({ iconName, label, toHit, damage, damageType, zone, c
               <MoveDiagonal className="size-2.5" />
               {zoneLabels[zone] || zone}
             </span>
+          )}
+
+          {/* Save-based damage */}
+          {saveInfo && (
+            <span className="text-[10px] font-medium text-warning">{saveInfo}</span>
+          )}
+
+          {/* Condition on hit */}
+          {conditionInfo && (
+            <span className="text-[10px] font-medium text-error">{conditionInfo}</span>
           )}
         </div>
       </div>

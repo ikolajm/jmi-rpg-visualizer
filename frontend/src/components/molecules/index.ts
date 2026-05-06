@@ -4,6 +4,8 @@ export { SpellSlotPips } from './SpellSlotPips';
 export { AcShield } from './AcShield';
 export { StatRow } from './StatRow';
 export { AttackLine } from './AttackLine';
+export { ConditionList } from './ConditionList';
+export { DetailItem } from './DetailItem';
 export { FeatureItem } from './FeatureItem';
 export { SpellListItem, SpellLevelHeader } from './SpellListItem';
 export { EquipmentCard } from './EquipmentCard';

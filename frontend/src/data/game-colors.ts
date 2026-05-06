@@ -103,6 +103,12 @@ export const resourceColors = {
 
 // ─── Surfaces / Overlays ─────────────────────────────────────
 
+export const boundaryColors: Record<string, string> = {
+  fire:  '#ef4444',
+  ice:   '#60a5fa',
+  force: '#a78bfa',
+};
+
 export const surfaceColors = {
   overlay:      'rgba(0, 0, 0, 0.50)',
   overlayHeavy: 'rgba(0, 0, 0, 0.70)',

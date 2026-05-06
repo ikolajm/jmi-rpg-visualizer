@@ -4,6 +4,7 @@ import { cn } from '@/components/atoms/cn';
 import { GameIcon } from '@/components/atoms/GameIcon';
 import { AcShield } from './AcShield';
 import { StatusStack, type StatusEffect } from './StatusStack';
+import type { GameCondition } from '@/data/status-effects';
 import { Heart } from 'lucide-react';
 import { resourceColors } from '@/data/game-colors';
 
@@ -15,7 +16,7 @@ type ZoneTokenProps = {
   hp: number;
   maxHp: number;
   ac: number;
-  statusEffects?: StatusEffect[];
+  statusEffects?: (StatusEffect | GameCondition)[];
   isActive?: boolean;
   isDead?: boolean;
   onClick?: () => void;

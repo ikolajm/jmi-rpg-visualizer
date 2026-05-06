@@ -3,13 +3,11 @@
 import { cn } from '@/components/atoms/cn';
 import { GameIcon } from '@/components/atoms/GameIcon';
 import { Eye, MoveDiagonal } from 'lucide-react';
-import {
-  Accordion, AccordionItem, AccordionTrigger, AccordionContent,
-} from '@/components/atoms/Accordion';
 import { spellMeta } from '@/data/spell-meta';
 import { schoolStyle, actionColors } from '@/data/game-colors';
 import { spellReach, reachLabels } from '@/data/zones';
 import { DamageInline } from './DamageIcon';
+import { DetailItem } from './DetailItem';
 
 type SpellListItemProps = {
   spellIndex: string;
@@ -22,80 +20,37 @@ function formatSpellName(index: string) {
 
 export function SpellListItem({ spellIndex, className }: SpellListItemProps) {
   const meta = spellMeta[spellIndex];
-  const hasDescription = !!meta?.description;
   const reach = meta?.range ? spellReach(meta.range) : null;
 
-  const header = (
-    <div className="flex items-center gap-3 flex-1 min-w-0 text-left">
-      {/* School icon */}
-      {meta?.school && (
-        <GameIcon
-          category="spell-school"
-          name={meta.school}
-          size="md"
-          className="shrink-0"
-          style={schoolStyle(meta.school)}
-        />
-      )}
-
-      {/* Name + stat indicators */}
-      <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-        <span className="text-body-sm font-medium text-on-surface truncate">
-          {formatSpellName(spellIndex)}
-        </span>
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Damage with type icon */}
+  return (
+    <DetailItem
+      id={spellIndex}
+      icon={meta?.school ? (
+        <GameIcon category="spell-school" name={meta.school} size="md" className="shrink-0" style={schoolStyle(meta.school)} />
+      ) : undefined}
+      title={formatSpellName(spellIndex)}
+      subtitle={
+        <>
           {meta?.damage && meta?.damageType && (
             <DamageInline type={meta.damageType} damage={meta.damage} />
           )}
-
-          {/* Zone range */}
           {reach && reach !== 'melee' && (
             <span className="inline-flex items-center gap-0.5 text-[10px] text-on-surface-variant">
               <MoveDiagonal className="size-2.5" />
               {reachLabels[reach]}
             </span>
           )}
-
-          {/* Concentration */}
           {meta?.concentration && (
             <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold" style={{ color: actionColors.reaction }}>
               <Eye className="size-2.5" />
               Conc.
             </span>
           )}
-        </div>
-      </div>
-    </div>
-  );
-
-  if (!hasDescription) {
-    return (
-      <div className={cn(
-        'flex items-center gap-3 p-2 px-3 rounded-component bg-surface-2',
-        className,
-      )}>
-        {header}
-      </div>
-    );
-  }
-
-  return (
-    <Accordion type="single" collapsible className={cn('border-0 bg-transparent', className)}>
-      <AccordionItem
-        value={spellIndex}
-        className="rounded-component bg-surface-2 overflow-hidden"
-      >
-        <AccordionTrigger size="sm" className="hover:bg-surface-3 px-3">
-          {header}
-        </AccordionTrigger>
-        <AccordionContent size="sm" className="px-3 pb-3 pt-0">
-          <p className="text-body-sm text-on-surface-variant leading-relaxed">
-            {meta.description}
-          </p>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+        </>
+      }
+      description={meta?.description || undefined}
+      className={className}
+    />
   );
 }
 

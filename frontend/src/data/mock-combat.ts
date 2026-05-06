@@ -19,6 +19,8 @@ const MOCK_ENEMIES: Omit<Enemy, 'id' | 'zone' | 'statusEffects' | 'isAlive'>[] =
     name: 'Goblin',
     type: 'humanoid',
     cr: 0.25,
+    xp: 50,
+    behavior: 'flexible',
     hp: 7, maxHp: 7,
     ac: 15,
     stats: { str: 8, dex: 14, con: 10, int: 10, wis: 8, cha: 8 },
@@ -39,6 +41,8 @@ const MOCK_ENEMIES: Omit<Enemy, 'id' | 'zone' | 'statusEffects' | 'isAlive'>[] =
     name: 'Skeleton',
     type: 'undead',
     cr: 0.25,
+    xp: 50,
+    behavior: 'flexible',
     hp: 13, maxHp: 13,
     ac: 13,
     stats: { str: 10, dex: 14, con: 15, int: 6, wis: 8, cha: 5 },
@@ -98,6 +102,8 @@ export function createMockCombat(party: Character[]): CombatState {
     currentTurnIndex: 0,
     turnResources: { actionUsed: false, bonusActionUsed: false, movementUsed: false },
     dodging: [],
+    activeEffects: [],
+    boundaries: { '1|2': null, '2|3': null },
     roundNumber: 1,
   };
 }

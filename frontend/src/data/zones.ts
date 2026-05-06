@@ -33,8 +33,11 @@ export function movableZones(current: Zone): Zone[] {
   return result;
 }
 
-/** Derive the reach category of a weapon */
-export function weaponReach(weapon: string): Reach {
+/** Derive the reach category of a weapon (accepts index string or EquippedWeapon) */
+export function weaponReach(weapon: string | { weaponRange?: string }): Reach {
+  if (typeof weapon === 'object') {
+    return weapon.weaponRange === 'ranged' ? 'any' : 'melee';
+  }
   const ranged = ['longbow', 'shortbow', 'light-crossbow', 'hand-crossbow'];
   if (ranged.includes(weapon)) return 'any';
   return 'melee';

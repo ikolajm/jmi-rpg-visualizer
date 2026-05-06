@@ -81,6 +81,7 @@ export function ZoneLayout({ onSelectTarget }: {
                   maxHp={enemy.maxHp}
                   ac={enemy.ac}
                   statusEffects={getDisplayEffects(enemy.id, enemy.statusEffects)}
+                  intent={state.combat!.enemyIntents[enemy.id]?.type}
                   isActive={enemy.id === currentEntity?.id}
                   isDead={!enemy.isAlive}
                   onClick={() => onSelectTarget(enemy.id, 'enemy')}

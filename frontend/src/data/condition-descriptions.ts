@@ -84,6 +84,11 @@ export const CONDITION_INFO: Record<GameCondition, ConditionInfo> = {
     description: 'Must obey the command. Skips next turn.',
     iconType: 'lucide', iconName: 'commanded',
   },
+  staggered: {
+    label: 'Staggered',
+    description: 'Reeling from a critical weakness exploit. Skips next turn.',
+    iconType: 'lucide', iconName: 'staggered',
+  },
 };
 
 /** Format duration for display */

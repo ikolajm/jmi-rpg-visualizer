@@ -9,6 +9,8 @@ import { generateRoom, floorFromRoom } from '@/data/room-generator';
 import { generateEncounter } from '@/data/encounter-generator';
 import { shouldDropLoot, generateLootChoices } from '@/data/loot-generator';
 import { awardXP, checkLevelUp, applyLevelUp, type LevelUpResult } from '@/data/progression';
+import { useRest } from '@/hooks/useRest';
+import { pickFloorModifier } from '@/data/floor-modifiers';
 import { statMod } from '@/data/dice';
 import { rarityColors } from '@/data/game-colors';
 import { GameIcon } from '@/components/atoms/GameIcon';
@@ -18,7 +20,7 @@ import type { Character, Enemy, Zone, RoomType } from '@/data/game-types';
 import type { LootItem } from '@/data/loot-generator';
 
 export default function GamePage() {
-  const { state, initParty, setPhase, setRoom, setCombat, addLog, updateCharacter, updateStats, advanceRoom } = useGame();
+  const { state, initParty, setPhase, setRoom, setCombat, addLog, updateCharacter, updateStats, advanceRoom, setFloorModifier } = useGame();
 
   const router = useRouter();
   const [inspectId, setInspectId] = useState<string | null>(null);
@@ -26,8 +28,7 @@ export default function GamePage() {
   const [lootChoices, setLootChoices] = useState<LootItem[]>([]);
   const [selectedLoot, setSelectedLoot] = useState<LootItem | null>(null);
   const [levelUpResults, setLevelUpResults] = useState<LevelUpResult[]>([]);
-
-
+  const { handleFullRest, handleQuickRest, handleTrain } = useRest({ onComplete: advanceRoom });
 
   // ─── Victory Handler ──────────────────────────────────────────
 
@@ -88,6 +89,16 @@ export default function GamePage() {
     const nextRoomNumber = state.roomNumber + 1;
     const floor = floorFromRoom(nextRoomNumber);
     const room = generateRoom(floor, nextRoomNumber);
+
+    // Pick a new floor modifier when floor changes
+    if (floor !== state.floor) {
+      const modifier = pickFloorModifier(floor);
+      setFloorModifier(modifier);
+      if (modifier) {
+        addLog(`Floor ${floor}: ${modifier.name} — ${modifier.description}`, 'system');
+      }
+    }
+
     setRoom(room);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.party.length, state.phase, state.currentRoom]);
@@ -121,7 +132,8 @@ export default function GamePage() {
       const zoneMap: Record<string, Zone> = { fighter: 1, rogue: 1, barbarian: 1, ranger: 2, wizard: 3, cleric: 2 };
       state.party.forEach(char => updateCharacter(char.id, { zone: zoneMap[char.classIndex] || 2 }));
 
-      const encounter = generateEncounter(state.floor, room.type, state.party, room.roomNumber);
+      const initBonus = state.floorModifier?.id === 'echoing-halls' ? 5 : 0;
+      const encounter = generateEncounter(state.floor, room.type, state.party, room.roomNumber, initBonus);
       setCombat(encounter);
       setPhase('combat');
 
@@ -136,35 +148,6 @@ export default function GamePage() {
       setPhase('loot');
       addLog('The party finds treasure!', 'loot');
     }
-  }
-
-  // ─── Rest ─────────────────────────────────────────────────────
-
-  function handleRest() {
-    for (const char of state.party) {
-      if (!char.isAlive) continue;
-      const healAmount = Math.floor(char.maxHp * 0.25);
-      const newHp = Math.min(char.maxHp, char.hp + healAmount);
-
-      const updates: Partial<Character> = { hp: newHp };
-
-      // Restore 1 spell slot
-      if (char.spellcasting && char.spellcasting.slotsUsed > 0) {
-        updates.spellcasting = { ...char.spellcasting, slotsUsed: Math.max(0, char.spellcasting.slotsUsed - 1) };
-      }
-
-      // Reset feature uses
-      const resetFeatures: Record<string, { used: number; max: number }> = {};
-      for (const [key, val] of Object.entries(char.featureUses)) {
-        resetFeatures[key] = { ...val, used: 0 };
-      }
-      updates.featureUses = resetFeatures;
-
-      updateCharacter(char.id, updates);
-    }
-
-    addLog('The party rests. HP restored, abilities refreshed.', 'system');
-    advanceRoom();
   }
 
   // ─── Loot ─────────────────────────────────────────────────────
@@ -184,6 +167,7 @@ export default function GamePage() {
             damageType: item.damageType || 'slashing',
             weaponRange: item.weaponRange || 'melee',
             properties: item.properties || [],
+            onHit: item.onHit,
           },
         },
       });
@@ -268,6 +252,13 @@ export default function GamePage() {
           <p className="text-body-md text-on-surface-variant text-center max-w-md italic">
             {state.currentRoom.flavorText}
           </p>
+          {state.floorModifier && (
+            <div className="flex items-center gap-2 px-4 py-2 rounded-card bg-surface-2 border border-primary/30">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">Floor Effect</span>
+              <span className="text-body-sm text-on-surface font-semibold">{state.floorModifier.name}</span>
+              <span className="text-label-sm text-on-surface-variant">— {state.floorModifier.description}</span>
+            </div>
+          )}
           <Button onClick={enterRoom}>Enter Room</Button>
         </div>
       )}
@@ -336,10 +327,50 @@ export default function GamePage() {
           <p className="text-body-md text-on-surface-variant text-center max-w-md italic">
             {state.currentRoom?.flavorText || 'A moment of respite.'}
           </p>
-          <p className="text-body-sm text-on-surface-variant text-center">
-            Heal 25% max HP. Restore 1 spell slot. Reset abilities.
-          </p>
-          <Button onClick={handleRest}>Rest</Button>
+
+          <div className="flex gap-4 flex-wrap justify-center">
+            {/* Full Rest */}
+            <button
+              onClick={handleFullRest}
+              className="flex flex-col items-start gap-2 p-4 rounded-card bg-surface-2 border-2 border-outline-subtle hover:border-primary transition-colors w-56 text-left"
+            >
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">Full Rest</span>
+              <span className="text-body-md text-on-surface font-semibold">Deep Recovery</span>
+              <ul className="text-label-sm text-on-surface-variant space-y-1">
+                <li>Heal 50% max HP</li>
+                <li>Restore all spell slots</li>
+                <li>Reset all abilities</li>
+              </ul>
+            </button>
+
+            {/* Quick Rest */}
+            <button
+              onClick={handleQuickRest}
+              className="flex flex-col items-start gap-2 p-4 rounded-card bg-surface-2 border-2 border-outline-subtle hover:border-primary transition-colors w-56 text-left"
+            >
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">Quick Rest</span>
+              <span className="text-body-md text-on-surface font-semibold">Brief Respite</span>
+              <ul className="text-label-sm text-on-surface-variant space-y-1">
+                <li>Heal 25% max HP</li>
+                <li>Restore 1 spell slot</li>
+                <li>Reset all abilities</li>
+              </ul>
+            </button>
+
+            {/* Train */}
+            <button
+              onClick={handleTrain}
+              className="flex flex-col items-start gap-2 p-4 rounded-card bg-surface-2 border-2 border-outline-subtle hover:border-primary transition-colors w-56 text-left"
+            >
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-error">Train</span>
+              <span className="text-body-md text-on-surface font-semibold">Hone Your Edge</span>
+              <ul className="text-label-sm text-on-surface-variant space-y-1">
+                <li>No healing</li>
+                <li>No spell slot restore</li>
+                <li className="text-primary font-semibold">+3 primary stat until next rest</li>
+              </ul>
+            </button>
+          </div>
         </div>
       )}
 

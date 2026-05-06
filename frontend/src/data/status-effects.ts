@@ -35,10 +35,11 @@ export type GameCondition =
   | 'hunterMarked'  // +1d6 damage from marker
   | 'shielded'      // +AC bonus
   | 'spiritGuarded' // zone aura, enemies in zone take damage
-  | 'commanded';    // skip next turn (one-shot)
+  | 'commanded'     // skip next turn (one-shot)
+  | 'staggered';    // skip next turn (vulnerability exploit)
 
 /** Conditions that prevent the entity from acting */
-export const SKIP_TURN_CONDITIONS: GameCondition[] = ['paralyzed', 'unconscious', 'commanded', 'petrified'];
+export const SKIP_TURN_CONDITIONS: GameCondition[] = ['paralyzed', 'unconscious', 'commanded', 'petrified', 'staggered'];
 
 /** Conditions that grant advantage on attacks against the affected entity */
 export const ADVANTAGE_AGAINST_CONDITIONS: GameCondition[] = ['paralyzed', 'unconscious', 'restrained', 'prone', 'petrified'];
@@ -94,6 +95,7 @@ export function getACBonus(effects: ActiveEffect[]): number {
 export function resolveEndOfTurnSaves(
   effects: ActiveEffect[],
   entityStats: { str: number; dex: number; con: number; int: number; wis: number; cha: number },
+  saveBonus = 0,
 ): { remaining: ActiveEffect[]; freed: ActiveEffect[] } {
   const remaining: ActiveEffect[] = [];
   const freed: ActiveEffect[] = [];
@@ -101,7 +103,7 @@ export function resolveEndOfTurnSaves(
   for (const e of effects) {
     if (e.saveDC && e.saveAbility) {
       const abilityKey = e.saveAbility.toLowerCase() as keyof typeof entityStats;
-      const saveRoll = rollD20() + statMod(entityStats[abilityKey] || 10);
+      const saveRoll = rollD20() + statMod(entityStats[abilityKey] || 10) + saveBonus;
       if (saveRoll >= e.saveDC) {
         freed.push(e);
         continue;
@@ -138,6 +140,7 @@ const SEVERITY: Partial<Record<GameCondition, number>> = {
   unconscious: 3,
   prone: 1,
   commanded: 2,
+  staggered: 1,
 };
 
 /**

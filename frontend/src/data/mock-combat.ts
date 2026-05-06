@@ -67,7 +67,7 @@ export function createMockEnemies(): Enemy[] {
   ];
 }
 
-export function rollInitiative(party: Character[], enemies: Enemy[]): CombatEntity[] {
+export function rollInitiative(party: Character[], enemies: Enemy[], enemyInitiativeBonus = 0): CombatEntity[] {
   const entries: CombatEntity[] = [];
 
   for (const char of party) {
@@ -82,7 +82,7 @@ export function rollInitiative(party: Character[], enemies: Enemy[]): CombatEnti
     entries.push({
       type: 'enemy',
       id: enemy.id,
-      initiative: rollD20() + statMod(enemy.stats.dex),
+      initiative: rollD20() + statMod(enemy.stats.dex) + enemyInitiativeBonus,
     });
   }
 
@@ -105,5 +105,6 @@ export function createMockCombat(party: Character[]): CombatState {
     activeEffects: [],
     boundaries: { '1|2': null, '2|3': null },
     roundNumber: 1,
+    enemyIntents: {},
   };
 }

@@ -23,6 +23,7 @@ export type LootItem = {
   damageType?: string;
   weaponRange?: string;
   properties?: string[];
+  onHit?: import('./game-types').WeaponOnHit;
   // Armor
   acBase?: number;
   acDexCap?: number;
@@ -71,16 +72,18 @@ function getAvailablePool(floor: number) {
 }
 
 function weaponToLoot(w: RosterWeapon): LootItem {
+  const onHitDesc = w.onHit ? ` ${w.onHit.description}` : '';
   return {
     index: w.index,
     name: w.name,
     category: 'weapon',
-    rarity: 'Common',
+    rarity: w.rarity || 'Common',
     damage: w.damage,
     damageType: w.damageType,
     weaponRange: w.weaponRange,
     properties: w.properties,
-    description: `${w.damage} ${w.damageType}${w.properties.length > 0 ? '. ' + w.properties.join(', ') : ''}.`,
+    onHit: w.onHit,
+    description: `${w.damage} ${w.damageType}${w.properties.length > 0 ? '. ' + w.properties.join(', ') : ''}.${onHitDesc}`,
   };
 }
 

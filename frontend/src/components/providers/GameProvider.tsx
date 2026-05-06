@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import type {
   GameState, Character, GamePhase, Room, CombatState, LogEntry, RunStats,
-  EquippedWeapon, EquippedArmor,
+  EquippedWeapon, EquippedArmor, FloorModifier,
 } from '@/data/game-types';
 import type { ClassBuild } from '@/data/classes';
 
@@ -29,6 +29,7 @@ const INITIAL_STATE: GameState = {
   combat: null,
   log: [],
   stats: INITIAL_STATS,
+  floorModifier: null,
 };
 
 // ─── Feature Uses Factory ────────────────────────────────────
@@ -104,6 +105,7 @@ function createCharacter(build: ClassBuild, slotIndex: number): Character {
     } : null,
     features: [...build.features],
     featureUses: buildFeatureUses(build.index),
+    trainingBuff: null,
     zone: 2,
     statusEffects: [],
     isAlive: true,
@@ -122,6 +124,7 @@ interface GameContextValue {
   updateCharacter: (id: string, updates: Partial<Character>) => void;
   updateStats: (updates: Partial<RunStats>) => void;
   advanceRoom: () => void;
+  setFloorModifier: (modifier: FloorModifier | null) => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -205,9 +208,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const setFloorModifier = useCallback((modifier: FloorModifier | null) => {
+    setState(prev => ({ ...prev, floorModifier: modifier }));
+  }, []);
+
   return (
     <GameContext value={{
-      state, initParty, setPhase, setRoom, setCombat, addLog, updateCharacter, updateStats, advanceRoom,
+      state, initParty, setPhase, setRoom, setCombat, addLog, updateCharacter, updateStats, advanceRoom, setFloorModifier,
     }}>
       {children}
     </GameContext>

@@ -14,7 +14,9 @@ import type { Character, Enemy, Zone, GamePhase } from '@/data/game-types';
 import type { LootItem } from '@/data/loot-generator';
 import { statMod } from '@/data/dice';
 import { awardXP, checkLevelUp, applyLevelUp, type LevelUpResult } from '@/data/progression';
+import { useRest } from '@/hooks/useRest';
 import { applyCondition, makeEffectId, type GameCondition } from '@/data/status-effects';
+import { FLOOR_MODIFIERS } from '@/data/floor-modifiers';
 
 const PHASES: { id: GamePhase | 'room-preview-boss'; label: string }[] = [
   { id: 'room-preview', label: 'Room Preview' },
@@ -27,13 +29,14 @@ const PHASES: { id: GamePhase | 'room-preview-boss'; label: string }[] = [
 ];
 
 function DevHarness() {
-  const { state, initParty, setPhase, setRoom, setCombat, addLog, updateCharacter, updateStats, advanceRoom } = useGame();
+  const { state, initParty, setPhase, setRoom, setCombat, addLog, updateCharacter, updateStats, advanceRoom, setFloorModifier } = useGame();
   const [activePhase, setActivePhase] = useState<string>('room-preview');
   const [inspectId, setInspectId] = useState<string | null>(null);
   const [inspectType, setInspectType] = useState<'character' | 'enemy'>('character');
   const [lootChoices, setLootChoices] = useState<LootItem[]>([]);
   const [selectedLoot, setSelectedLoot] = useState<LootItem | null>(null);
   const [levelUpResults, setLevelUpResults] = useState<LevelUpResult[]>([]);
+  const { handleFullRest, handleQuickRest, handleTrain } = useRest();
 
   // Init default party on first load
   React.useEffect(() => {
@@ -110,25 +113,6 @@ function DevHarness() {
 
   const combat = useCombat({ onVictory: handleVictory });
 
-  function handleRest() {
-    for (const char of state.party) {
-      if (!char.isAlive) continue;
-      const healAmount = Math.floor(char.maxHp * 0.25);
-      const newHp = Math.min(char.maxHp, char.hp + healAmount);
-      const updates: Partial<Character> = { hp: newHp };
-      if (char.spellcasting && char.spellcasting.slotsUsed > 0) {
-        updates.spellcasting = { ...char.spellcasting, slotsUsed: Math.max(0, char.spellcasting.slotsUsed - 1) };
-      }
-      const resetFeatures: Record<string, { used: number; max: number }> = {};
-      for (const [key, val] of Object.entries(char.featureUses)) {
-        resetFeatures[key] = { ...val, used: 0 };
-      }
-      updates.featureUses = resetFeatures;
-      updateCharacter(char.id, updates);
-    }
-    addLog('The party rests. HP restored, abilities refreshed.', 'system');
-  }
-
   function handleLootPick(item: LootItem, charId: string) {
     const char = state.party.find(c => c.id === charId);
     if (!char) return;
@@ -136,7 +120,7 @@ function DevHarness() {
       updateCharacter(charId, {
         equipment: {
           ...char.equipment,
-          weapon: { index: item.index, name: item.name, damage: item.damage, damageType: item.damageType || 'slashing', weaponRange: item.weaponRange || 'melee', properties: item.properties || [] },
+          weapon: { index: item.index, name: item.name, damage: item.damage, damageType: item.damageType || 'slashing', weaponRange: item.weaponRange || 'melee', properties: item.properties || [], onHit: item.onHit },
         },
       });
       addLog(`${char.name} equips ${item.name}.`, 'loot');
@@ -206,7 +190,7 @@ function DevHarness() {
       {state.phase === 'combat' && state.combat && (
         <div className="absolute top-10 left-0 right-0 z-50 flex items-center gap-1 px-3 py-1.5 bg-black/70 backdrop-blur-sm overflow-x-auto">
           <span className="text-[9px] text-error font-semibold uppercase tracking-wider mr-2 shrink-0">Inflict</span>
-          {(['paralyzed', 'unconscious', 'restrained', 'poisoned', 'frightened', 'prone', 'petrified', 'burning', 'frozen', 'commanded', 'hunterMarked'] as GameCondition[]).map(cond => (
+          {(['paralyzed', 'unconscious', 'restrained', 'poisoned', 'frightened', 'prone', 'petrified', 'burning', 'frozen', 'commanded', 'staggered', 'hunterMarked'] as GameCondition[]).map(cond => (
             <button key={cond} onClick={() => {
               // Apply to first alive enemy
               const target = state.combat!.enemies.find(e => e.isAlive);
@@ -214,7 +198,7 @@ function DevHarness() {
               const effect = {
                 id: makeEffectId(), name: cond, condition: cond,
                 sourceId: state.party[0]?.id || 'dev', targetId: target.id,
-                turnsRemaining: cond === 'unconscious' ? 10 : -1,
+                turnsRemaining: cond === 'unconscious' ? 10 : cond === 'staggered' ? 1 : cond === 'commanded' ? 1 : -1,
                 ...(cond === 'paralyzed' ? { saveDC: 12, saveAbility: 'wis' } : {}),
                 ...(cond === 'restrained' ? { saveDC: 12, saveAbility: 'dex' } : {}),
                 ...(cond === 'shielded' ? { value: 5 } : {}),
@@ -265,6 +249,21 @@ function DevHarness() {
           </button>
         </div>
       )}
+
+      {/* ─── Dev Floor Modifier Selector ────────────────── */}
+      <div className="absolute top-[calc(2.25rem)] left-0 right-0 z-40 flex items-center gap-1 px-3 py-1 bg-black/60 backdrop-blur-sm overflow-x-auto">
+        <span className="text-[9px] text-primary font-semibold uppercase tracking-wider mr-2 shrink-0">Floor Mod</span>
+        <button onClick={() => { setFloorModifier(null); addLog('DEV: Cleared floor modifier', 'system'); }}
+          className={`text-[10px] px-2 py-0.5 rounded-full shrink-0 transition-colors ${!state.floorModifier ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:bg-surface-2'}`}>
+          None
+        </button>
+        {FLOOR_MODIFIERS.map(m => (
+          <button key={m.id} onClick={() => { setFloorModifier(m); addLog(`DEV: Set floor modifier — ${m.name}`, 'system'); }}
+            className={`text-[10px] px-2 py-0.5 rounded-full shrink-0 transition-colors ${state.floorModifier?.id === m.id ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:bg-surface-2'}`}>
+            {m.name}
+          </button>
+        ))}
+      </div>
 
       {/* ─── Phase Content (offset for nav bar) ──────────── */}
       <div className={`h-full ${state.phase === 'combat' ? 'pt-[72px]' : 'pt-10'}`}>
@@ -330,10 +329,41 @@ function DevHarness() {
             <p className="text-body-md text-on-surface-variant text-center max-w-md italic">
               {state.currentRoom?.flavorText || 'A moment of respite.'}
             </p>
-            <p className="text-body-sm text-on-surface-variant text-center">
-              Heal 25% max HP. Restore 1 spell slot. Reset abilities.
-            </p>
-            <Button onClick={handleRest}>Rest</Button>
+
+            <div className="flex gap-4 flex-wrap justify-center">
+              <button onClick={handleFullRest}
+                className="flex flex-col items-start gap-2 p-4 rounded-card bg-surface-2 border-2 border-outline-subtle hover:border-primary transition-colors w-56 text-left">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">Full Rest</span>
+                <span className="text-body-md text-on-surface font-semibold">Deep Recovery</span>
+                <ul className="text-label-sm text-on-surface-variant space-y-1">
+                  <li>Heal 50% max HP</li>
+                  <li>Restore all spell slots</li>
+                  <li>Reset all abilities</li>
+                </ul>
+              </button>
+
+              <button onClick={handleQuickRest}
+                className="flex flex-col items-start gap-2 p-4 rounded-card bg-surface-2 border-2 border-outline-subtle hover:border-primary transition-colors w-56 text-left">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">Quick Rest</span>
+                <span className="text-body-md text-on-surface font-semibold">Brief Respite</span>
+                <ul className="text-label-sm text-on-surface-variant space-y-1">
+                  <li>Heal 25% max HP</li>
+                  <li>Restore 1 spell slot</li>
+                  <li>Reset all abilities</li>
+                </ul>
+              </button>
+
+              <button onClick={handleTrain}
+                className="flex flex-col items-start gap-2 p-4 rounded-card bg-surface-2 border-2 border-outline-subtle hover:border-primary transition-colors w-56 text-left">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-error">Train</span>
+                <span className="text-body-md text-on-surface font-semibold">Hone Your Edge</span>
+                <ul className="text-label-sm text-on-surface-variant space-y-1">
+                  <li>No healing</li>
+                  <li>No spell slot restore</li>
+                  <li className="text-primary font-semibold">+3 primary stat until next rest</li>
+                </ul>
+              </button>
+            </div>
           </div>
         )}
 

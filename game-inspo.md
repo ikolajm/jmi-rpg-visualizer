@@ -1,0 +1,9 @@
+- Pokemon Fire Red / Leaf Green
+- Pokemon Emerald/Sapphire/Ruby
+- Final Fantasy V Advance
+- Final Fantasy VI Advance
+- Final Fantasy Tactics Advance
+- Slay the Spire
+- Baldur's Gate 3
+- Dungeons and Dragons
+- Fire Emblem: The Scared Stones

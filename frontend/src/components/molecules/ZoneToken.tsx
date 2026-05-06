@@ -5,8 +5,17 @@ import { GameIcon } from '@/components/atoms/GameIcon';
 import { AcShield } from './AcShield';
 import { StatusStack, type StatusEffect } from './StatusStack';
 import type { GameCondition } from '@/data/status-effects';
-import { Heart } from 'lucide-react';
+import type { IntentType } from '@/data/game-types';
+import { Heart, Sword, Crosshair, Flame, Zap, Moon } from 'lucide-react';
 import { resourceColors } from '@/data/game-colors';
+
+const INTENT_ICON: Record<IntentType, { icon: React.ComponentType<{ className?: string }>; color: string; label: string }> = {
+  melee:     { icon: Sword,     color: '#ef4444', label: 'Melee Attack' },
+  ranged:    { icon: Crosshair, color: '#f59e0b', label: 'Ranged Attack' },
+  breath:    { icon: Flame,     color: '#f97316', label: 'Breath / AoE' },
+  condition: { icon: Zap,       color: '#a78bfa', label: 'Status Effect' },
+  skip:      { icon: Moon,      color: '#64748b', label: 'Disabled' },
+};
 
 type ZoneTokenProps = {
   isCharacter: boolean;
@@ -17,6 +26,7 @@ type ZoneTokenProps = {
   maxHp: number;
   ac: number;
   statusEffects?: (StatusEffect | GameCondition)[];
+  intent?: IntentType;
   isActive?: boolean;
   isDead?: boolean;
   onClick?: () => void;
@@ -24,7 +34,7 @@ type ZoneTokenProps = {
 
 export function ZoneToken({
   isCharacter, name, iconCategory, iconName,
-  hp, maxHp, ac, statusEffects = [],
+  hp, maxHp, ac, statusEffects = [], intent,
   isActive, isDead, onClick,
 }: ZoneTokenProps) {
   const hpPct = maxHp > 0 ? hp / maxHp : 0;
@@ -46,6 +56,21 @@ export function ZoneToken({
         isActive && !isCharacter && 'scale-110 border-error shadow-[0_0_20px_var(--error)] ring-2 ring-error/50 z-10',
       )}
     >
+      {/* Intent badge (enemies only) */}
+      {intent && !isDead && (() => {
+        const cfg = INTENT_ICON[intent];
+        const IntentIcon = cfg.icon;
+        return (
+          <span
+            title={cfg.label}
+            className="flex items-center justify-center size-5 rounded-full bg-surface-1 border border-outline-subtle/50 animate-pulse"
+            style={{ color: cfg.color }}
+          >
+            <IntentIcon className="size-3" />
+          </span>
+        );
+      })()}
+
       {/* Icon */}
       <GameIcon
         category={iconCategory}

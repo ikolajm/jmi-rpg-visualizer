@@ -28,7 +28,7 @@ export function proficiencyBonus(level: number): number {
 }
 
 /** Primary stat per class for auto-ASI */
-const PRIMARY_STAT: Record<string, keyof Character['stats']> = {
+export const PRIMARY_STAT: Record<string, keyof Character['stats']> = {
   fighter: 'str',
   rogue: 'dex',
   wizard: 'int',

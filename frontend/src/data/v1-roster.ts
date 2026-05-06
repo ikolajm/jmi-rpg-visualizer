@@ -122,6 +122,8 @@ export const V1_SPELLS = new Set([
 
 // ─── Weapons (12 curated from 37) ──────────────────────────────
 
+import type { WeaponOnHit } from './game-types';
+
 export interface RosterWeapon {
   index: string;
   name: string;
@@ -129,6 +131,8 @@ export interface RosterWeapon {
   damageType: string;
   weaponRange: 'melee' | 'ranged';
   properties: string[];
+  onHit?: WeaponOnHit;
+  rarity?: string;
 }
 
 export const V1_WEAPONS: RosterWeapon[] = [
@@ -144,6 +148,17 @@ export const V1_WEAPONS: RosterWeapon[] = [
   { index: 'heavy-crossbow', name: 'Heavy Crossbow', damage: '1d10', damageType: 'piercing', weaponRange: 'ranged', properties: ['ammunition', 'heavy', 'loading', 'two-handed'] },
   { index: 'greataxe', name: 'Greataxe', damage: '1d12', damageType: 'slashing', weaponRange: 'melee', properties: ['heavy', 'two-handed'] },
   { index: 'greatsword', name: 'Greatsword', damage: '2d6', damageType: 'slashing', weaponRange: 'melee', properties: ['heavy', 'two-handed'] },
+  // Magic weapons
+  { index: 'flame-tongue', name: 'Flame Tongue', damage: '2d6', damageType: 'fire', weaponRange: 'melee', properties: ['versatile'], rarity: 'Rare',
+    onHit: { trigger: 'crit', condition: 'burning', conditionDuration: 3, description: 'On crit: target burns (1d6 fire/turn, 3 turns)' } },
+  { index: 'frost-brand', name: 'Frost Brand', damage: '1d8', damageType: 'cold', weaponRange: 'melee', properties: ['versatile'], rarity: 'Rare',
+    onHit: { trigger: 'hit', chance: 0.25, condition: 'frozen', conditionDuration: 1, description: '25% chance on hit: target frozen (can\'t move, 1 turn)' } },
+  { index: 'venom-dagger', name: 'Venom Dagger', damage: '1d4', damageType: 'piercing', weaponRange: 'melee', properties: ['finesse', 'light'], rarity: 'Uncommon',
+    onHit: { trigger: 'hit', condition: 'poisoned', conditionDuration: 2, conditionSave: 'con', conditionDC: 13, description: 'On hit: CON 13 save or poisoned (2 turns)' } },
+  { index: 'holy-avenger', name: 'Holy Avenger', damage: '2d6', damageType: 'radiant', weaponRange: 'melee', properties: ['heavy', 'two-handed'], rarity: 'Very Rare',
+    onHit: { trigger: 'hit', bonusDamage: '1d8', bonusDamageType: 'radiant', bonusVsType: 'undead', description: 'On hit vs undead: +1d8 radiant damage' } },
+  { index: 'thunderous-maul', name: 'Thunderous Maul', damage: '2d6', damageType: 'thunder', weaponRange: 'melee', properties: ['heavy', 'two-handed'], rarity: 'Rare',
+    onHit: { trigger: 'crit', condition: 'staggered', conditionDuration: 1, description: 'On crit: target staggered (skips next turn)' } },
 ];
 
 export const V1_WEAPON_SET = new Set(V1_WEAPONS.map(w => w.index));
@@ -251,21 +266,21 @@ export const LOOT_TIERS = {
     armor: ['leather-armor', 'studded-leather-armor', 'chain-shirt', 'scale-mail', 'chain-mail'],
     consumables: ['potion-of-healing', 'scroll-of-cure-wounds'],
   },
-  // Floors 6-10: full base roster + uncommon consumables
+  // Floors 6-10: full base roster + uncommon consumables + first magic weapons
   mid: {
-    weapons: ['rapier', 'warhammer', 'glaive', 'heavy-crossbow', 'greatsword'],
+    weapons: ['rapier', 'warhammer', 'glaive', 'heavy-crossbow', 'greatsword', 'venom-dagger', 'flame-tongue', 'frost-brand'],
     armor: ['half-plate-armor', 'splint-armor'],
     consumables: ['potion-of-greater-healing', 'potion-of-fire-resistance', 'scroll-of-fireball', 'scroll-of-hold-person'],
   },
-  // Floors 11-15: top-tier base + rare consumables
+  // Floors 11-15: top-tier base + rare consumables + endgame magic weapons
   late: {
-    weapons: ['greatsword', 'glaive', 'heavy-crossbow'],
+    weapons: ['greatsword', 'glaive', 'heavy-crossbow', 'holy-avenger', 'thunderous-maul'],
     armor: ['splint-armor', 'plate-armor'],
     consumables: ['potion-of-superior-healing', 'potion-of-heroism'],
   },
   // Floors 16+: endgame
   endgame: {
-    weapons: ['greatsword', 'glaive'],
+    weapons: ['greatsword', 'glaive', 'holy-avenger', 'thunderous-maul'],
     armor: ['plate-armor'],
     consumables: ['potion-of-superior-healing', 'potion-of-heroism', 'potion-of-speed'],
   },

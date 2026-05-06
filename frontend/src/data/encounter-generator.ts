@@ -140,12 +140,13 @@ export function generateEncounter(
   roomType: 'combat' | 'elite_combat' | 'boss',
   party: Character[],
   roomNumber?: number,
+  enemyInitiativeBonus?: number,
 ): CombatState {
   const templates = pickMonsters(floor, roomType, roomNumber);
   const enemies = templates.map((t, i) => templateToEnemy(t, i));
   deduplicateNames(enemies);
 
-  const initiativeOrder = rollInitiative(party, enemies);
+  const initiativeOrder = rollInitiative(party, enemies, enemyInitiativeBonus);
 
   return {
     enemies,
@@ -156,5 +157,6 @@ export function generateEncounter(
     dodging: [],
     activeEffects: [],
     boundaries: { '1|2': null, '2|3': null },
+    enemyIntents: {},
   };
 }

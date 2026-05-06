@@ -47,16 +47,17 @@
 - [x] Turn skip for paralyzed/unconscious/commanded entities
 - [x] End-of-turn repeat saves (hold person, web)
 - [x] Spirit Guardians zone damage at enemy turn start
-- [ ] **Advantage/disadvantage from conditions not yet wired into attack rolls**
-- [ ] **Concentration breaking on damage not implemented**
-- [ ] **Unconscious wake on damage not implemented**
-- [ ] **Tick/expire effects at turn boundaries not fully wired**
-- [ ] **Effect display on zone tokens not wired**
+- [x] Advantage/disadvantage from conditions wired into all attack rolls
+- [x] AC bonus from shield effects in enemy attack resolution
+- [x] Concentration breaking on damage (CON save)
+- [x] Wake unconscious on damage
+- [x] Effect duration ticking + dead entity cleanup
+- [x] Status icons on zone tokens (20px, wrapping)
 
 ### Enemy AI
 - [x] Behavior-based: melee-aggro (move toward, melee attack), flexible (adapt range), caster (prefer ranged/DC), boss, passive (skip)
 - [x] Zone movement for melee enemies
-- [ ] **No boss telegraphing or legendary actions**
+- [ ] **Boss telegraphing / legendary actions** (→ see Enemy Intent in Strategy Depth)
 
 ### Dungeon Progression
 - [x] Room generator (weighted random, boss every 5th, flavor text by tier)
@@ -128,13 +129,13 @@
 - [x] Draft page: refactored weapon helpers to use V1_WEAPONS roster data (58 → 25 lines)
 
 ### Strategy Depth (next session)
-- [ ] Enemy Intent — broadcast next action as icon above token (sword/flame/shield/arrow)
-- [ ] Rest Choices — Full Rest / Quick Rest / Train / Scout options
-- [ ] Weakness Stagger — exploiting vulnerability staggers enemy (lose next action)
-- [ ] Floor Modifiers — random twist per floor (Darkness, Hallowed Ground, Blood Moon, etc.)
-- [ ] Equipment On-Hit Effects — Flame Tongue burns on crit, Frost Brand slows, etc.
+- [x] Enemy Intent — broadcast next action as icon above token (sword/flame/shield/arrow)
+- [x] Rest Choices — Full Rest (50% HP, all slots) / Quick Rest (25% HP, 1 slot) / Train (+3 primary stat, no heal)
+- [x] Weakness Stagger — vulnerability hit triggers CON save or 1-turn stagger (skip next action)
+- [x] Floor Modifiers — 8 modifiers (Darkness, Hallowed Ground, Blood Moon, Ironhide, Thin Veil, Echoing Halls, Blessed Winds, Unstable Ground), floor 1 clean
+- [x] Equipment On-Hit Effects — 5 magic weapons (Flame Tongue, Frost Brand, Venom Dagger, Holy Avenger, Thunderous Maul) with on-hit conditions/damage
 - [ ] All-Out Attack — group attack when all enemies in a zone are disabled
-- [ ] Zone Synergies — flanking bonus, cleric aura, positioning rewards
+- [x] Zone Synergies — flanking (+2 melee hit), cleric aura (+1 saves), ranger overwatch (+2 ranged dmg)
 
 ### UI — Polish (Track 2)
 - [ ] Component-by-component visual polish (BG3/FF direction)

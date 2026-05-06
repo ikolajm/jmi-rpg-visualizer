@@ -3,7 +3,7 @@
 import { cn } from '@/components/atoms/cn';
 import { GameIcon } from '@/components/atoms/GameIcon';
 import {
-  ZapOff, Moon, Ghost, ArrowDownToLine, Gem, Brain, ShieldPlus, Crosshair, Orbit,
+  ZapOff, Moon, Ghost, ArrowDownToLine, Gem, Brain, ShieldPlus, Crosshair, Orbit, CircleSlash,
 } from 'lucide-react';
 import { statusColors } from '@/data/game-colors';
 import type { GameCondition } from '@/data/status-effects';
@@ -36,6 +36,7 @@ const CONDITION_ICON: Record<string, { type: 'pixart'; name: string } | { type: 
   shielded: { type: 'lucide', icon: ShieldPlus },
   hunterMarked: { type: 'lucide', icon: Crosshair },
   spiritGuarded: { type: 'lucide', icon: Orbit },
+  staggered: { type: 'lucide', icon: CircleSlash },
 };
 
 /** Resolve a condition name to a color */
@@ -58,6 +59,7 @@ const CONDITION_COLOR: Record<string, string> = {
   shielded: statusColors.blessed,
   hunterMarked: '#f59e0b',
   spiritGuarded: statusColors.blessed,
+  staggered: '#f97316',
 };
 
 type StatusStackProps = {

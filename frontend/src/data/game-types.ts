@@ -16,6 +16,19 @@ export type Zone = 1 | 2 | 3;
 
 // ─── Equipment ──────────────────────────────────────────────
 
+export interface WeaponOnHit {
+  trigger: 'hit' | 'crit';         // when the effect fires
+  chance?: number;                   // 0-1, default 1 (always)
+  condition?: string;                // condition to apply (e.g. 'burning', 'frozen')
+  conditionDuration?: number;        // turns
+  conditionSave?: string;            // ability for save (e.g. 'con')
+  conditionDC?: number;              // save DC
+  bonusDamage?: string;              // extra dice (e.g. '1d8')
+  bonusDamageType?: string;          // damage type
+  bonusVsType?: string;              // only triggers vs this monster type (e.g. 'undead')
+  description: string;               // tooltip text
+}
+
 export interface EquippedWeapon {
   index: string;
   name: string;
@@ -23,6 +36,7 @@ export interface EquippedWeapon {
   damageType: string;    // 'slashing', 'piercing', 'bludgeoning', etc.
   weaponRange: string;   // 'melee' | 'ranged'
   properties: string[];  // 'finesse', 'light', 'two-handed', etc.
+  onHit?: WeaponOnHit;   // magic weapon on-hit effect
 }
 
 export interface EquippedArmor {
@@ -85,6 +99,9 @@ export interface Character {
 
   // Limited-use feature tracking (resets on rest)
   featureUses: Record<string, { used: number; max: number }>;
+
+  // Training buff (+3 primary stat, clears on next rest)
+  trainingBuff: { stat: keyof Character['stats']; amount: number } | null;
 
   // Combat state
   zone: Zone;
@@ -149,6 +166,15 @@ export interface Enemy {
   isAlive: boolean;
 }
 
+// ─── Enemy Intent ───────────────────────────────────────────
+
+export type IntentType = 'melee' | 'ranged' | 'breath' | 'condition' | 'skip';
+
+export interface EnemyIntent {
+  type: IntentType;
+  actionName?: string; // e.g. "Fire Breath", "Bite" — for tooltip
+}
+
 // ─── Combat ──────────────────────────────────────────────────
 
 export type CombatEntity = {
@@ -190,6 +216,7 @@ export interface CombatState {
   dodging: string[];
   activeEffects: import('@/data/status-effects').ActiveEffect[];
   boundaries: Record<BoundaryKey, BoundaryEffect | null>;
+  enemyIntents: Record<string, EnemyIntent>;
 }
 
 // ─── Rooms ───────────────────────────────────────────────────
@@ -237,6 +264,24 @@ export interface LogEntry {
   type: 'combat' | 'loot' | 'system' | 'death' | 'levelup';
 }
 
+// ─── Floor Modifiers ────────────────────────────────────────
+
+export type FloorModifierId =
+  | 'darkness'
+  | 'hallowed-ground'
+  | 'blood-moon'
+  | 'ironhide'
+  | 'thin-veil'
+  | 'echoing-halls'
+  | 'blessed-winds'
+  | 'unstable-ground';
+
+export interface FloorModifier {
+  id: FloorModifierId;
+  name: string;
+  description: string;
+}
+
 // ─── Full Game State ─────────────────────────────────────────
 
 export interface GameState {
@@ -248,4 +293,5 @@ export interface GameState {
   combat: CombatState | null;
   log: LogEntry[];
   stats: RunStats;
+  floorModifier: FloorModifier | null;
 }

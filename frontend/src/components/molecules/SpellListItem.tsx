@@ -35,13 +35,13 @@ export function SpellListItem({ spellIndex, className }: SpellListItemProps) {
             <DamageInline type={meta.damageType} damage={meta.damage} />
           )}
           {reach && reach !== 'melee' && (
-            <span className="inline-flex items-center gap-0.5 text-[10px] text-on-surface-variant">
+            <span className="inline-flex items-center gap-0.5 text-label-sm text-on-surface-variant">
               <MoveDiagonal className="size-2.5" />
               {reachLabels[reach]}
             </span>
           )}
           {meta?.concentration && (
-            <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold" style={{ color: actionColors.reaction }}>
+            <span className="inline-flex items-center gap-0.5 text-label-sm font-semibold" style={{ color: actionColors.reaction }}>
               <Eye className="size-2.5" />
               Conc.
             </span>
@@ -62,7 +62,7 @@ export function SpellLevelHeader({ level, className }: { level: number | 'cantri
 
   return (
     <div className={cn('flex items-center gap-2 py-1', className)}>
-      <span className="text-[10px] uppercase tracking-widest font-semibold text-on-surface-variant">
+      <span className="text-label-sm uppercase tracking-widest font-semibold text-on-surface-variant">
         {label}
       </span>
       <div className="flex-1 h-px bg-outline-subtle" />

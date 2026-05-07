@@ -14,7 +14,7 @@ type ResourceBarProps = {
 };
 
 const trackSize: Record<string, string> = {
-  sm: 'h-3 text-[10px]',
+  sm: 'h-3 text-label-sm',
   md: 'h-5 text-label-sm',
   lg: 'h-7 text-label-md',
 };

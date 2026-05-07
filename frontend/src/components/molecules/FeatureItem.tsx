@@ -83,7 +83,7 @@ export function FeatureItem({ name, description, id, className }: FeatureItemPro
         tags.length > 0 ? (
           <>
             {tags.map((tag) => (
-              <span key={tag.label} className="inline-flex items-center gap-0.5 text-[10px] font-medium" style={{ color: tag.color }}>
+              <span key={tag.label} className="inline-flex items-center gap-0.5 text-label-sm font-medium" style={{ color: tag.color }}>
                 {tag.icon}
                 {tag.label}
               </span>

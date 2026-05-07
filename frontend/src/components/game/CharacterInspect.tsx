@@ -90,12 +90,12 @@ export function CharacterInspect({ char, mode = 'combat' }: CharacterInspectProp
           {!isDraft && (
             <div className="flex flex-col gap-0.5">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-semibold text-primary uppercase tracking-widest shrink-0">Lvl {char.level}</span>
+                <span className="text-label-sm font-semibold text-primary uppercase tracking-widest shrink-0">Lvl {char.level}</span>
                 <div className="h-1.5 rounded-full bg-surface-3 overflow-hidden flex-1">
                   <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${xpProgress * 100}%` }} />
                 </div>
               </div>
-              <span className="text-[10px] tabular-nums text-on-surface-variant self-end">
+              <span className="text-label-sm tabular-nums text-on-surface-variant self-end">
                 {xpCurrent}{xpNext ? ` / ${xpNext}` : ' (max)'}
               </span>
             </div>

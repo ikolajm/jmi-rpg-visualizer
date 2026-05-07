@@ -45,7 +45,7 @@ export function ResistanceRow({ resistances = [], immunities = [], vulnerabiliti
 
   if (!hasAny) {
     return (
-      <div className={cn('text-[10px] text-on-surface-variant italic', className)}>
+      <div className={cn('text-label-sm text-on-surface-variant italic', className)}>
         No resistances, immunities, or vulnerabilities
       </div>
     );
@@ -75,65 +75,54 @@ export function ResistanceRow({ resistances = [], immunities = [], vulnerabiliti
   };
 
   return (
-    <div className={cn('flex flex-col gap-2', className)}>
-      {/* Vulnerability first — most tactically important (stagger potential) */}
+    <div className={cn('flex flex-col gap-3', className)}>
+      {/* Vulnerability first — most tactically important */}
       {grouped.vulnerable.length > 0 && (
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-1 text-[10px] uppercase tracking-widest font-semibold text-warning">
-            <ShieldAlert className="size-3" />
-            Vulnerable — exploit for stagger
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5 text-label-sm uppercase tracking-widest font-semibold text-success">
+            <ShieldAlert className="size-3.5" />
+            Vulnerable
           </div>
-          <div className="flex items-center gap-1.5 flex-wrap pl-4">
+          <div className="flex flex-col gap-1 pl-5">
             {grouped.vulnerable.map(type => (
-              <span
-                key={type}
-                className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-warning/15 border border-warning/40"
-                style={{ color: damageColors[type] || '#f59e0b' }}
-              >
-                <DamageIcon type={type} size="size-3" />
-                {type}
-              </span>
+              <div key={type} className="flex items-center gap-2">
+                <DamageIcon type={type} size="size-4" />
+                <span className="text-body-sm capitalize">{type}</span>
+              </div>
             ))}
           </div>
         </div>
       )}
 
       {grouped.resistant.length > 0 && (
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-1 text-[10px] uppercase tracking-widest font-semibold text-on-surface-variant">
-            <Shield className="size-3" />
-            Resistant — half damage
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5 text-label-sm uppercase tracking-widest font-semibold text-warning">
+            <Shield className="size-3.5" />
+            Resistant
           </div>
-          <div className="flex items-center gap-1.5 flex-wrap pl-4">
+          <div className="flex flex-col gap-1 pl-5">
             {grouped.resistant.map(type => (
-              <span
-                key={type}
-                className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-surface-3 border border-outline-subtle"
-                style={{ color: damageColors[type] || undefined }}
-              >
-                <DamageIcon type={type} size="size-3" />
-                {type}
-              </span>
+              <div key={type} className="flex items-center gap-2">
+                <DamageIcon type={type} size="size-4" />
+                <span className="text-body-sm capitalize">{type}</span>
+              </div>
             ))}
           </div>
         </div>
       )}
 
       {grouped.immune.length > 0 && (
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-1 text-[10px] uppercase tracking-widest font-semibold text-error">
-            <ShieldOff className="size-3" />
-            Immune — no effect
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5 text-label-sm uppercase tracking-widest font-semibold text-error">
+            <ShieldOff className="size-3.5" />
+            Immune
           </div>
-          <div className="flex items-center gap-1.5 flex-wrap pl-4">
+          <div className="flex flex-col gap-1 pl-5">
             {grouped.immune.map(type => (
-              <span
-                key={type}
-                className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-error/15 border border-error/40 text-error/80"
-              >
-                <DamageIcon type={type} size="size-3" />
-                {type}
-              </span>
+              <div key={type} className="flex items-center gap-2">
+                <DamageIcon type={type} size="size-4" />
+                <span className="text-body-sm capitalize">{type}</span>
+              </div>
             ))}
           </div>
         </div>

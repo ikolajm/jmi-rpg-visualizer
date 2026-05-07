@@ -21,6 +21,11 @@ import { LootScreen } from '@/components/game/LootScreen';
 import { LevelUpScreen } from '@/components/game/LevelUpScreen';
 import { RestScreen } from '@/components/game/RestScreen';
 import { GameOverScreen } from '@/components/game/GameOverScreen';
+import { CombatFeedback } from '@/components/game/CombatFeedback';
+import { CombatOverlays } from '@/components/game/CombatOverlays';
+import { PhaseBanner } from '@/components/game/PhaseBanner';
+import { VictoryOverlay } from '@/components/game/VictoryOverlay';
+import { AnimatePresence, motion } from 'motion/react';
 import type { Character, Enemy, Zone, RoomType } from '@/data/game-types';
 import type { LootItem } from '@/data/loot-generator';
 
@@ -32,6 +37,7 @@ export default function GamePage() {
   const [inspectType, setInspectType] = useState<'character' | 'enemy'>('character');
   const [lootChoices, setLootChoices] = useState<LootItem[]>([]);
   const [levelUpResults, setLevelUpResults] = useState<LevelUpResult[]>([]);
+  const [victoryXp, setVictoryXp] = useState<number | null>(null);
   const { handleFullRest, handleQuickRest, handleTrain } = useRest({ onComplete: advanceRoom });
 
   // ─── Victory Handler ──────────────────────────────────────────
@@ -46,16 +52,23 @@ export default function GamePage() {
     }
     updatedParty.forEach(c => updateCharacter(c.id, { xp: c.xp }));
 
-    // Check loot drop
+    // Capture before async delay
     const roomType = state.currentRoom?.type || 'combat';
-    if (shouldDropLoot(roomType)) {
-      const choices = generateLootChoices(state.floor);
-      setLootChoices(choices);
+    const currentFloor = state.floor;
 
-      setPhase('loot');
-    } else {
-      checkAndQueueLevelUps(updatedParty);
-    }
+    // Show victory overlay, then proceed after delay
+    setVictoryXp(xpTotal);
+    setTimeout(() => {
+      setVictoryXp(null);
+
+      if (shouldDropLoot(roomType)) {
+        const choices = generateLootChoices(currentFloor);
+        setLootChoices(choices);
+        setPhase('loot');
+      } else {
+        checkAndQueueLevelUps(updatedParty);
+      }
+    }, 2500);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.party, state.currentRoom, state.floor]);
 
@@ -232,7 +245,7 @@ export default function GamePage() {
   }
 
   return (
-    <div className="relative h-dvh bg-surface overflow-hidden">
+    <div className="relative h-dvh bg-surface overflow-hidden animate-[fade-in_0.5s_ease-out]">
 
       {/* ─── Combat ──────────────────────────────────────── */}
       {state.phase === 'combat' && state.combat && (
@@ -285,15 +298,29 @@ export default function GamePage() {
       {/* ─── HUD Overlays ────────────────────────────────── */}
       <div className="absolute top-3 left-3 z-20">
         <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/50 backdrop-blur-sm">
-          <span className="font-heading text-[10px] tracking-widest uppercase text-primary">Party Wipe</span>
-          <span className="text-[10px] text-on-surface-variant">F{state.floor} · R{state.roomNumber}</span>
+          <span className="font-heading text-label-sm tracking-widest uppercase text-primary">Party Wipe</span>
+          <span className="text-label-sm text-on-surface-variant">F{state.floor} · R{state.roomNumber}</span>
         </div>
       </div>
 
       {state.combat && <InitiativeBar />}
       <GameLog />
+      {state.phase === 'combat' && <CombatFeedback />}
+      {state.phase === 'combat' && <CombatOverlays />}
+      {state.phase === 'combat' && <PhaseBanner />}
+      <AnimatePresence>
+        {victoryXp !== null && <VictoryOverlay xpGained={victoryXp} />}
+      </AnimatePresence>
 
+      <AnimatePresence>
       {state.phase === 'combat' && combat.isPlayerTurn && combat.activeCharacter && (
+        <motion.div
+          key="action-bar"
+          initial={{ y: 40, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 40, opacity: 0 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+        >
         <ActionBar
           onAttack={combat.handleAttack}
           onCast={combat.handleCast}
@@ -303,7 +330,9 @@ export default function GamePage() {
           onMove={combat.handleMove}
           onEndTurn={() => combat.advanceTurn()}
         />
+        </motion.div>
       )}
+      </AnimatePresence>
 
       <InspectSheet inspecting={inspecting} inspectType={inspectType} onClose={() => setInspectId(null)} />
     </div>

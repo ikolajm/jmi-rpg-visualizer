@@ -48,7 +48,7 @@ export function StatRow({ stats, proficientSaves = [], className }: StatRowProps
                 )} />
               )}
               <span className={cn(
-                'text-[10px] uppercase tracking-widest',
+                'text-label-sm uppercase tracking-widest',
                 isProficient ? 'text-on-primary-container font-semibold' : 'text-on-surface-variant',
               )}>
                 {key}
@@ -65,7 +65,7 @@ export function StatRow({ stats, proficientSaves = [], className }: StatRowProps
 
             {/* Raw score (secondary) */}
             <span className={cn(
-              'text-[10px] tabular-nums',
+              'text-label-sm tabular-nums',
               isProficient ? 'text-primary/70' : 'text-on-surface-variant/60',
             )}>
               {stats[key]}

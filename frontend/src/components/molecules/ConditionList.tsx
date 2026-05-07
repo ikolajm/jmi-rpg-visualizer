@@ -92,13 +92,13 @@ export function ConditionList({ effects, className }: ConditionListProps) {
               icon={<ConditionIcon condition={effect.condition} />}
               title={info.label}
               meta={
-                <span className="text-[10px] tabular-nums text-on-surface-variant">{duration}</span>
+                <span className="text-label-sm tabular-nums text-on-surface-variant">{duration}</span>
               }
               description={
                 <div className="flex flex-col gap-1">
                   <p className="text-body-sm text-on-surface-variant leading-relaxed">{info.description}</p>
                   {extras.length > 0 && (
-                    <p className="text-[10px] text-on-surface-variant">{extras.join(' · ')}</p>
+                    <p className="text-label-sm text-on-surface-variant">{extras.join(' · ')}</p>
                   )}
                 </div>
               }

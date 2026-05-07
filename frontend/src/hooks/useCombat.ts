@@ -19,6 +19,7 @@ import { getModifiers, hallowedHeal } from './combat-modifiers';
 import { getClericAuraBonus } from '@/data/zone-synergies';
 import { resolvePlayerAttack, resolveSpellDamage } from './combat-resolvers';
 import { executeEnemyTurn } from './enemy-turn';
+import { emitCombatFeedback, delay } from '@/data/combat-events';
 import type { Zone, CombatState, Enemy, BoundaryKey, TurnResources } from '@/data/game-types';
 
 function getBoundaryKey(from: Zone, to: Zone): BoundaryKey | null {
@@ -146,8 +147,13 @@ export function useCombat(options: UseCombatOptions = {}) {
   function finishAction(combatUpdate: Partial<CombatState>) {
     if (!state.combat) return;
     const updated = { ...state.combat, ...combatUpdate } as CombatState;
-    if (updated.turnResources.actionsRemaining <= 0 && updated.turnResources.movementUsed) advanceTurn(updated);
-    else setCombat(updated);
+    if (updated.turnResources.actionsRemaining <= 0 && updated.turnResources.movementUsed) {
+      // Delay auto-advance to let animations (movement, damage) finish
+      setCombat(updated);
+      setTimeout(() => advanceTurn(updated), 400);
+    } else {
+      setCombat(updated);
+    }
   }
 
   // ─── Player Turn Start: DoT + Status Check ─────────────────
@@ -218,30 +224,57 @@ export function useCombat(options: UseCombatOptions = {}) {
       return () => clearTimeout(t);
     }
 
-    const t = setTimeout(() => {
-      executeEnemyTurn(enemy, {
-        combat: state.combat!,
-        party: state.party,
-        stats: state.stats,
-        mods,
-        addLog, updateCharacter, updateStats, setCombat, setPhase, advanceTurn,
-      });
-    }, 800);
-    return () => clearTimeout(t);
+    const abort = { cancelled: false };
+    executeEnemyTurn(enemy, {
+      combat: state.combat!,
+      party: state.party,
+      stats: state.stats,
+      mods,
+      addLog, updateCharacter, updateStats, setCombat, setPhase, advanceTurn,
+      abortSignal: abort,
+    });
+    return () => { abort.cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.combat?.currentTurnIndex, state.combat?.roundNumber]);
 
   // ─── Player Actions ────────────────────────────────────────
 
-  function handleAttack(targetId: string) {
+  async function handleAttack(targetId: string) {
     if (!activeCharacter || !state.combat) return;
 
-    const result = resolvePlayerAttack(activeCharacter, targetId, state.combat, state.party, mods);
+    // Capture snapshot before async delay
+    const combat = state.combat;
+    const attacker = activeCharacter;
+    const party = state.party;
+
+    // Swing animation before resolving
+    const target = combat.enemies.find(e => e.id === targetId);
+    emitCombatFeedback({ type: 'attack-swing', targetId, attackerId: attacker.id, attackerZone: attacker.zone, targetZone: target?.zone ?? 2 });
+    await delay(150);
+
+    const result = resolvePlayerAttack(attacker, targetId, combat, party, mods);
     result.logs.forEach(l => addLog(l.message, l.type));
+
+    // Emit visual feedback
+    if (result.isImmune) {
+      emitCombatFeedback({ type: 'immune', targetId });
+    } else if (result.damage > 0) {
+      const isCrit = result.logs.some(l => l.message.includes('CRIT') || l.message.includes('critical'));
+      emitCombatFeedback({ type: isCrit ? 'crit' : 'damage', targetId, value: result.damage, damageType: attacker.equipment.weapon.damageType });
+      emitCombatFeedback({ type: 'impact', targetId, damageType: attacker.equipment.weapon.damageType });
+      if (result.isVulnerable) emitCombatFeedback({ type: 'vulnerable', targetId });
+      if (result.isResisted) emitCombatFeedback({ type: 'resisted', targetId });
+      if (result.enemyUpdates && !result.enemyUpdates.isAlive) {
+        emitCombatFeedback({ type: 'kill', targetId, isPartyMember: false });
+      }
+    } else if (result.enemyUpdates === null) {
+      emitCombatFeedback({ type: 'miss', targetId });
+    }
+
     if (result.damage > 0) updateStats({ totalDamageDealt: state.stats.totalDamageDealt + result.damage });
 
     if (result.enemyUpdates) {
-      const newEnemies = state.combat.enemies.map(e =>
+      const newEnemies = combat.enemies.map(e =>
         e.id === result.enemyUpdates!.id ? { ...e, hp: result.enemyUpdates!.hp, isAlive: result.enemyUpdates!.isAlive } : e
       );
       if (!result.enemyUpdates.isAlive) updateStats({ enemiesKilled: state.stats.enemiesKilled + 1 });
@@ -253,10 +286,18 @@ export function useCombat(options: UseCombatOptions = {}) {
     }
   }
 
-  function handleCast(spellIndex: string, targetId: string) {
+  async function handleCast(spellIndex: string, targetId: string) {
     if (!activeCharacter || !state.combat || !activeCharacter.spellcasting) return;
     const meta = spellMeta[spellIndex]; if (!meta) return;
-    const rawSc = activeCharacter.spellcasting;
+
+    // Capture snapshot before async delay
+    const combat = state.combat;
+    const caster = activeCharacter;
+
+    // Spell cast glow before resolving
+    emitCombatFeedback({ type: 'spell-cast', targetId: caster.id, spellSchool: meta.school });
+    await delay(200);
+    const rawSc = caster.spellcasting!;
     const sc = mods.thinVeil ? { ...rawSc, spellSaveDC: rawSc.spellSaveDC - 2 } : rawSc;
     const castType = getSpellCastType(spellIndex);
     const isCantrip = meta.level === 0;
@@ -275,6 +316,7 @@ export function useCombat(options: UseCombatOptions = {}) {
       const newHp = Math.min(ally.maxHp, ally.hp + heal);
       updateCharacter(ally.id, { hp: newHp });
       addLog(logHeal(activeCharacter.name, name, ally.name, heal, ally.hp, newHp), 'combat');
+      emitCombatFeedback({ type: 'heal', targetId, value: heal });
       if (activeCharacter.features.includes('Blessed Healer') && ally.id !== activeCharacter.id && !isCantrip) {
         const selfHeal = 2 + meta.level;
         const selfNewHp = Math.min(activeCharacter.maxHp, activeCharacter.hp + selfHeal);
@@ -391,6 +433,20 @@ export function useCombat(options: UseCombatOptions = {}) {
     if (castType === 'damage' && meta.damageType) {
       const result = resolveSpellDamage(activeCharacter, spellIndex, targetId, state.combat, sc.spellSaveDC, sc.spellAttackBonus, mods);
       result.logs.forEach(l => addLog(l.message, l.type));
+
+      // Emit visual feedback
+      if (result.isImmune) {
+        emitCombatFeedback({ type: 'immune', targetId });
+      } else if (result.damage > 0) {
+        const isCrit = result.logs.some(l => l.message.includes('CRIT') || l.message.includes('critical'));
+        emitCombatFeedback({ type: isCrit ? 'crit' : 'damage', targetId, value: result.damage, damageType: meta.damageType });
+        emitCombatFeedback({ type: 'impact', targetId, damageType: meta.damageType });
+        if (result.isVulnerable) emitCombatFeedback({ type: 'vulnerable', targetId });
+        if (result.isResisted) emitCombatFeedback({ type: 'resisted', targetId });
+      } else if (result.enemyUpdates === null) {
+        emitCombatFeedback({ type: 'miss', targetId });
+      }
+
       if (result.damage > 0) updateStats({ totalDamageDealt: state.stats.totalDamageDealt + result.damage });
       if (result.enemyUpdates) {
         const newEnemies = state.combat.enemies.map(e =>
@@ -412,6 +468,7 @@ export function useCombat(options: UseCombatOptions = {}) {
   function handleDefend() {
     if (!activeCharacter || !state.combat) return;
     addLog(`${activeCharacter.name} braces for impact — dodging.`, 'combat');
+    emitCombatFeedback({ type: 'defend', targetId: activeCharacter.id });
     finishAction({ dodging: [...state.combat.dodging, activeCharacter.id], turnResources: spendAction() });
   }
 

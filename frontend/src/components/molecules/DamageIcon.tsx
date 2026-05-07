@@ -46,7 +46,7 @@ export function DamageInline({ type, damage, className }: { type: string; damage
   const color = damageColors[type] || damageColors.slashing;
 
   return (
-    <span className={`inline-flex items-center gap-0.5 text-[10px] font-semibold ${className || ''}`} style={{ color }}>
+    <span className={`inline-flex items-center gap-0.5 text-label-sm font-semibold ${className || ''}`} style={{ color }}>
       <DamageIcon type={type} size="size-2.5" />
       {damage} {type}
     </span>

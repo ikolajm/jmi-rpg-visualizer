@@ -7,17 +7,17 @@ import { V1_FEATURES } from './v1-roster';
 import { rollDice, statMod } from './dice';
 import type { Character } from './game-types';
 
-/** Standard 5e XP thresholds for levels 2-10 */
+/** Accelerated XP thresholds for roguelike pacing (roughly 1/3 of 5e standard) */
 export const XP_THRESHOLDS: Record<number, number> = {
-  2: 300,
-  3: 900,
-  4: 2700,
-  5: 6500,
-  6: 14000,
-  7: 23000,
-  8: 34000,
-  9: 48000,
-  10: 64000,
+  2: 100,
+  3: 300,
+  4: 750,
+  5: 1800,
+  6: 4000,
+  7: 7500,
+  8: 11000,
+  9: 16000,
+  10: 22000,
 };
 
 /** Proficiency bonus by level */

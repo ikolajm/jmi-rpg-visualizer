@@ -62,7 +62,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
             <PanelSection label="Select Spell">
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2 py-1">
-                  <span className="text-[10px] uppercase tracking-widest font-semibold text-on-surface-variant">At Will</span>
+                  <span className="text-label-sm uppercase tracking-widest font-semibold text-on-surface-variant">At Will</span>
                   <div className="flex-1 h-px bg-outline-subtle" />
                 </div>
                 {[...character.spellcasting.cantrips].filter(isSpellCastable).sort().map((spell) => (
@@ -75,14 +75,14 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
                   return (
                     <>
                       <div className="flex items-center gap-2 py-1 mt-1">
-                        <span className="text-[10px] uppercase tracking-widest font-semibold text-on-surface-variant">Level I</span>
+                        <span className="text-label-sm uppercase tracking-widest font-semibold text-on-surface-variant">Level I</span>
                         <div className="flex-1 h-px bg-outline-subtle" />
                         <SpellSlotPips total={character.spellcasting!.slotsTotal} used={character.spellcasting!.slotsUsed} size="md" />
                       </div>
                       {castableSlotSpells.map((spell) => (
                         <SpellRow key={spell} spell={spell} available={hasSlots}
                           onClick={() => { if (hasSlots) { setSelectedSpell(spell); setMode('cast-target'); } }}>
-                          {!hasSlots && <span className="text-[10px] text-error">No slots</span>}
+                          {!hasSlots && <span className="text-label-sm text-error">No slots</span>}
                         </SpellRow>
                       ))}
                     </>
@@ -221,7 +221,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
       </div>
 
       {/* Action tiles row */}
-      <div className="flex items-center gap-2 rounded-card bg-black/70 backdrop-blur-md border border-outline-subtle px-3 py-2">
+      <div className="flex items-center gap-1 rounded-card bg-black/70 backdrop-blur-md border border-outline-subtle/50 px-3 py-2">
         <ActionTile icon={<Swords className="size-6" />} label="Attack" color={actionColors.action}
           active={mode === 'attack-target'} disabled={resources.actionsRemaining <= 0}
           onClick={() => setMode(mode === 'attack-target' ? 'idle' : 'attack-target')} />
@@ -258,18 +258,18 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
         <div className="w-px h-8 bg-outline-subtle mx-1" />
 
         <button onClick={() => { setMode('idle'); onEndTurn(); }}
-          className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-component bg-white/5 hover:bg-white/10 cursor-pointer transition-all">
-          <SkipForward className="size-5 text-on-surface-variant" />
-          <span className="text-[9px] font-semibold text-on-surface-variant uppercase tracking-wider">End</span>
+          className="flex flex-col items-center gap-1 px-4 py-2.5 rounded-component bg-white/5 hover:bg-white/10 cursor-pointer transition-all hover:-translate-y-0.5 min-w-[60px]">
+          <SkipForward className="size-6 text-on-surface-variant" />
+          <span className="text-label-sm font-medium text-on-surface-variant">End</span>
         </button>
       </div>
 
       {/* Turn indicator */}
-      {!hasSubMenu && (
-        <span className="text-[10px] text-on-surface-variant bg-black/40 px-3 py-0.5 rounded-full">
+      {/* {!hasSubMenu && (
+        <span className="text-label-sm text-on-surface-variant bg-black/40 px-3 py-0.5 rounded-full">
           {character.name}&apos;s turn
         </span>
-      )}
+      )} */}
     </div>
   );
 }
@@ -285,11 +285,11 @@ function ActionTile({ icon, label, color, active, disabled, onClick }: {
 }) {
   return (
     <button onClick={onClick} disabled={disabled}
-      className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-component transition-all min-w-[52px]
-        ${active ? 'bg-white/15 ring-1 ring-white/30' : 'bg-transparent hover:bg-white/10'}
-        ${disabled ? 'opacity-25 cursor-not-allowed' : 'cursor-pointer'}`}>
+      className={`flex flex-col items-center gap-1 px-4 py-2.5 rounded-component transition-all min-w-[60px]
+        ${active ? 'bg-white/15 ring-1 ring-white/40 scale-105' : 'bg-transparent hover:bg-white/8'}
+        ${disabled ? 'opacity-20 cursor-not-allowed' : 'cursor-pointer hover:-translate-y-0.5'}`}>
       <span style={{ color: disabled ? 'var(--on-surface-variant)' : color }}>{icon}</span>
-      <span className="text-[9px] font-medium text-on-surface">{label}</span>
+      <span className="text-label-sm font-medium text-on-surface">{label}</span>
     </button>
   );
 }
@@ -297,7 +297,7 @@ function ActionTile({ icon, label, color, active, disabled, onClick }: {
 function PanelSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-[10px] uppercase tracking-widest font-semibold text-on-surface-variant">{label}</span>
+      <span className="text-label-sm uppercase tracking-widest font-semibold text-on-surface-variant">{label}</span>
       {children}
     </div>
   );
@@ -313,7 +313,7 @@ function TargetButton({ icon, name, detail, variant, onClick }: {
 }) {
   return (
     <button onClick={onClick}
-      className={`flex items-center gap-3 px-3 py-2 rounded-component bg-white/5 hover:bg-white/10 cursor-pointer transition-all
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-component bg-white/5 hover:bg-white/10 cursor-pointer transition-all
         ${variant === 'enemy' ? 'hover:ring-1 hover:ring-error/50' : 'hover:ring-1 hover:ring-primary/50'}`}>
       {icon}
       <div className="flex flex-col">
@@ -340,7 +340,7 @@ function SpellRow({ spell, available, onClick, children }: {
         {spell.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
       </span>
       {meta?.damageType && <DamageIcon type={meta.damageType} size="size-4" />}
-      {reachLabel && <span className="text-[10px] text-on-surface-variant">{reachLabel}</span>}
+      {reachLabel && <span className="text-label-sm text-on-surface-variant">{reachLabel}</span>}
       {children}
     </button>
   );

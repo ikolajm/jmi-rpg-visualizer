@@ -26,6 +26,12 @@ export function ZoneLayout({ onSelectTarget }: {
   const currentEntity = state.combat.initiativeOrder[state.combat.currentTurnIndex];
   const zones: Zone[] = [1, 2, 3];
 
+  const ZONE_BG = [
+    'bg-gradient-to-b from-surface-1/60 to-surface-1/30',  // Zone 1 — frontline
+    'bg-gradient-to-b from-surface-1/40 to-surface-1/20',  // Zone 2 — midfield
+    'bg-gradient-to-b from-surface-1/60 to-surface-1/30',  // Zone 3 — backline
+  ];
+
   return (
     <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] h-full p-6 pt-[88px] pb-[180px] gap-1">
       {zones.flatMap((zone, i) => {
@@ -34,7 +40,7 @@ export function ZoneLayout({ onSelectTarget }: {
         const hasBoth = zoneChars.length > 0 && zoneEnemies.length > 0;
 
         return [
-          <div key={zone} className="flex flex-col gap-3 p-4 rounded-card bg-surface-1/50 backdrop-blur-sm border border-outline-subtle/50">
+          <div key={zone} className={`flex flex-col gap-3 p-4 rounded-card ${ZONE_BG[i]} backdrop-blur-sm border border-outline-subtle/30 overflow-hidden`}>
             <h3 className="text-label-sm uppercase tracking-widest font-semibold text-on-surface-variant text-center">
               {zoneLabel(zone)}
             </h3>
@@ -44,6 +50,7 @@ export function ZoneLayout({ onSelectTarget }: {
               {zoneChars.map((char) => (
                 <ZoneToken
                   key={char.id}
+                  entityId={char.id}
                   isCharacter
                   name={char.name}
                   iconCategory="class"
@@ -63,7 +70,7 @@ export function ZoneLayout({ onSelectTarget }: {
             {hasBoth && (
               <div className="flex items-center gap-2 px-2">
                 <div className="flex-1 h-px bg-outline-subtle/50" />
-                <span className="text-[8px] uppercase tracking-widest text-outline-subtle">vs</span>
+                <span className="text-label-sm uppercase tracking-widest text-outline-subtle">vs</span>
                 <div className="flex-1 h-px bg-outline-subtle/50" />
               </div>
             )}
@@ -73,6 +80,7 @@ export function ZoneLayout({ onSelectTarget }: {
               {zoneEnemies.map((enemy) => (
                 <ZoneToken
                   key={enemy.id}
+                  entityId={enemy.id}
                   isCharacter={false}
                   name={enemy.name}
                   iconCategory="monster"

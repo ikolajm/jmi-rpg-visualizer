@@ -2,6 +2,7 @@
 
 import { useGame } from '@/components/providers/GameProvider';
 import { GameIcon } from '@/components/atoms/GameIcon';
+import { resourceColors } from '@/data/game-colors';
 
 export function InitiativeBar() {
   const { state } = useGame();
@@ -15,6 +16,10 @@ export function InitiativeBar() {
         const char = isChar ? state.party.find(c => c.id === entity.id) : null;
         const enemy = !isChar ? state.combat!.enemies.find(e => e.id === entity.id) : null;
         const isDead = isChar ? !char?.isAlive : !enemy?.isAlive;
+        const hp = isChar ? char?.hp || 0 : enemy?.hp || 0;
+        const maxHp = isChar ? char?.maxHp || 1 : enemy?.maxHp || 1;
+        const hpPct = maxHp > 0 ? hp / maxHp : 0;
+        const hpColor = isDead ? '#6b7280' : hpPct <= 0.1 ? resourceColors.hpCritical : hpPct <= 0.25 ? resourceColors.hpLow : resourceColors.hp;
 
         return (
           <div
@@ -31,14 +36,18 @@ export function InitiativeBar() {
               size="md"
               className={isChar ? 'text-primary' : 'text-error'}
             />
-            <span className="text-[9px] font-medium text-on-surface truncate max-w-[44px] text-center">
+            {/* HP indicator bar */}
+            <div className="w-6 h-0.5 rounded-full bg-surface-3 overflow-hidden">
+              <div className="h-full rounded-full transition-all duration-300" style={{ width: `${hpPct * 100}%`, backgroundColor: hpColor }} />
+            </div>
+            <span className="text-label-sm font-medium text-on-surface truncate max-w-[44px] text-center">
               {isChar ? char?.name : enemy?.name}
             </span>
           </div>
         );
       })}
       <div className="w-px h-6 bg-outline-subtle mx-1" />
-      <span className="text-[10px] text-on-surface-variant whitespace-nowrap">
+      <span className="text-label-sm text-on-surface-variant whitespace-nowrap">
         R{state.combat.roundNumber}
       </span>
     </div>

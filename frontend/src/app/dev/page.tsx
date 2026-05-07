@@ -15,6 +15,9 @@ import { LootScreen } from '@/components/game/LootScreen';
 import { LevelUpScreen } from '@/components/game/LevelUpScreen';
 import { RestScreen } from '@/components/game/RestScreen';
 import { GameOverScreen } from '@/components/game/GameOverScreen';
+import { CombatFeedback } from '@/components/game/CombatFeedback';
+import { CombatOverlays } from '@/components/game/CombatOverlays';
+import { PhaseBanner } from '@/components/game/PhaseBanner';
 import type { Character, Enemy, Zone, GamePhase } from '@/data/game-types';
 import type { LootItem } from '@/data/loot-generator';
 import { statMod } from '@/data/dice';
@@ -177,10 +180,10 @@ function DevHarness() {
 
       {/* ─── Dev Nav Bar ─────────────────────────────────── */}
       <div className="absolute top-0 left-0 right-0 z-50 flex items-center gap-1 px-3 py-2 bg-black/80 backdrop-blur-sm overflow-x-auto">
-        <span className="text-[10px] text-primary font-semibold uppercase tracking-wider mr-2 shrink-0">DEV</span>
+        <span className="text-label-sm text-primary font-semibold uppercase tracking-wider mr-2 shrink-0">DEV</span>
         {PHASES.map(p => (
           <button key={p.id} onClick={() => jumpTo(p.id)}
-            className={`text-[11px] px-2 py-1 rounded-full shrink-0 transition-colors
+            className={`text-label-sm px-2 py-1 rounded-full shrink-0 transition-colors
               ${activePhase === p.id ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-2'}`}
           >
             {p.label}
@@ -191,7 +194,7 @@ function DevHarness() {
       {/* ─── Dev Condition Injector (combat only) ──────── */}
       {state.phase === 'combat' && state.combat && (
         <div className="absolute top-10 left-0 right-0 z-50 flex items-center gap-1 px-3 py-1.5 bg-black/70 backdrop-blur-sm overflow-x-auto">
-          <span className="text-[9px] text-error font-semibold uppercase tracking-wider mr-2 shrink-0">Inflict</span>
+          <span className="text-label-sm text-error font-semibold uppercase tracking-wider mr-2 shrink-0">Inflict</span>
           {(['paralyzed', 'unconscious', 'restrained', 'poisoned', 'frightened', 'prone', 'petrified', 'burning', 'frozen', 'commanded', 'staggered', 'hunterMarked'] as GameCondition[]).map(cond => (
             <button key={cond} onClick={() => {
               // Apply to first alive enemy
@@ -215,12 +218,12 @@ function DevHarness() {
                 addLog(`DEV: ${target.name} already ${reason || 'affected'}`, 'system');
               }
             }}
-              className="text-[10px] px-2 py-0.5 rounded-full shrink-0 text-error hover:bg-error/20 transition-colors"
+              className="text-label-sm px-2 py-0.5 rounded-full shrink-0 text-error hover:bg-error/20 transition-colors"
             >
               {cond}
             </button>
           ))}
-          <span className="text-[9px] text-primary font-semibold uppercase tracking-wider mx-2 shrink-0">Buff Ally</span>
+          <span className="text-label-sm text-primary font-semibold uppercase tracking-wider mx-2 shrink-0">Buff Ally</span>
           {(['blessed', 'shielded', 'spiritGuarded'] as GameCondition[]).map(cond => (
             <button key={`ally-${cond}`} onClick={() => {
               const target = state.party.find(c => c.isAlive);
@@ -238,7 +241,7 @@ function DevHarness() {
                 addLog(`DEV: ${target.name} already ${reason || 'affected'}`, 'system');
               }
             }}
-              className="text-[10px] px-2 py-0.5 rounded-full shrink-0 text-primary hover:bg-primary/20 transition-colors"
+              className="text-label-sm px-2 py-0.5 rounded-full shrink-0 text-primary hover:bg-primary/20 transition-colors"
             >
               {cond}
             </button>
@@ -246,7 +249,7 @@ function DevHarness() {
           <button onClick={() => {
             setCombat({ ...state.combat!, activeEffects: [] });
             addLog('DEV: Cleared all effects', 'system');
-          }} className="text-[10px] px-2 py-0.5 rounded-full shrink-0 text-on-surface-variant hover:bg-surface-2 transition-colors ml-auto">
+          }} className="text-label-sm px-2 py-0.5 rounded-full shrink-0 text-on-surface-variant hover:bg-surface-2 transition-colors ml-auto">
             Clear All
           </button>
         </div>
@@ -254,14 +257,14 @@ function DevHarness() {
 
       {/* ─── Dev Floor Modifier Selector ────────────────── */}
       <div className="absolute top-[calc(2.25rem)] left-0 right-0 z-40 flex items-center gap-1 px-3 py-1 bg-black/60 backdrop-blur-sm overflow-x-auto">
-        <span className="text-[9px] text-primary font-semibold uppercase tracking-wider mr-2 shrink-0">Floor Mod</span>
+        <span className="text-label-sm text-primary font-semibold uppercase tracking-wider mr-2 shrink-0">Floor Mod</span>
         <button onClick={() => { setFloorModifier(null); addLog('DEV: Cleared floor modifier', 'system'); }}
-          className={`text-[10px] px-2 py-0.5 rounded-full shrink-0 transition-colors ${!state.floorModifier ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:bg-surface-2'}`}>
+          className={`text-label-sm px-2 py-0.5 rounded-full shrink-0 transition-colors ${!state.floorModifier ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:bg-surface-2'}`}>
           None
         </button>
         {FLOOR_MODIFIERS.map(m => (
           <button key={m.id} onClick={() => { setFloorModifier(m); addLog(`DEV: Set floor modifier — ${m.name}`, 'system'); }}
-            className={`text-[10px] px-2 py-0.5 rounded-full shrink-0 transition-colors ${state.floorModifier?.id === m.id ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:bg-surface-2'}`}>
+            className={`text-label-sm px-2 py-0.5 rounded-full shrink-0 transition-colors ${state.floorModifier?.id === m.id ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:bg-surface-2'}`}>
             {m.name}
           </button>
         ))}
@@ -318,13 +321,16 @@ function DevHarness() {
       {/* ─── HUD Overlays ────────────────────────────────── */}
       <div className="absolute top-12 left-3 z-20">
         <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/50 backdrop-blur-sm">
-          <span className="font-heading text-[10px] tracking-widest uppercase text-primary">Party Wipe</span>
-          <span className="text-[10px] text-on-surface-variant">F{state.floor} · R{state.roomNumber}</span>
+          <span className="font-heading text-label-sm tracking-widest uppercase text-primary">Party Wipe</span>
+          <span className="text-label-sm text-on-surface-variant">F{state.floor} · R{state.roomNumber}</span>
         </div>
       </div>
 
       {state.combat && <InitiativeBar />}
       <GameLog />
+      {state.phase === 'combat' && <CombatFeedback />}
+      {state.phase === 'combat' && <CombatOverlays />}
+      {state.phase === 'combat' && <PhaseBanner />}
 
       {state.phase === 'combat' && combat.isPlayerTurn && combat.activeCharacter && (
         <ActionBar

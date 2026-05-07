@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/components/atoms/cn';
+import { motion, AnimatePresence } from 'motion/react';
 import { GameIcon } from '@/components/atoms/GameIcon';
 import {
   ZapOff, Moon, Ghost, ArrowDownToLine, Gem, Brain, ShieldPlus, Crosshair, Orbit, CircleSlash,
@@ -77,28 +78,46 @@ export function StatusStack({ effects, size = 'sm', className }: StatusStackProp
 
   return (
     <div className={cn('flex items-center gap-1 flex-wrap justify-center', className)}>
-      {effects.map((effect) => {
-        const config = CONDITION_ICON[effect];
-        const color = CONDITION_COLOR[effect] || statusColors.cursed;
-        const title = effect.charAt(0).toUpperCase() + effect.slice(1).replace(/([A-Z])/g, ' $1');
+      <AnimatePresence>
+        {effects.map((effect) => {
+          const config = CONDITION_ICON[effect];
+          const color = CONDITION_COLOR[effect] || statusColors.cursed;
+          const title = effect.charAt(0).toUpperCase() + effect.slice(1).replace(/([A-Z])/g, ' $1');
 
-        if (!config) return null;
+          if (!config) return null;
 
-        if (config.type === 'pixart') {
+          if (config.type === 'pixart') {
+            return (
+              <motion.span
+                key={effect}
+                title={title}
+                style={{ color }}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: [0, 1.3, 1], opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <GameIcon category="status" name={config.name} size={size === 'sm' ? 'md' : 'lg'} />
+              </motion.span>
+            );
+          }
+
+          const LucideIcon = config.icon;
           return (
-            <span key={effect} title={title} style={{ color }}>
-              <GameIcon category="status" name={config.name} size={size === 'sm' ? 'md' : 'lg'} />
-            </span>
+            <motion.span
+              key={effect}
+              title={title}
+              style={{ color }}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: [0, 1.3, 1], opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <LucideIcon className={iconSize} />
+            </motion.span>
           );
-        }
-
-        const LucideIcon = config.icon;
-        return (
-          <span key={effect} title={title} style={{ color }}>
-            <LucideIcon className={iconSize} />
-          </span>
-        );
-      })}
+        })}
+      </AnimatePresence>
     </div>
   );
 }

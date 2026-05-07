@@ -33,7 +33,7 @@ export function AttackLine({ iconName, label, toHit, damage, damageType, zone, c
         <span className="text-body-sm font-medium text-on-surface truncate">{label}</span>
         <div className="flex items-center gap-3 flex-wrap">
           {/* To hit */}
-          <span className="inline-flex items-center gap-0.5 text-[10px] tabular-nums text-on-surface-variant">
+          <span className="inline-flex items-center gap-0.5 text-label-sm tabular-nums text-on-surface-variant">
             <span className="font-semibold" style={{ color: damageColors.radiant }}>+{toHit}</span> to hit
           </span>
 
@@ -41,14 +41,14 @@ export function AttackLine({ iconName, label, toHit, damage, damageType, zone, c
           {damageType ? (
             <DamageInline type={damageType} damage={damage} />
           ) : (
-            <span className="text-[10px] tabular-nums font-semibold text-on-surface-variant">
+            <span className="text-label-sm tabular-nums font-semibold text-on-surface-variant">
               {damage}
             </span>
           )}
 
           {/* Zone range */}
           {zone && (
-            <span className="inline-flex items-center gap-0.5 text-[10px] text-on-surface-variant">
+            <span className="inline-flex items-center gap-0.5 text-label-sm text-on-surface-variant">
               <MoveDiagonal className="size-2.5" />
               {zoneLabels[zone] || zone}
             </span>
@@ -56,12 +56,12 @@ export function AttackLine({ iconName, label, toHit, damage, damageType, zone, c
 
           {/* Save-based damage */}
           {saveInfo && (
-            <span className="text-[10px] font-medium text-warning">{saveInfo}</span>
+            <span className="text-label-sm font-medium text-warning">{saveInfo}</span>
           )}
 
           {/* Condition on hit */}
           {conditionInfo && (
-            <span className="text-[10px] font-medium text-error">{conditionInfo}</span>
+            <span className="text-label-sm font-medium text-error">{conditionInfo}</span>
           )}
         </div>
       </div>

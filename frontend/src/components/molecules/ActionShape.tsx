@@ -21,8 +21,8 @@ const LABELS: Record<ActionType, string> = {
 };
 
 const SIZE_MAP: Record<string, { shape: number; text: string }> = {
-  sm: { shape: 10, text: 'text-[9px]' },
-  md: { shape: 14, text: 'text-[10px]' },
+  sm: { shape: 10, text: 'text-label-sm' },
+  md: { shape: 14, text: 'text-label-sm' },
   lg: { shape: 18, text: 'text-label-sm' },
 };
 
@@ -103,7 +103,7 @@ export function ResourceTracker({ actionsRemaining, actionsTotal, bonusUsed, mov
         {Array.from({ length: actionsTotal }, (_, i) => (
           <ActionShape key={i} type="action" used={i >= actionsRemaining} size="md" />
         ))}
-        <span className={cn('text-[10px] font-medium ml-0.5', actionsRemaining <= 0 && 'opacity-40')} style={{ color: actionColors.action }}>
+        <span className={cn('text-label-sm font-medium ml-0.5', actionsRemaining <= 0 && 'opacity-40')} style={{ color: actionColors.action }}>
           {actionsTotal > 1 ? `Actions` : `Action`}
         </span>
       </span>
@@ -112,7 +112,7 @@ export function ResourceTracker({ actionsRemaining, actionsTotal, bonusUsed, mov
         <svg width={14} height={14} viewBox="0 0 16 16" className="shrink-0">
           <path d="M3 13L13 3M13 3H6M13 3V10" fill="none" stroke={moveUsed ? featureColors.passive : actionColors.free} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <span className="text-[10px] font-medium" style={{ color: moveUsed ? featureColors.passive : actionColors.free }}>
+        <span className="text-label-sm font-medium" style={{ color: moveUsed ? featureColors.passive : actionColors.free }}>
           Movement
         </span>
       </span>
@@ -125,7 +125,7 @@ export function ResourceTracker({ actionsRemaining, actionsTotal, bonusUsed, mov
                 stroke={resourceColors.spellSlot} strokeWidth="1.5" />
             </svg>
           ))}
-          <span className="text-[10px] font-medium" style={{ color: resourceColors.spellSlot }}>Slots</span>
+          <span className="text-label-sm font-medium" style={{ color: resourceColors.spellSlot }}>Slots</span>
         </span>
       )}
     </div>

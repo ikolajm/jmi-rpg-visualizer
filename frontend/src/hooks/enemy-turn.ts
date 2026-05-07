@@ -19,6 +19,7 @@ import {
 } from '@/data/status-effects';
 import { bloodMoonDamage, type CombatModifiers } from './combat-modifiers';
 import { getClericAuraBonus } from '@/data/zone-synergies';
+import { emitCombatFeedback, delay } from '@/data/combat-events';
 import type { Zone, CombatState, Character, Enemy, BoundaryKey } from '@/data/game-types';
 
 function getBoundaryKey(from: Zone, to: Zone): BoundaryKey | null {
@@ -39,9 +40,11 @@ export interface EnemyTurnContext {
   setCombat: (combat: CombatState | null) => void;
   setPhase: (phase: import('@/data/game-types').GamePhase) => void;
   advanceTurn: (combatOverride?: CombatState | null, killedIds?: string[]) => void;
+  abortSignal?: { cancelled: boolean };
 }
 
-export function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
+export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
+  const abort = ctx.abortSignal || { cancelled: false };
   const { combat, party, mods, addLog, updateCharacter, updateStats, setCombat, setPhase, advanceTurn } = ctx;
 
   const aliveChars = party.filter(c => c.isAlive);
@@ -94,6 +97,10 @@ export function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
   }
 
   // ─── Behavior ───────────────────────────────────────────
+  // Pause to let active turn pulse play
+  await delay(300);
+  if (abort.cancelled) return;
+
   const behavior = enemy.behavior || 'melee-aggro';
   let currentEnemy = updatedEnemiesForSG.find(e => e.id === enemy.id) || enemy;
   let updatedEnemies = updatedEnemiesForSG;
@@ -159,26 +166,38 @@ export function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
   }
 
   // ─── Target + action selection ──────────────────────────
+  // Pause to let movement animation play
+  await delay(300);
+  if (abort.cancelled) return;
+
   const sameZoneAfterMove = aliveChars.filter(c => c.zone === currentEnemy.zone);
   const target = sameZoneAfterMove.length > 0 ? sameZoneAfterMove[0] : nearest;
-  let action;
+  const inMeleeRange = target.zone === currentEnemy.zone;
 
+  // Filter actions by what can actually reach the target
+  const meleeActions = currentEnemy.actions.filter(a => a.reach === 'melee');
+  const rangedActions = currentEnemy.actions.filter(a => a.reach === 'any');
   const dcAction = currentEnemy.actions.find(a => a.saveDC && a.damage);
   const condAction = currentEnemy.actions.find(a => a.conditionDC && !a.saveDC);
+  const reachableActions = inMeleeRange
+    ? currentEnemy.actions  // In same zone: all actions available
+    : currentEnemy.actions.filter(a => a.reach !== 'melee');  // Different zone: no melee
+
+  let action;
 
   if (behavior === 'caster' || behavior === 'boss-caster' || behavior === 'boss') {
     action = dcAction || condAction
-      || currentEnemy.actions.find(a => a.reach === 'any')
-      || currentEnemy.actions[0];
+      || rangedActions[0]
+      || (inMeleeRange ? meleeActions[0] : undefined);
   } else if (behavior === 'flexible') {
     action = dcAction
-      || ((target.zone === currentEnemy.zone)
-        ? currentEnemy.actions.find(a => a.reach === 'melee') || currentEnemy.actions[0]
-        : currentEnemy.actions.find(a => a.reach === 'any') || currentEnemy.actions[0]);
+      || (inMeleeRange ? meleeActions[0] : rangedActions[0])
+      || reachableActions[0];
   } else {
-    action = (target.zone === currentEnemy.zone)
-      ? currentEnemy.actions.find(a => a.reach === 'melee') || condAction || currentEnemy.actions[0]
-      : dcAction || currentEnemy.actions.find(a => a.reach === 'any') || currentEnemy.actions[0];
+    // melee-aggro
+    action = inMeleeRange
+      ? (meleeActions[0] || condAction || reachableActions[0])
+      : (dcAction || rangedActions[0]);
   }
 
   let killedThisTurn: string[] = [];
@@ -200,6 +219,7 @@ export function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
     else if (passed && action.saveSuccess === 'none') damage = 0;
 
     addLog(logBreathWeapon(currentEnemy.name, action.name, target.name, damage, action.damageType || 'fire', passed, `${saveAbility.toUpperCase()} ${saveRoll} vs DC ${action.saveDC}`), 'combat');
+    if (damage > 0) emitCombatFeedback({ type: 'damage', targetId: target.id, value: damage, damageType: action.damageType || 'fire' });
     const newHp = Math.max(0, target.hp - damage);
     updateCharacter(target.id, { hp: newHp, isAlive: newHp > 0 });
     updateStats({ totalDamageTaken: ctx.stats.totalDamageTaken + damage });
@@ -220,6 +240,11 @@ export function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
     }
     return;
   }
+
+  // Emit attack swing before resolving
+  emitCombatFeedback({ type: 'attack-swing', targetId: target.id, attackerId: currentEnemy.id, attackerZone: currentEnemy.zone, targetZone: target.zone });
+  await delay(250);
+  if (abort.cancelled) return;
 
   // ─── Melee/ranged attack ────────────────────────────────
   const targetEffectsForAtk = combat.activeEffects.filter(e => e.targetId === target.id);
@@ -243,6 +268,7 @@ export function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
 
   if (attackRoll === 1 || total < effectiveAC) {
     addLog(attackRoll === 1 ? logNat1(currentEnemy.name, target.name) : logAttackMiss(currentEnemy.name, target.name, total, effectiveAC, tag), 'combat');
+    emitCombatFeedback({ type: 'miss', targetId: target.id });
   } else {
     let damage = action.damage ? rollDice(action.damage) : 0;
     if (isCrit) damage = Math.floor(damage * 1.5);
@@ -250,6 +276,8 @@ export function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
     const newHp = Math.max(0, target.hp - damage);
     const isKill = newHp <= 0;
     addLog(logAttackHit(currentEnemy.name, target.name, action.name, damage, action.damageType || 'slashing', total, effectiveAC, isCrit, isKill), 'combat');
+    emitCombatFeedback({ type: isCrit ? 'crit' : 'damage', targetId: target.id, value: damage, damageType: action.damageType || 'slashing' });
+    emitCombatFeedback({ type: 'impact', targetId: target.id, damageType: action.damageType || 'slashing' });
     updateCharacter(target.id, { hp: newHp, isAlive: !isKill });
     updateStats({ totalDamageTaken: ctx.stats.totalDamageTaken + damage });
 
@@ -304,12 +332,17 @@ export function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
     if (newHp <= 0) {
       killedThisTurn.push(target.id);
       addLog(logDeath(target.name), 'death');
+      emitCombatFeedback({ type: 'kill', targetId: target.id, isPartyMember: true });
       updateStats({ charactersLost: ctx.stats.charactersLost + 1 });
       if (party.filter(c => c.isAlive && c.id !== target.id).length === 0) {
         addLog('Total Party Kill!', 'death'); setPhase('game-over'); return;
       }
     }
   }
+
+  // Pause to let damage/impact animations play
+  await delay(400);
+  if (abort.cancelled) return;
 
   if (updatedEnemies !== combat.enemies) {
     const combatWithEnemies = { ...combat, enemies: updatedEnemies };

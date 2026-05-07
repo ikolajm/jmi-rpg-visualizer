@@ -30,6 +30,9 @@ export type LogEntry = { message: string; type: 'combat' | 'death' | 'system' | 
 export interface AttackResult {
   logs: LogEntry[];
   damage: number;
+  isImmune: boolean;
+  isVulnerable: boolean;
+  isResisted: boolean;
   enemyUpdates: { id: string; hp: number; isAlive: boolean } | null;
   effects: ActiveEffect[];
   effectsChanged: boolean;
@@ -86,7 +89,7 @@ export function resolvePlayerAttack(
   const logs: LogEntry[] = [];
   const target = combat.enemies.find(e => e.id === targetId);
   if (!target || !target.isAlive) {
-    return { logs, damage: 0, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false };
+    return { logs, damage: 0, isImmune: false, isVulnerable: false, isResisted: false, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false };
   }
 
   const weapon = attacker.equipment.weapon;
@@ -125,11 +128,11 @@ export function resolvePlayerAttack(
   // Miss
   if (attackRoll === 1) {
     logs.push({ message: logNat1(attacker.name, target.name), type: 'combat' });
-    return { logs, damage: 0, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false };
+    return { logs, damage: 0, isImmune: false, isVulnerable: false, isResisted: false, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false };
   }
   if (total < effectiveEnemyAC) {
     logs.push({ message: logAttackMiss(attacker.name, target.name, total, effectiveEnemyAC, tag), type: 'combat' });
-    return { logs, damage: 0, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false };
+    return { logs, damage: 0, isImmune: false, isVulnerable: false, isResisted: false, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false };
   }
 
   // Hit — calculate damage
@@ -166,9 +169,10 @@ export function resolvePlayerAttack(
   // Damage type interactions
   let isImmune = false;
   let isVulnerable = false;
+  let isResisted = false;
   if (target.damageImmunities.includes(damageType)) { damage = 0; isImmune = true; }
   else if (target.damageVulnerabilities.includes(damageType)) { damage *= 2; isVulnerable = true; }
-  else if (target.damageResistances.some(r => r.includes(damageType))) { damage = Math.floor(damage / 2); }
+  else if (target.damageResistances.some(r => r.includes(damageType))) { damage = Math.floor(damage / 2); isResisted = true; }
 
   const newHp = Math.max(0, target.hp - damage);
   const isKill = newHp <= 0;
@@ -211,7 +215,7 @@ export function resolvePlayerAttack(
           logs.push({ message: `  ${weapon.name} blazes — +${bonusDmg} ${oh.bonusDamageType}!`, type: 'combat' });
           if (bonusKill) logs.push({ message: logDeath(target.name), type: 'death' });
           return {
-            logs, damage,
+            logs, damage, isImmune: false, isVulnerable: false, isResisted: false,
             enemyUpdates: { id: targetId, hp: updatedHp, isAlive: !bonusKill },
             effects: updatedEffects,
             effectsChanged: updatedEffects !== combat.activeEffects,
@@ -254,6 +258,7 @@ export function resolvePlayerAttack(
   return {
     logs,
     damage,
+    isImmune, isVulnerable, isResisted,
     enemyUpdates: { id: targetId, hp: newHp, isAlive: !isKill },
     effects: updatedEffects,
     effectsChanged: updatedEffects !== combat.activeEffects,
@@ -275,7 +280,7 @@ export function resolveSpellDamage(
   const meta = spellMeta[spellIndex];
   const target = combat.enemies.find(e => e.id === targetId);
   if (!target || !meta?.damageType) {
-    return { logs, damage: 0, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false };
+    return { logs, damage: 0, isImmune: false, isVulnerable: false, isResisted: false, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false };
   }
 
   const name = spellIndex.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -289,7 +294,7 @@ export function resolveSpellDamage(
     isCrit = roll === 20; hit = roll !== 1 && (isCrit || total >= spellTargetAC);
     if (!hit) {
       logs.push({ message: logSpellMiss(caster.name, name, target.name, roll + spellAttackBonus, spellTargetAC), type: 'combat' });
-      return { logs, damage: 0, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false };
+      return { logs, damage: 0, isImmune: false, isVulnerable: false, isResisted: false, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false };
     }
   }
 
@@ -323,12 +328,14 @@ export function resolveSpellDamage(
 
   let isImmune = false;
   let isVulnerable = false;
+  let isResisted = false;
   if (target.damageImmunities.includes(meta.damageType)) { damage = 0; isImmune = true; }
   else if (target.damageVulnerabilities.includes(meta.damageType)) { damage *= 2; isVulnerable = true; }
+  else if (meta.damageType && target.damageResistances.some(r => r.includes(meta.damageType!))) { damage = Math.floor(damage / 2); isResisted = true; }
 
   const newHp = Math.max(0, target.hp - damage);
   const isKill = newHp <= 0;
-  if (isImmune) { logs.push({ message: logImmune(target.name, meta.damageType), type: 'combat' }); }
+  if (isImmune) { logs.push({ message: logImmune(target.name, meta.damageType!), type: 'combat' }); }
   else { logs.push({ message: logSpellHit(caster.name, name, target.name, damage, meta.damageType, isCrit, isKill), type: 'combat' }); }
   if (isKill) logs.push({ message: logDeath(target.name), type: 'death' });
 
@@ -343,6 +350,7 @@ export function resolveSpellDamage(
   return {
     logs,
     damage,
+    isImmune, isVulnerable, isResisted,
     enemyUpdates: { id: targetId, hp: newHp, isAlive: !isKill },
     effects: updatedEffects,
     effectsChanged: updatedEffects !== combat.activeEffects,

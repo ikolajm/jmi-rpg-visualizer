@@ -160,20 +160,32 @@
 - [x] RestScreen component (Motion): rest watermark, sanctuary title, 3 choice cards with tradeoff coloring
 - [x] GameOverScreen component (Motion): death watermark, slow letter-tick, staggered stats, "Party: Wiped." tagline
 - [x] Motion (framer-motion) v12 installed, animations.css for shared keyframes + corner brackets
-- [ ] Style pass on ZoneTokens (visual weight, spacing, damage feedback)
-- [ ] Style pass on ActionBar (tile sizing, selection panel)
-- [ ] Hit/damage feedback animations (screen shake, flash, floating numbers)
-- [ ] Death animation on zone tokens
-- [ ] Combat phase transitions (player phase / enemy phase banners)
-- [ ] Victory overlay before loot
+- [x] ZoneTokens: condition tints, attack swing, crit shake, active pulse, death animation, zone slide (layoutId)
+- [x] ActionBar: larger tiles, hover lift, slide-in/out on turn change, action pips
+- [x] Floating combat text: damage numbers, MISS, CRIT, IMMUNE, VULNERABLE!, RESISTED, heal
+- [x] Impact slash SVG overlay on hit, spell cast glow, defend shield icon, kill vignette
+- [x] Combat phase banners ("Player Phase" / "Enemy Phase" sweep)
+- [x] Victory overlay ("Victory!" + XP, 2.5s before loot)
+- [x] Enemy turn sequencing: async pulse → move → swing → damage → advance (abort signal pattern)
+- [x] Combat log keyword highlighting (damage types, conditions, crits)
+- [x] Zone layout atmospheric gradients
+- [x] Initiative bar HP indicators
+- [x] Game page fade-in (transition chain complete)
+- [x] All raw text-[Xpx] replaced with text-label-sm across 16 files
 
 ### Status Effect Animations (Phase 6 — case study showcase)
-- [ ] Animated treatments on ConditionList DetailItems (Motion)
-- [ ] Subtle token indicators (colored glow/tint per condition)
-- [ ] Reusable effect layer component
+- [x] Status effect pop-in/out with AnimatePresence (scale bounce)
+- [x] Token condition tints (burning=orange, frozen=blue, poisoned=green, etc.)
+- [x] CombatOverlays component as reusable effect layer (impact, defend, spell-cast, kill)
+
+### Balance Pass ✓
+- [x] Boss interval: 5 → 10 rooms
+- [x] XP thresholds: ~1/3 of standard 5e for roguelike pacing
+- [x] Floor tiers: smoother 6-tier curve (was 5)
+- [x] Dead characters excluded from initiative
+- [x] Cross-zone melee attacks prevented (reach-aware action selection)
 
 ### Ship
-- [ ] Playtest balance pass (floor 1-5 difficulty, XP curve, loot drops)
 - [ ] Deploy (Vercel)
 - [ ] Case study writeup
 - [ ] Demo video/recording

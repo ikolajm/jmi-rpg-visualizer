@@ -71,6 +71,7 @@ export function rollInitiative(party: Character[], enemies: Enemy[], enemyInitia
   const entries: CombatEntity[] = [];
 
   for (const char of party) {
+    if (!char.isAlive) continue;
     entries.push({
       type: 'character',
       id: char.id,

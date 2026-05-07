@@ -35,10 +35,10 @@ export function EquipmentCard({ slot, iconName, label, stats, note, acValue, cla
       <div className="flex flex-col gap-0.5 min-w-0 flex-1">
         <span className="text-body-sm font-medium text-on-surface truncate">{label}</span>
         {stats && (
-          <span className="text-[10px] text-on-surface-variant">{stats}</span>
+          <span className="text-label-sm text-on-surface-variant">{stats}</span>
         )}
         {note && (
-          <span className="text-[10px] text-on-surface-variant italic">{note}</span>
+          <span className="text-label-sm text-on-surface-variant italic">{note}</span>
         )}
       </div>
 

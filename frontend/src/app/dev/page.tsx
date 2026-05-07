@@ -10,10 +10,15 @@ import { generateLootChoices } from '@/data/loot-generator';
 import { GameIcon } from '@/components/atoms/GameIcon';
 import { Button } from '@/components/atoms/Button';
 import { InitiativeBar, ZoneLayout, ActionBar, GameLog, InspectSheet } from '@/components/game';
+import { RoomPreview } from '@/components/game/RoomPreview';
+import { LootScreen } from '@/components/game/LootScreen';
+import { LevelUpScreen } from '@/components/game/LevelUpScreen';
+import { RestScreen } from '@/components/game/RestScreen';
+import { GameOverScreen } from '@/components/game/GameOverScreen';
 import type { Character, Enemy, Zone, GamePhase } from '@/data/game-types';
 import type { LootItem } from '@/data/loot-generator';
 import { statMod } from '@/data/dice';
-import { awardXP, checkLevelUp, applyLevelUp, type LevelUpResult } from '@/data/progression';
+import { awardXP, checkLevelUp, applyLevelUp, XP_THRESHOLDS, type LevelUpResult } from '@/data/progression';
 import { useRest } from '@/hooks/useRest';
 import { applyCondition, makeEffectId, type GameCondition } from '@/data/status-effects';
 import { FLOOR_MODIFIERS } from '@/data/floor-modifiers';
@@ -78,13 +83,14 @@ function DevHarness() {
       setRoom(room);
       setPhase('rest');
     } else if (phaseId === 'level-up') {
-      // Force XP and apply level-ups
+      // Force level-up: repeatedly apply until all characters gain a level
       const results: LevelUpResult[] = [];
       for (const c of state.party) {
         if (!c.isAlive) continue;
-        updateCharacter(c.id, { xp: 300 });
-        const result = applyLevelUp({ ...c, xp: 300 });
-        updateCharacter(c.id, result.character);
+        // Give enough XP to guarantee next level, then apply
+        let char = { ...c, xp: (XP_THRESHOLDS[c.level + 1] || 999999) };
+        const result = applyLevelUp(char);
+        updateCharacter(c.id, { ...result.character, xp: char.xp });
         results.push(result);
       }
       setLevelUpResults(results);
@@ -161,10 +167,6 @@ function DevHarness() {
     setInspectId(id);
   }
 
-  const roomIcon = (type: string) => {
-    const map: Record<string, string> = { combat: 'combat', elite_combat: 'combat', boss: 'boss', rest: 'rest', treasure: 'treasure', trap: 'trap' };
-    return map[type] || 'combat';
-  };
 
   if (state.party.length === 0) {
     return <div className="flex items-center justify-center min-h-dvh bg-surface"><p className="text-body-md text-on-surface-variant">Loading...</p></div>;
@@ -275,155 +277,48 @@ function DevHarness() {
 
         {/* Room Preview */}
         {state.phase === 'room-preview' && state.currentRoom && (
-          <div className="flex flex-col items-center justify-center h-full gap-6 px-6">
-            <GameIcon category="room" name={roomIcon(state.currentRoom.type)} size="xl" className="text-primary" />
-            <h2 className="font-[family-name:var(--font-heading)] text-title-lg text-on-surface tracking-[0.1em] uppercase">
-              {state.currentRoom.type === 'elite_combat' ? 'Elite Combat' : state.currentRoom.type.replace('_', ' ')}
-            </h2>
-            <p className="text-body-md text-on-surface-variant text-center max-w-md italic">
-              {state.currentRoom.flavorText}
-            </p>
-            <p className="text-label-sm text-on-surface-variant">Floor {state.currentRoom.floor} · Room {state.currentRoom.roomNumber}</p>
-            <Button onClick={() => jumpTo('combat')}>Enter Room</Button>
-          </div>
+          <RoomPreview key={`room-${state.currentRoom.roomNumber}`} room={state.currentRoom} floorModifier={state.floorModifier} onEnter={() => jumpTo('combat')} />
         )}
 
         {/* Loot */}
-        {state.phase === 'loot' && (
-          <div className="flex flex-col items-center justify-center h-full gap-6 px-6">
-            <h2 className="font-[family-name:var(--font-heading)] text-title-lg text-primary tracking-[0.1em] uppercase">
-              Choose Your Loot
-            </h2>
-            <div className="flex gap-4 flex-wrap justify-center">
-              {lootChoices.map((item) => (
-                <button key={item.index} onClick={() => setSelectedLoot(item)}
-                  className={`flex flex-col items-start gap-2 p-4 rounded-card bg-surface-2 border-2 transition-colors w-52
-                    ${selectedLoot?.index === item.index ? 'border-primary' : 'border-outline-subtle hover:border-outline'}`}
-                >
-                  <span className="text-label-md text-on-surface-variant uppercase tracking-wider">{item.rarity}</span>
-                  <span className="text-body-md text-on-surface font-semibold">{item.name}</span>
-                  <span className="text-label-sm text-on-surface-variant capitalize">{item.category}</span>
-                  {item.damage && <span className="text-label-sm text-on-surface-variant">{item.damage} {item.damageType}</span>}
-                  {item.acBase !== undefined && <span className="text-label-sm text-on-surface-variant">AC {item.acBase}</span>}
-                </button>
-              ))}
-            </div>
-            {selectedLoot && (
-              <div className="flex gap-3 flex-wrap justify-center">
-                <p className="text-body-sm text-on-surface-variant w-full text-center">Assign to:</p>
-                {state.party.filter(c => c.isAlive).map(c => (
-                  <Button key={c.id} onClick={() => handleLootPick(selectedLoot, c.id)}>{c.name}</Button>
-                ))}
-              </div>
-            )}
-            <button onClick={() => { setLootChoices([]); setSelectedLoot(null); }}
-              className="text-label-md text-on-surface-variant hover:text-on-surface underline">Skip</button>
-          </div>
+        {state.phase === 'loot' && lootChoices.length > 0 && (
+          <LootScreen
+            choices={lootChoices}
+            party={state.party}
+            onPick={(item, charId) => { handleLootPick(item, charId); }}
+            onSkip={() => { setLootChoices([]); }}
+          />
         )}
 
         {/* Rest */}
         {state.phase === 'rest' && (
-          <div className="flex flex-col items-center justify-center h-full gap-6 px-6">
-            <GameIcon category="room" name="rest" size="xl" className="text-primary" />
-            <h2 className="font-[family-name:var(--font-heading)] text-title-lg text-on-surface tracking-[0.1em] uppercase">Rest</h2>
-            <p className="text-body-md text-on-surface-variant text-center max-w-md italic">
-              {state.currentRoom?.flavorText || 'A moment of respite.'}
-            </p>
-
-            <div className="flex gap-4 flex-wrap justify-center">
-              <button onClick={handleFullRest}
-                className="flex flex-col items-start gap-2 p-4 rounded-card bg-surface-2 border-2 border-outline-subtle hover:border-primary transition-colors w-56 text-left">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">Full Rest</span>
-                <span className="text-body-md text-on-surface font-semibold">Deep Recovery</span>
-                <ul className="text-label-sm text-on-surface-variant space-y-1">
-                  <li>Heal 50% max HP</li>
-                  <li>Restore all spell slots</li>
-                  <li>Reset all abilities</li>
-                </ul>
-              </button>
-
-              <button onClick={handleQuickRest}
-                className="flex flex-col items-start gap-2 p-4 rounded-card bg-surface-2 border-2 border-outline-subtle hover:border-primary transition-colors w-56 text-left">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">Quick Rest</span>
-                <span className="text-body-md text-on-surface font-semibold">Brief Respite</span>
-                <ul className="text-label-sm text-on-surface-variant space-y-1">
-                  <li>Heal 25% max HP</li>
-                  <li>Restore 1 spell slot</li>
-                  <li>Reset all abilities</li>
-                </ul>
-              </button>
-
-              <button onClick={handleTrain}
-                className="flex flex-col items-start gap-2 p-4 rounded-card bg-surface-2 border-2 border-outline-subtle hover:border-primary transition-colors w-56 text-left">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-error">Train</span>
-                <span className="text-body-md text-on-surface font-semibold">Hone Your Edge</span>
-                <ul className="text-label-sm text-on-surface-variant space-y-1">
-                  <li>No healing</li>
-                  <li>No spell slot restore</li>
-                  <li className="text-primary font-semibold">+3 primary stat until next rest</li>
-                </ul>
-              </button>
-            </div>
-          </div>
+          <RestScreen
+            flavorText={state.currentRoom?.flavorText}
+            onFullRest={handleFullRest}
+            onQuickRest={handleQuickRest}
+            onTrain={handleTrain}
+          />
         )}
 
         {/* Level-Up Recap */}
         {state.phase === 'level-up' && levelUpResults.length > 0 && (
-          <div className="flex flex-col items-center justify-center h-full gap-6 px-6">
-            <h2 className="font-[family-name:var(--font-heading)] text-title-lg text-primary tracking-[0.1em] uppercase">Level Up!</h2>
-            <div className="flex flex-col gap-4 w-full max-w-lg">
-              {levelUpResults.map((r) => {
-                const formatSpell = (s: string) => s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                return (
-                  <div key={r.character.id} className="flex items-start gap-3 p-4 rounded-card bg-surface-2">
-                    <GameIcon category="class" name={r.character.classIndex} size="lg" className="text-primary shrink-0 mt-0.5" />
-                    <div className="flex flex-col gap-1 flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-body-md font-semibold text-on-surface">{r.character.name}</span>
-                        <span className="text-label-sm text-primary">Level {r.newLevel}</span>
-                      </div>
-                      <span className="text-body-sm text-on-surface-variant">
-                        +{r.hpGained} HP ({r.character.maxHp - r.hpGained} → {r.character.maxHp})
-                      </span>
-                      {r.statBoost && (
-                        <span className="text-body-sm text-primary">+{r.statBoost.amount} {r.statBoost.stat}</span>
-                      )}
-                      {r.newFeatures.length > 0 && (
-                        <span className="text-body-sm text-on-surface-variant">New: {r.newFeatures.join(', ')}</span>
-                      )}
-                      {r.newSpells.length > 0 && (
-                        <span className="text-body-sm text-on-surface-variant">Spells: {r.newSpells.map(formatSpell).join(', ')}</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <Button onClick={handleLevelUpDismiss}>Continue</Button>
-          </div>
+          <LevelUpScreen results={levelUpResults} onContinue={handleLevelUpDismiss} />
         )}
 
         {/* Game Over */}
         {state.phase === 'game-over' && (
-          <div className="flex flex-col items-center justify-center h-full gap-6">
-            <GameIcon category="ui" name="death" size="xl" className="text-error" />
-            <h2 className="font-[family-name:var(--font-heading)] text-title-lg text-error tracking-[0.1em] uppercase">Total Party Kill</h2>
-            <div className="text-body-sm text-on-surface-variant text-center">
-              <p>Rooms cleared: {state.stats.roomsCleared}</p>
-              <p>Floor reached: {state.floor}</p>
-              <p>Enemies killed: {state.stats.enemiesKilled}</p>
-              <p>Damage dealt: {state.stats.totalDamageDealt}</p>
-              <p>Damage taken: {state.stats.totalDamageTaken}</p>
-            </div>
-            <Button onClick={() => window.location.href = '/draft'}>Try Again</Button>
-          </div>
+          <GameOverScreen
+            stats={state.stats}
+            floor={state.floor}
+            onRetry={() => window.location.href = '/draft'}
+          />
         )}
       </div>
 
       {/* ─── HUD Overlays ────────────────────────────────── */}
       <div className="absolute top-12 left-3 z-20">
         <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/50 backdrop-blur-sm">
-          <span className="font-[family-name:var(--font-heading)] text-[10px] tracking-[0.1em] uppercase text-primary">Party Wipe</span>
+          <span className="font-heading text-[10px] tracking-widest uppercase text-primary">Party Wipe</span>
           <span className="text-[10px] text-on-surface-variant">F{state.floor} · R{state.roomNumber}</span>
         </div>
       </div>

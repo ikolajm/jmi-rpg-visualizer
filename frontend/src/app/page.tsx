@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Logo } from '@/components/atoms/Logo';
+import { Button } from '@/components/atoms/Button';
 
 export default function TitleScreen() {
   const router = useRouter();
@@ -33,17 +34,13 @@ export default function TitleScreen() {
             </span>
           ))}
         </h1>
-        <p className="ts-tagline text-body-sm">Prepare to get wiped!</p>
+        <p className="ts-tagline text-body-sm">The dungeon awaits...</p>
       </div>
 
-      {/* Start button with breathing corner brackets */}
-      <button className="ts-button" onClick={handleStart} disabled={exiting}>
-        <span className="ts-corner ts-corner-tl" />
-        <span className="ts-corner ts-corner-tr" />
-        <span className="ts-corner ts-corner-bl" />
-        <span className="ts-corner ts-corner-br" />
-        <span className="ts-button-text text-body-md">BEGIN</span>
-      </button>
+      {/* Start button */}
+      <div className="ts-button">
+        <Button size="lg" onClick={handleStart} disabled={exiting}>Begin</Button>
+      </div>
     </div>
   );
 }

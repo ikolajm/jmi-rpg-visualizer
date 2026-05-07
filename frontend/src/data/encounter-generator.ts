@@ -153,7 +153,7 @@ export function generateEncounter(
     initiativeOrder,
     currentTurnIndex: 0,
     roundNumber: 1,
-    turnResources: { actionUsed: false, bonusActionUsed: false, movementUsed: false },
+    turnResources: { actionsRemaining: 1, bonusActionUsed: false, movementUsed: false },
     dodging: [],
     activeEffects: [],
     boundaries: { '1|2': null, '2|3': null },

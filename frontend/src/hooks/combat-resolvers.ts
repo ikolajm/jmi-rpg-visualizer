@@ -33,7 +33,6 @@ export interface AttackResult {
   enemyUpdates: { id: string; hp: number; isAlive: boolean } | null;
   effects: ActiveEffect[];
   effectsChanged: boolean;
-  actionConsumed: boolean;
 }
 
 export interface SpellResult {
@@ -83,12 +82,11 @@ export function resolvePlayerAttack(
   combat: CombatState,
   party: Character[],
   mods: CombatModifiers,
-  isExtraAttack: boolean,
 ): AttackResult {
   const logs: LogEntry[] = [];
   const target = combat.enemies.find(e => e.id === targetId);
   if (!target || !target.isAlive) {
-    return { logs, damage: 0, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false, actionConsumed: !isExtraAttack };
+    return { logs, damage: 0, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false };
   }
 
   const weapon = attacker.equipment.weapon;
@@ -127,11 +125,11 @@ export function resolvePlayerAttack(
   // Miss
   if (attackRoll === 1) {
     logs.push({ message: logNat1(attacker.name, target.name), type: 'combat' });
-    return { logs, damage: 0, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false, actionConsumed: !isExtraAttack };
+    return { logs, damage: 0, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false };
   }
   if (total < effectiveEnemyAC) {
     logs.push({ message: logAttackMiss(attacker.name, target.name, total, effectiveEnemyAC, tag), type: 'combat' });
-    return { logs, damage: 0, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false, actionConsumed: !isExtraAttack };
+    return { logs, damage: 0, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false };
   }
 
   // Hit — calculate damage
@@ -217,7 +215,6 @@ export function resolvePlayerAttack(
             enemyUpdates: { id: targetId, hp: updatedHp, isAlive: !bonusKill },
             effects: updatedEffects,
             effectsChanged: updatedEffects !== combat.activeEffects,
-            actionConsumed: !isExtraAttack,
           };
         }
       }
@@ -260,7 +257,6 @@ export function resolvePlayerAttack(
     enemyUpdates: { id: targetId, hp: newHp, isAlive: !isKill },
     effects: updatedEffects,
     effectsChanged: updatedEffects !== combat.activeEffects,
-    actionConsumed: !isExtraAttack,
   };
 }
 
@@ -279,7 +275,7 @@ export function resolveSpellDamage(
   const meta = spellMeta[spellIndex];
   const target = combat.enemies.find(e => e.id === targetId);
   if (!target || !meta?.damageType) {
-    return { logs, damage: 0, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false, actionConsumed: true };
+    return { logs, damage: 0, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false };
   }
 
   const name = spellIndex.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -293,7 +289,7 @@ export function resolveSpellDamage(
     isCrit = roll === 20; hit = roll !== 1 && (isCrit || total >= spellTargetAC);
     if (!hit) {
       logs.push({ message: logSpellMiss(caster.name, name, target.name, roll + spellAttackBonus, spellTargetAC), type: 'combat' });
-      return { logs, damage: 0, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false, actionConsumed: true };
+      return { logs, damage: 0, enemyUpdates: null, effects: combat.activeEffects, effectsChanged: false };
     }
   }
 
@@ -350,6 +346,5 @@ export function resolveSpellDamage(
     enemyUpdates: { id: targetId, hp: newHp, isAlive: !isKill },
     effects: updatedEffects,
     effectsChanged: updatedEffects !== combat.activeEffects,
-    actionConsumed: true,
   };
 }

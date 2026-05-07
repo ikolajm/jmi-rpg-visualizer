@@ -83,7 +83,7 @@ export function ZoneToken({
       <span className={cn(
         'text-label-sm font-semibold truncate w-full text-center leading-tight',
         isCharacter
-          ? 'font-[family-name:var(--font-heading)] tracking-[0.06em] text-on-surface'
+          ? 'font-heading tracking-wider text-on-surface'
           : 'text-error',
       )}>
         {name}

@@ -78,8 +78,6 @@ export interface Character {
     weapon: EquippedWeapon;
     armor: EquippedArmor | null;
     shield: boolean;
-    ring1: string | null;
-    ring2: string | null;
   };
   consumables: { id: string; name: string; quantity: number; effect: string; value: number }[];
 
@@ -188,7 +186,7 @@ export type CombatEntity = {
 };
 
 export interface TurnResources {
-  actionUsed: boolean;
+  actionsRemaining: number;  // 1 normally, 2 with Extra Attack, +1 from Action Surge
   bonusActionUsed: boolean;
   movementUsed: boolean;
 }

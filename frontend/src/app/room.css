@@ -1,0 +1,78 @@
+/* =========================================================
+   Room Preview (rp- namespace)
+   Choreographed entrance sequence:
+   1. Floor/Room progress — fades down       (0.0s)
+   2. Room icon — scales in with glow pulse  (0.3s)
+   3. Room name — letter-by-letter tick      (0.8s)
+   4. Flavor text — fades up                 (1.6s)
+   5. Floor modifier — fades up              (1.9s)
+   6. Enter button — fades in + brackets     (2.2s)
+   ========================================================= */
+
+.rp-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: var(--space-5);
+  padding: var(--space-6);
+}
+
+/* 1. Floor/Room progress */
+.rp-progress {
+  opacity: 0;
+  animation: anim-fade-down 0.5s ease-out 0.0s forwards;
+}
+
+/* 2. Icon — scale in then glow pulse */
+.rp-icon {
+  opacity: 0;
+  animation: anim-scale-in 0.6s ease-out 0.3s forwards;
+}
+.rp-icon--boss {
+  animation: anim-scale-in 0.6s ease-out 0.3s forwards,
+             anim-glow-pulse 2s ease-in-out 0.9s infinite;
+}
+.rp-icon--elite {
+  animation: anim-scale-in 0.6s ease-out 0.3s forwards,
+             anim-glow-pulse 3s ease-in-out 0.9s infinite;
+}
+
+/* 3. Room name — letter tick (same pattern as title screen) */
+.rp-heading {
+  font-family: var(--font-heading);
+  font-size: clamp(1.25rem, 4vw, 2rem);
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  display: flex;
+}
+
+.rp-letter {
+  opacity: 0;
+  display: inline-block;
+  animation: anim-letter-in 0.3s ease-out forwards;
+}
+
+/* 4. Flavor text */
+.rp-flavor {
+  opacity: 0;
+  text-align: center;
+  max-width: 28rem;
+  font-style: italic;
+  animation: anim-fade-up 0.5s ease-out 1.6s forwards;
+}
+
+/* 5. Floor modifier */
+.rp-modifier {
+  opacity: 0;
+  animation: anim-fade-up 0.5s ease-out 1.9s forwards;
+}
+
+/* 6. Enter button */
+.rp-enter {
+  position: relative;
+  opacity: 0;
+  animation: anim-fade-in 0.5s ease-out 2.2s forwards;
+}

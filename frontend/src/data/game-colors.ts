@@ -26,9 +26,9 @@ export const damageColors: Record<string, string> = {
   psychic:     '#d47fa8',
 
   // Physical
-  bludgeoning: '#9a9590',
-  piercing:    '#9a9590',
-  slashing:    '#9a9590',
+  bludgeoning: '#c4bdb8',
+  piercing:    '#c4bdb8',
+  slashing:    '#c4bdb8',
 
   // Positive
   healing:     '#d45b6e',

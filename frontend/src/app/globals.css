@@ -1,12 +1,16 @@
 @import "tailwindcss";
 @import "../tokens.css";
+@import "./animations.css";
 @import "./title.css";
+@import "./room.css";
 
 body {
   background: var(--surface);
   color: var(--on-surface);
   font-family: var(--font-body);
 }
+
+.font-heading { font-family: var(--font-heading); }
 
 ::selection {
   background: var(--primary-container);

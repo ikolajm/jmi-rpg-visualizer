@@ -88,8 +88,9 @@ export function ActionShape({ type, used = false, size = 'md', showLabel = false
 }
 
 /** Compact resource tracker row */
-export function ResourceTracker({ actionUsed, bonusUsed, moveUsed, spellSlotsTotal, spellSlotsUsed, className }: {
-  actionUsed: boolean;
+export function ResourceTracker({ actionsRemaining, actionsTotal, bonusUsed, moveUsed, spellSlotsTotal, spellSlotsUsed, className }: {
+  actionsRemaining: number;
+  actionsTotal: number;
   bonusUsed: boolean;
   moveUsed: boolean;
   spellSlotsTotal?: number;
@@ -98,7 +99,14 @@ export function ResourceTracker({ actionUsed, bonusUsed, moveUsed, spellSlotsTot
 }) {
   return (
     <div className={cn('flex items-center gap-4', className)}>
-      <ActionShape type="action" used={actionUsed} size="md" showLabel />
+      <span className="inline-flex items-center gap-1">
+        {Array.from({ length: actionsTotal }, (_, i) => (
+          <ActionShape key={i} type="action" used={i >= actionsRemaining} size="md" />
+        ))}
+        <span className={cn('text-[10px] font-medium ml-0.5', actionsRemaining <= 0 && 'opacity-40')} style={{ color: actionColors.action }}>
+          {actionsTotal > 1 ? `Actions` : `Action`}
+        </span>
+      </span>
       <ActionShape type="bonusAction" used={bonusUsed} size="md" showLabel />
       <span className={cn('inline-flex items-center gap-1', moveUsed && 'opacity-40')}>
         <svg width={14} height={14} viewBox="0 0 16 16" className="shrink-0">

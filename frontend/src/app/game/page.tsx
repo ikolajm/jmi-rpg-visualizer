@@ -16,6 +16,11 @@ import { rarityColors } from '@/data/game-colors';
 import { GameIcon } from '@/components/atoms/GameIcon';
 import { Button } from '@/components/atoms/Button';
 import { InitiativeBar, ZoneLayout, ActionBar, GameLog, InspectSheet } from '@/components/game';
+import { RoomPreview } from '@/components/game/RoomPreview';
+import { LootScreen } from '@/components/game/LootScreen';
+import { LevelUpScreen } from '@/components/game/LevelUpScreen';
+import { RestScreen } from '@/components/game/RestScreen';
+import { GameOverScreen } from '@/components/game/GameOverScreen';
 import type { Character, Enemy, Zone, RoomType } from '@/data/game-types';
 import type { LootItem } from '@/data/loot-generator';
 
@@ -26,7 +31,6 @@ export default function GamePage() {
   const [inspectId, setInspectId] = useState<string | null>(null);
   const [inspectType, setInspectType] = useState<'character' | 'enemy'>('character');
   const [lootChoices, setLootChoices] = useState<LootItem[]>([]);
-  const [selectedLoot, setSelectedLoot] = useState<LootItem | null>(null);
   const [levelUpResults, setLevelUpResults] = useState<LevelUpResult[]>([]);
   const { handleFullRest, handleQuickRest, handleTrain } = useRest({ onComplete: advanceRoom });
 
@@ -47,7 +51,7 @@ export default function GamePage() {
     if (shouldDropLoot(roomType)) {
       const choices = generateLootChoices(state.floor);
       setLootChoices(choices);
-      setSelectedLoot(null);
+
       setPhase('loot');
     } else {
       checkAndQueueLevelUps(updatedParty);
@@ -144,7 +148,7 @@ export default function GamePage() {
     } else if (room.type === 'treasure') {
       const choices = generateLootChoices(state.floor);
       setLootChoices(choices);
-      setSelectedLoot(null);
+
       setPhase('loot');
       addLog('The party finds treasure!', 'loot');
     }
@@ -200,13 +204,11 @@ export default function GamePage() {
     }
 
     setLootChoices([]);
-    setSelectedLoot(null);
     checkAndQueueLevelUps(state.party);
   }
 
   function handleSkipLoot() {
     setLootChoices([]);
-    setSelectedLoot(null);
     checkAndQueueLevelUps(state.party);
   }
 
@@ -229,11 +231,6 @@ export default function GamePage() {
     return <div className="flex items-center justify-center min-h-dvh bg-surface"><p className="text-body-md text-on-surface-variant">Loading party...</p></div>;
   }
 
-  const roomIcon = (type: RoomType) => {
-    const map: Record<string, string> = { combat: 'combat', elite_combat: 'combat', boss: 'boss', rest: 'rest', treasure: 'treasure', trap: 'trap' };
-    return map[type] || 'combat';
-  };
-
   return (
     <div className="relative h-dvh bg-surface overflow-hidden">
 
@@ -244,23 +241,7 @@ export default function GamePage() {
 
       {/* ─── Room Preview ────────────────────────────────── */}
       {state.phase === 'room-preview' && state.currentRoom && (
-        <div className="flex flex-col items-center justify-center h-full gap-6 px-6">
-          <GameIcon category="room" name={roomIcon(state.currentRoom.type)} size="xl" className="text-primary" />
-          <h2 className="font-[family-name:var(--font-heading)] text-title-lg text-on-surface tracking-[0.1em] uppercase">
-            {state.currentRoom.type === 'elite_combat' ? 'Elite Combat' : state.currentRoom.type.replace('_', ' ')}
-          </h2>
-          <p className="text-body-md text-on-surface-variant text-center max-w-md italic">
-            {state.currentRoom.flavorText}
-          </p>
-          {state.floorModifier && (
-            <div className="flex items-center gap-2 px-4 py-2 rounded-card bg-surface-2 border border-primary/30">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">Floor Effect</span>
-              <span className="text-body-sm text-on-surface font-semibold">{state.floorModifier.name}</span>
-              <span className="text-label-sm text-on-surface-variant">— {state.floorModifier.description}</span>
-            </div>
-          )}
-          <Button onClick={enterRoom}>Enter Room</Button>
-        </div>
+        <RoomPreview key={`room-${state.currentRoom.roomNumber}`} room={state.currentRoom} floorModifier={state.floorModifier} onEnter={enterRoom} />
       )}
 
       {state.phase === 'room-preview' && !state.currentRoom && (
@@ -268,176 +249,43 @@ export default function GamePage() {
       )}
 
       {/* ─── Loot ────────────────────────────────────────── */}
-      {state.phase === 'loot' && (
-        <div className="flex flex-col items-center justify-center h-full gap-6 px-6">
-          <h2 className="font-[family-name:var(--font-heading)] text-title-lg text-primary tracking-[0.1em] uppercase">
-            Choose Your Loot
-          </h2>
-          <div className="flex gap-4 flex-wrap justify-center">
-            {lootChoices.map((item) => {
-              const rarityColor = rarityColors[item.rarity.toLowerCase()] || rarityColors.common;
-              const isSelected = selectedLoot?.index === item.index;
-              return (
-                <button key={item.index}
-                  onClick={() => setSelectedLoot(item)}
-                  className={`flex flex-col items-start gap-2 p-4 rounded-card bg-surface-2 border-2 transition-colors w-56 text-left
-                    ${isSelected ? 'border-primary' : 'border-outline-subtle hover:border-outline'}`}
-                  style={isSelected ? undefined : { borderLeftColor: rarityColor, borderLeftWidth: 3 }}
-                >
-                  <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: rarityColor }}>
-                    {item.rarity} {item.category}
-                  </span>
-                  <span className="text-body-md text-on-surface font-semibold">{item.name}</span>
-                  {item.damage && (
-                    <span className="text-label-sm text-on-surface-variant">{item.damage} {item.damageType} damage</span>
-                  )}
-                  {item.acBase !== undefined && (
-                    <span className="text-label-sm text-on-surface-variant">AC {item.acBase}{item.acDexCap === undefined ? ' + DEX' : item.acDexCap > 0 ? ` + DEX (max ${item.acDexCap})` : ''}</span>
-                  )}
-                  {item.description && (
-                    <p className="text-[11px] text-on-surface-variant leading-relaxed line-clamp-3 mt-1">{item.description}</p>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-          {selectedLoot && (
-            <div className="flex gap-3 flex-wrap justify-center">
-              <p className="text-body-sm text-on-surface-variant w-full text-center">Assign to:</p>
-              {state.party.filter(c => c.isAlive).map(c => (
-                <Button key={c.id} onClick={() => handleLootPick(selectedLoot, c.id)}>
-                  {c.name}
-                </Button>
-              ))}
-            </div>
-          )}
-          <button onClick={handleSkipLoot} className="text-label-md text-on-surface-variant hover:text-on-surface underline">
-            Skip
-          </button>
-        </div>
+      {state.phase === 'loot' && lootChoices.length > 0 && (
+        <LootScreen
+          choices={lootChoices}
+          party={state.party}
+          onPick={handleLootPick}
+          onSkip={handleSkipLoot}
+        />
       )}
 
       {/* ─── Rest ────────────────────────────────────────── */}
       {state.phase === 'rest' && (
-        <div className="flex flex-col items-center justify-center h-full gap-6 px-6">
-          <GameIcon category="room" name="rest" size="xl" className="text-primary" />
-          <h2 className="font-[family-name:var(--font-heading)] text-title-lg text-on-surface tracking-[0.1em] uppercase">
-            Rest
-          </h2>
-          <p className="text-body-md text-on-surface-variant text-center max-w-md italic">
-            {state.currentRoom?.flavorText || 'A moment of respite.'}
-          </p>
-
-          <div className="flex gap-4 flex-wrap justify-center">
-            {/* Full Rest */}
-            <button
-              onClick={handleFullRest}
-              className="flex flex-col items-start gap-2 p-4 rounded-card bg-surface-2 border-2 border-outline-subtle hover:border-primary transition-colors w-56 text-left"
-            >
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">Full Rest</span>
-              <span className="text-body-md text-on-surface font-semibold">Deep Recovery</span>
-              <ul className="text-label-sm text-on-surface-variant space-y-1">
-                <li>Heal 50% max HP</li>
-                <li>Restore all spell slots</li>
-                <li>Reset all abilities</li>
-              </ul>
-            </button>
-
-            {/* Quick Rest */}
-            <button
-              onClick={handleQuickRest}
-              className="flex flex-col items-start gap-2 p-4 rounded-card bg-surface-2 border-2 border-outline-subtle hover:border-primary transition-colors w-56 text-left"
-            >
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">Quick Rest</span>
-              <span className="text-body-md text-on-surface font-semibold">Brief Respite</span>
-              <ul className="text-label-sm text-on-surface-variant space-y-1">
-                <li>Heal 25% max HP</li>
-                <li>Restore 1 spell slot</li>
-                <li>Reset all abilities</li>
-              </ul>
-            </button>
-
-            {/* Train */}
-            <button
-              onClick={handleTrain}
-              className="flex flex-col items-start gap-2 p-4 rounded-card bg-surface-2 border-2 border-outline-subtle hover:border-primary transition-colors w-56 text-left"
-            >
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-error">Train</span>
-              <span className="text-body-md text-on-surface font-semibold">Hone Your Edge</span>
-              <ul className="text-label-sm text-on-surface-variant space-y-1">
-                <li>No healing</li>
-                <li>No spell slot restore</li>
-                <li className="text-primary font-semibold">+3 primary stat until next rest</li>
-              </ul>
-            </button>
-          </div>
-        </div>
+        <RestScreen
+          flavorText={state.currentRoom?.flavorText}
+          onFullRest={handleFullRest}
+          onQuickRest={handleQuickRest}
+          onTrain={handleTrain}
+        />
       )}
 
       {/* ─── Level-Up Recap ─────────────────────────────── */}
       {state.phase === 'level-up' && levelUpResults.length > 0 && (
-        <div className="flex flex-col items-center justify-center h-full gap-6 px-6">
-          <h2 className="font-[family-name:var(--font-heading)] text-title-lg text-primary tracking-[0.1em] uppercase">
-            Level Up!
-          </h2>
-          <div className="flex flex-col gap-4 w-full max-w-lg">
-            {levelUpResults.map((r) => {
-              const formatSpell = (s: string) => s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-              return (
-                <div key={r.character.id} className="flex items-start gap-3 p-4 rounded-card bg-surface-2">
-                  <GameIcon category="class" name={r.character.classIndex} size="lg" className="text-primary shrink-0 mt-0.5" />
-                  <div className="flex flex-col gap-1 flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-body-md font-semibold text-on-surface">{r.character.name}</span>
-                      <span className="text-label-sm text-primary">Level {r.newLevel}</span>
-                    </div>
-                    <span className="text-body-sm text-on-surface-variant">
-                      +{r.hpGained} HP ({r.character.maxHp - r.hpGained} → {r.character.maxHp})
-                    </span>
-                    {r.statBoost && (
-                      <span className="text-body-sm text-primary">
-                        +{r.statBoost.amount} {r.statBoost.stat}
-                      </span>
-                    )}
-                    {r.newFeatures.length > 0 && (
-                      <span className="text-body-sm text-on-surface-variant">
-                        New: {r.newFeatures.join(', ')}
-                      </span>
-                    )}
-                    {r.newSpells.length > 0 && (
-                      <span className="text-body-sm text-on-surface-variant">
-                        Spells: {r.newSpells.map(formatSpell).join(', ')}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <Button onClick={handleLevelUpDismiss}>Continue</Button>
-        </div>
+        <LevelUpScreen results={levelUpResults} onContinue={handleLevelUpDismiss} />
       )}
 
       {/* ─── Game Over ───────────────────────────────────── */}
       {state.phase === 'game-over' && (
-        <div className="flex flex-col items-center justify-center h-full gap-6">
-          <GameIcon category="ui" name="death" size="xl" className="text-error" />
-          <h2 className="font-[family-name:var(--font-heading)] text-title-lg text-error tracking-[0.1em] uppercase">Total Party Kill</h2>
-          <div className="text-body-sm text-on-surface-variant text-center">
-            <p>Rooms cleared: {state.stats.roomsCleared}</p>
-            <p>Floor reached: {state.floor}</p>
-            <p>Enemies killed: {state.stats.enemiesKilled}</p>
-            <p>Damage dealt: {state.stats.totalDamageDealt}</p>
-            <p>Damage taken: {state.stats.totalDamageTaken}</p>
-          </div>
-          <Button onClick={() => window.location.href = '/draft'}>Try Again</Button>
-        </div>
+        <GameOverScreen
+          stats={state.stats}
+          floor={state.floor}
+          onRetry={() => window.location.href = '/draft'}
+        />
       )}
 
       {/* ─── HUD Overlays ────────────────────────────────── */}
       <div className="absolute top-3 left-3 z-20">
         <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/50 backdrop-blur-sm">
-          <span className="font-[family-name:var(--font-heading)] text-[10px] tracking-[0.1em] uppercase text-primary">Party Wipe</span>
+          <span className="font-heading text-[10px] tracking-widest uppercase text-primary">Party Wipe</span>
           <span className="text-[10px] text-on-surface-variant">F{state.floor} · R{state.roomNumber}</span>
         </div>
       </div>

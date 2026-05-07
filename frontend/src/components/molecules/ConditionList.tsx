@@ -73,7 +73,7 @@ export function ConditionList({ effects, className }: ConditionListProps) {
 
   return (
     <div className={className}>
-      <h4 className="text-label-md uppercase tracking-[0.08em] text-on-surface-variant mb-2">Active Conditions</h4>
+      <h4 className="text-label-md uppercase tracking-widest text-on-surface-variant mb-2">Active Conditions</h4>
       <div className="flex flex-col gap-2">
         {sorted.map(effect => {
           const info = CONDITION_INFO[effect.condition];

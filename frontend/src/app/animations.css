@@ -1,0 +1,72 @@
+/* =========================================================
+   Shared Animation Keyframes
+   Reusable across screens. Screen-specific choreography
+   (delays, sequences) lives in per-screen CSS files.
+   ========================================================= */
+
+/* ─── Entrance ────────────────────────────────────────────── */
+
+@keyframes anim-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes anim-fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes anim-fade-up {
+  from { opacity: 0; transform: translateY(var(--space-3)); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes anim-fade-down {
+  from { opacity: 0; transform: translateY(calc(-1 * var(--space-3))); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes anim-scale-in {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes anim-letter-in {
+  from { opacity: 0; transform: translateY(var(--space-2)); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Looping ─────────────────────────────────────────────── */
+
+@keyframes anim-glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 4px currentColor); opacity: 0.8; }
+  50% { filter: drop-shadow(0 0 16px currentColor); opacity: 1; }
+}
+
+/* ─── Corner Brackets (reusable component) ────────────────── */
+
+@keyframes anim-breathe {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.corner-bracket {
+  position: absolute;
+  width: var(--icon-1);
+  height: var(--icon-1);
+  border-color: var(--primary);
+  border-style: solid;
+  border-width: 0;
+  animation: anim-breathe 2s ease-in-out infinite;
+}
+
+.corner-bracket-tl { top: -2px; left: -2px; border-top-width: var(--bw-2); border-left-width: var(--bw-2); }
+.corner-bracket-tr { top: -2px; right: -2px; border-top-width: var(--bw-2); border-right-width: var(--bw-2); }
+.corner-bracket-bl { bottom: -2px; left: -2px; border-bottom-width: var(--bw-2); border-left-width: var(--bw-2); }
+.corner-bracket-br { bottom: -2px; right: -2px; border-bottom-width: var(--bw-2); border-right-width: var(--bw-2); }
+
+.corner-bracket-btn {
+  position: relative;
+  transition: transform 0.15s ease;
+}
+.corner-bracket-btn:hover { transform: scale(1.03); }
+.corner-bracket-btn:active { transform: scale(0.97); }

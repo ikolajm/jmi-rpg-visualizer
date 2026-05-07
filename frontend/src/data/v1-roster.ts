@@ -216,9 +216,14 @@ export const V1_CONSUMABLE_SET = new Set(V1_CONSUMABLES.map(c => c.index));
 // ─── Combat-Relevant Features (per class) ──────────────────────
 
 /** Features that mechanically affect zone combat. Everything else is hidden. */
+/**
+ * Features that mechanically fire in v1 zone combat.
+ * Excluded: fighting styles (AC hardcoded), cunning action (no dash/disengage),
+ * uncanny dodge / evasion (no reactions), arcane recovery (rest handles globally),
+ * sculpt spells (no friendly fire), potent cantrip (not wired), unarmored defense (AC hardcoded).
+ */
 export const V1_FEATURES: Record<string, Set<string>> = {
   fighter: new Set([
-    'fighter-fighting-style',     // L1: +1 AC in armor (Defense)
     'second-wind',                // L1: bonus action heal 1d10+level
     'action-surge-1-use',         // L2: extra action, 1/rest
     'improved-critical',          // L3: crit on 19-20
@@ -226,14 +231,8 @@ export const V1_FEATURES: Record<string, Set<string>> = {
   ]),
   rogue: new Set([
     'sneak-attack',               // L1: +Xd6 with advantage or ally in zone
-    'cunning-action',             // L2: bonus action dash/disengage
-    'uncanny-dodge',              // L5: reaction halve damage
-    'rogue-evasion',              // L7: DEX save success = 0 damage
   ]),
   wizard: new Set([
-    'arcane-recovery',            // L1: recover spell slots on rest
-    'sculpt-spells',              // L2: allies auto-save your evocation spells
-    'potent-cantrip',             // L6: cantrips deal half on save
     'empowered-evocation',        // L10: +INT mod to evocation damage
   ]),
   cleric: new Set([
@@ -243,17 +242,47 @@ export const V1_FEATURES: Record<string, Set<string>> = {
     'divine-strike',              // L8: +1d8 radiant on weapon attack
   ]),
   ranger: new Set([
-    'ranger-fighting-style',      // L2: fighting style
     'ranger-extra-attack',        // L5: 2 attacks per action
     'hunters-prey',               // L3: +1d8 on wounded target
   ]),
   barbarian: new Set([
     'rage',                       // L1: +2 damage, physical resistance
-    'barbarian-unarmored-defense', // L1: AC = 10 + DEX + CON
     'reckless-attack',            // L2: advantage on attacks, enemies get advantage
     'barbarian-extra-attack',     // L5: 2 attacks per action
     'brutal-critical-1-die',      // L9: extra die on crit
   ]),
+};
+
+// ─── Feature Combat Summaries ─────────────────────────────────
+
+/**
+ * Structured mechanical data for V1 features. The SRD only provides
+ * prose descriptions — this fills the gap with badge-friendly summaries.
+ * Keyed by feature index. Level-scaling features use a function.
+ */
+export interface FeatureCombatSummary {
+  badge: string | ((level: number) => string);
+  detail: string | ((level: number) => string);
+  type: 'attack' | 'defense' | 'heal' | 'utility';
+}
+
+export const V1_FEATURE_SUMMARIES: Record<string, FeatureCombatSummary> = {
+  'second-wind':              { badge: (lvl) => `Heal 1d10+${lvl}`, detail: (lvl) => `Bonus action: recover 1d10+${lvl} HP. Once per rest.`, type: 'heal' },
+  'action-surge-1-use':       { badge: 'Extra Action', detail: 'Bonus action: gain one additional action this turn. Once per rest.', type: 'utility' },
+  'improved-critical':        { badge: 'Crit on 19-20', detail: 'Your weapon attacks score a critical hit on a roll of 19 or 20.', type: 'attack' },
+  'extra-attack-1':           { badge: '2 Attacks', detail: 'You can attack twice per turn instead of once.', type: 'attack' },
+  'sneak-attack':             { badge: (lvl) => `Sneak +${Math.ceil(lvl / 2)}d6`, detail: (lvl) => `+${Math.ceil(lvl / 2)}d6 damage when you have advantage or an ally is in the target's zone.`, type: 'attack' },
+  'empowered-evocation':      { badge: '+INT to evocation', detail: 'Add your Intelligence modifier to evocation spell damage.', type: 'attack' },
+  'disciple-of-life':         { badge: '+2+lvl healing', detail: 'Your healing spells restore an extra 2 + spell level HP.', type: 'heal' },
+  'channel-divinity-preserve-life': { badge: '5×lvl HP pool', detail: (lvl) => `Bonus action: distribute ${lvl * 5} HP among wounded allies. Once per rest.`, type: 'heal' },
+  'blessed-healer':           { badge: 'Self-heal on heal', detail: 'When you heal an ally, you also recover 2 + spell level HP.', type: 'heal' },
+  'divine-strike':            { badge: '+1d8 radiant', detail: 'Once per turn, your weapon attack deals an extra 1d8 radiant damage.', type: 'attack' },
+  'ranger-extra-attack':      { badge: '2 Attacks', detail: 'You can attack twice per turn instead of once.', type: 'attack' },
+  'hunters-prey':             { badge: '+1d8 wounded', detail: 'Deal an extra 1d8 damage to targets below their max HP.', type: 'attack' },
+  'rage':                     { badge: '+2 melee dmg', detail: 'Bonus action: enter rage. +2 melee damage, resist physical damage. Uses limited per day.', type: 'attack' },
+  'reckless-attack':          { badge: 'Advantage (risky)', detail: 'Bonus action: gain advantage on attacks this turn, but enemies also gain advantage on you.', type: 'attack' },
+  'barbarian-extra-attack':   { badge: '2 Attacks', detail: 'You can attack twice per turn instead of once.', type: 'attack' },
+  'brutal-critical-1-die':    { badge: 'Extra crit die', detail: 'On a critical hit, roll one additional weapon damage die.', type: 'attack' },
 };
 
 // ─── Loot Tier Mapping ─────────────────────────────────────────

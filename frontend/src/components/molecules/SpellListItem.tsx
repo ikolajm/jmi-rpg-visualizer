@@ -62,7 +62,7 @@ export function SpellLevelHeader({ level, className }: { level: number | 'cantri
 
   return (
     <div className={cn('flex items-center gap-2 py-1', className)}>
-      <span className="text-[10px] uppercase tracking-[0.12em] font-semibold text-on-surface-variant">
+      <span className="text-[10px] uppercase tracking-widest font-semibold text-on-surface-variant">
         {label}
       </span>
       <div className="flex-1 h-px bg-outline-subtle" />

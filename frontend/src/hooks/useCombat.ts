@@ -19,7 +19,7 @@ import { getModifiers, hallowedHeal } from './combat-modifiers';
 import { getClericAuraBonus } from '@/data/zone-synergies';
 import { resolvePlayerAttack, resolveSpellDamage } from './combat-resolvers';
 import { executeEnemyTurn } from './enemy-turn';
-import type { Zone, CombatState, Enemy, BoundaryKey } from '@/data/game-types';
+import type { Zone, CombatState, Enemy, BoundaryKey, TurnResources } from '@/data/game-types';
 
 function getBoundaryKey(from: Zone, to: Zone): BoundaryKey | null {
   const low = Math.min(from, to);
@@ -120,21 +120,33 @@ export function useCombat(options: UseCombatOptions = {}) {
       }
     }
 
+    // Determine action count for next entity
+    let actions = 1;
+    if (nextEntity?.type === 'character') {
+      const nextChar = state.party.find(c => c.id === nextEntity.id);
+      if (nextChar?.features.includes('Extra Attack')) actions = 2;
+    }
+
     setCombat({
       ...combat,
       currentTurnIndex: nextIndex,
       roundNumber: nextIndex <= combat.currentTurnIndex ? combat.roundNumber + 1 : combat.roundNumber,
-      turnResources: { actionUsed: false, bonusActionUsed: false, movementUsed: false },
+      turnResources: { actionsRemaining: actions, bonusActionUsed: false, movementUsed: false },
       dodging: newDodging,
       activeEffects: tickedEffects,
       boundaries: cleanedBoundaries,
     });
   }
 
+  /** Build turnResources with one action spent */
+  function spendAction(): TurnResources {
+    return { ...state.combat!.turnResources, actionsRemaining: state.combat!.turnResources.actionsRemaining - 1 };
+  }
+
   function finishAction(combatUpdate: Partial<CombatState>) {
     if (!state.combat) return;
     const updated = { ...state.combat, ...combatUpdate } as CombatState;
-    if (updated.turnResources.actionUsed && updated.turnResources.movementUsed) advanceTurn(updated);
+    if (updated.turnResources.actionsRemaining <= 0 && updated.turnResources.movementUsed) advanceTurn(updated);
     else setCombat(updated);
   }
 
@@ -224,38 +236,20 @@ export function useCombat(options: UseCombatOptions = {}) {
   function handleAttack(targetId: string) {
     if (!activeCharacter || !state.combat) return;
 
-    function applyResult(result: ReturnType<typeof resolvePlayerAttack>) {
-      result.logs.forEach(l => addLog(l.message, l.type));
-      if (result.damage > 0) updateStats({ totalDamageDealt: state.stats.totalDamageDealt + result.damage });
-      if (result.enemyUpdates) {
-        const newEnemies = state.combat!.enemies.map(e =>
-          e.id === result.enemyUpdates!.id ? { ...e, hp: result.enemyUpdates!.hp, isAlive: result.enemyUpdates!.isAlive } : e
-        );
-        if (!result.enemyUpdates.isAlive) updateStats({ enemiesKilled: state.stats.enemiesKilled + 1 });
-        const combatUpdate: Partial<CombatState> = { enemies: newEnemies };
-        if (result.effectsChanged) combatUpdate.activeEffects = result.effects;
-        if (result.actionConsumed) {
-          finishAction({ ...combatUpdate, turnResources: { ...state.combat!.turnResources, actionUsed: true } });
-        } else {
-          setCombat({ ...state.combat!, ...combatUpdate });
-        }
-      } else if (result.actionConsumed) {
-        finishAction({ turnResources: { ...state.combat!.turnResources, actionUsed: true } });
-      }
-    }
+    const result = resolvePlayerAttack(activeCharacter, targetId, state.combat, state.party, mods);
+    result.logs.forEach(l => addLog(l.message, l.type));
+    if (result.damage > 0) updateStats({ totalDamageDealt: state.stats.totalDamageDealt + result.damage });
 
-    const hasExtraAttack = activeCharacter.features.includes('Extra Attack');
-    if (hasExtraAttack) {
-      const first = resolvePlayerAttack(activeCharacter, targetId, state.combat, state.party, mods, true);
-      applyResult(first);
-      setTimeout(() => {
-        if (!state.combat) return;
-        const second = resolvePlayerAttack(activeCharacter, targetId, state.combat, state.party, mods, false);
-        applyResult(second);
-      }, 100);
+    if (result.enemyUpdates) {
+      const newEnemies = state.combat.enemies.map(e =>
+        e.id === result.enemyUpdates!.id ? { ...e, hp: result.enemyUpdates!.hp, isAlive: result.enemyUpdates!.isAlive } : e
+      );
+      if (!result.enemyUpdates.isAlive) updateStats({ enemiesKilled: state.stats.enemiesKilled + 1 });
+      const combatUpdate: Partial<CombatState> = { enemies: newEnemies, turnResources: spendAction() };
+      if (result.effectsChanged) combatUpdate.activeEffects = result.effects;
+      finishAction(combatUpdate);
     } else {
-      const result = resolvePlayerAttack(activeCharacter, targetId, state.combat, state.party, mods, false);
-      applyResult(result);
+      finishAction({ turnResources: spendAction() });
     }
   }
 
@@ -287,7 +281,7 @@ export function useCombat(options: UseCombatOptions = {}) {
         updateCharacter(activeCharacter.id, { hp: selfNewHp });
         addLog(logHeal(activeCharacter.name, 'Blessed Healer', activeCharacter.name, selfHeal, activeCharacter.hp, selfNewHp), 'combat');
       }
-      finishAction({ turnResources: { ...state.combat.turnResources, actionUsed: true } });
+      finishAction({ turnResources: spendAction() });
       return;
     }
 
@@ -320,14 +314,14 @@ export function useCombat(options: UseCombatOptions = {}) {
         const effect: ActiveEffect = { id: makeEffectId(), name: 'Shield', condition: 'shielded', sourceId: activeCharacter.id, targetId: activeCharacter.id, turnsRemaining: 1, value: 5 };
         if (tryApply(effect, activeCharacter.name)) addLog(`${activeCharacter.name} raises a magical shield — +5 AC.`, 'combat');
       }
-      finishAction({ activeEffects: effects, turnResources: { ...state.combat.turnResources, actionUsed: true } });
+      finishAction({ activeEffects: effects, turnResources: spendAction() });
       return;
     }
 
     // ── Condition ────────────────────────────────────────
     if (castType === 'condition') {
       const target = state.combat.enemies.find(e => e.id === targetId);
-      if (!target) { finishAction({ turnResources: { ...state.combat.turnResources, actionUsed: true } }); return; }
+      if (!target) { finishAction({ turnResources: spendAction() }); return; }
 
       if (spellIndex === 'hold-person') {
         const saveRoll = rollD20() + statMod(target.stats.wis);
@@ -369,10 +363,10 @@ export function useCombat(options: UseCombatOptions = {}) {
         });
         addLog(`${activeCharacter.name} conjures Spike Growth — thorns shred enemies for ${totalDmg} piercing!`, 'combat');
         updateStats({ totalDamageDealt: state.stats.totalDamageDealt + totalDmg });
-        finishAction({ enemies: newEnemies, activeEffects: effects, turnResources: { ...state.combat.turnResources, actionUsed: true } });
+        finishAction({ enemies: newEnemies, activeEffects: effects, turnResources: spendAction() });
         return;
       }
-      finishAction({ activeEffects: effects, turnResources: { ...state.combat.turnResources, actionUsed: true } });
+      finishAction({ activeEffects: effects, turnResources: spendAction() });
       return;
     }
 
@@ -389,7 +383,7 @@ export function useCombat(options: UseCombatOptions = {}) {
       if (oldBoundary) addLog(`${name} erupts across the boundary, consuming ${oldBoundary.name}!`, 'combat');
       const newBoundaries = { ...state.combat.boundaries, [boundaryKey]: newBoundary };
       addLog(`${activeCharacter.name} conjures ${name} across the Zone ${boundaryKey.replace('|', '–')} boundary!`, 'combat');
-      finishAction({ boundaries: newBoundaries, turnResources: { ...state.combat.turnResources, actionUsed: true } });
+      finishAction({ boundaries: newBoundaries, turnResources: spendAction() });
       return;
     }
 
@@ -403,22 +397,22 @@ export function useCombat(options: UseCombatOptions = {}) {
           e.id === result.enemyUpdates!.id ? { ...e, hp: result.enemyUpdates!.hp, isAlive: result.enemyUpdates!.isAlive } : e
         );
         if (!result.enemyUpdates.isAlive) updateStats({ enemiesKilled: state.stats.enemiesKilled + 1 });
-        const combatUpdate: Partial<CombatState> = { enemies: newEnemies, turnResources: { ...state.combat.turnResources, actionUsed: true } };
+        const combatUpdate: Partial<CombatState> = { enemies: newEnemies, turnResources: spendAction() };
         if (result.effectsChanged) combatUpdate.activeEffects = result.effects;
         finishAction(combatUpdate);
       } else {
-        finishAction({ turnResources: { ...state.combat.turnResources, actionUsed: true } });
+        finishAction({ turnResources: spendAction() });
       }
       return;
     }
 
-    finishAction({ turnResources: { ...state.combat.turnResources, actionUsed: true } });
+    finishAction({ turnResources: spendAction() });
   }
 
   function handleDefend() {
     if (!activeCharacter || !state.combat) return;
     addLog(`${activeCharacter.name} braces for impact — dodging.`, 'combat');
-    finishAction({ dodging: [...state.combat.dodging, activeCharacter.id], turnResources: { ...state.combat.turnResources, actionUsed: true } });
+    finishAction({ dodging: [...state.combat.dodging, activeCharacter.id], turnResources: spendAction() });
   }
 
   function handleUseItem(itemId: string, targetId: string) {
@@ -434,7 +428,7 @@ export function useCombat(options: UseCombatOptions = {}) {
     newConsumables[idx] = { ...item, quantity: item.quantity - 1 };
     updateCharacter(activeCharacter.id, { consumables: newConsumables });
     addLog(logHeal(activeCharacter.name, item.name, target.name, heal, target.hp, newHp), 'combat');
-    finishAction({ turnResources: { ...state.combat.turnResources, actionUsed: true } });
+    finishAction({ turnResources: spendAction() });
   }
 
   function handleBonusAction(actionId: string) {
@@ -453,7 +447,7 @@ export function useCombat(options: UseCombatOptions = {}) {
     if (actionId === 'action-surge') {
       updateCharacter(activeCharacter.id, { featureUses: { ...activeCharacter.featureUses, 'action-surge': { ...activeCharacter.featureUses['action-surge'], used: activeCharacter.featureUses['action-surge'].used + 1 } } });
       addLog(`${activeCharacter.name} surges with renewed vigor — extra action!`, 'combat');
-      setCombat({ ...state.combat, turnResources: { ...state.combat.turnResources, actionUsed: false, bonusActionUsed: true } });
+      setCombat({ ...state.combat, turnResources: { ...state.combat.turnResources, actionsRemaining: state.combat.turnResources.actionsRemaining + 1, bonusActionUsed: true } });
       return;
     }
     if (actionId === 'reckless-attack') {

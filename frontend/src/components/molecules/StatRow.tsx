@@ -35,30 +35,41 @@ export function StatRow({ stats, proficientSaves = [], className }: StatRowProps
           <div
             key={key}
             className={cn(
-              'flex flex-col items-center gap-0.5 px-2 py-2 rounded-component min-w-[48px] transition-colors',
+              'flex flex-col items-center gap-0.5 px-2 py-2 rounded-component min-w-[48px] transition-colors relative',
               isProficient ? 'bg-primary-container' : 'bg-surface-2',
             )}
           >
-            <span className={cn(
-              'text-[10px] uppercase tracking-[0.1em]',
-              isProficient ? 'text-on-primary-container font-semibold' : 'text-on-surface-variant',
-            )}>
-              {key}
-            </span>
-            <div className="flex items-baseline gap-0.5">
+            {/* Ability label + proficiency dot */}
+            <div className="flex items-center gap-1">
+              {proficientSaves.length > 0 && (
+                <span className={cn(
+                  'size-1.5 rounded-full',
+                  isProficient ? 'bg-primary' : 'bg-outline-subtle',
+                )} />
+              )}
               <span className={cn(
-                'text-title-lg font-bold tabular-nums leading-none',
-                isProficient ? 'text-on-primary-container' : 'text-on-surface',
+                'text-[10px] uppercase tracking-widest',
+                isProficient ? 'text-on-primary-container font-semibold' : 'text-on-surface-variant',
               )}>
-                {stats[key]}
-              </span>
-              <span className={cn(
-                'text-[10px] font-medium tabular-nums',
-                isProficient ? 'text-primary' : 'text-on-surface-variant',
-              )}>
-                {mod(stats[key])}
+                {key}
               </span>
             </div>
+
+            {/* Modifier (primary) */}
+            <span className={cn(
+              'text-title-lg font-bold tabular-nums leading-none',
+              isProficient ? 'text-on-primary-container' : 'text-on-surface',
+            )}>
+              {mod(stats[key])}
+            </span>
+
+            {/* Raw score (secondary) */}
+            <span className={cn(
+              'text-[10px] tabular-nums',
+              isProficient ? 'text-primary/70' : 'text-on-surface-variant/60',
+            )}>
+              {stats[key]}
+            </span>
           </div>
         );
       })}

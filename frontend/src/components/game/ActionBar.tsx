@@ -62,7 +62,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
             <PanelSection label="Select Spell">
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2 py-1">
-                  <span className="text-[10px] uppercase tracking-[0.12em] font-semibold text-on-surface-variant">At Will</span>
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-on-surface-variant">At Will</span>
                   <div className="flex-1 h-px bg-outline-subtle" />
                 </div>
                 {[...character.spellcasting.cantrips].filter(isSpellCastable).sort().map((spell) => (
@@ -75,7 +75,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
                   return (
                     <>
                       <div className="flex items-center gap-2 py-1 mt-1">
-                        <span className="text-[10px] uppercase tracking-[0.12em] font-semibold text-on-surface-variant">Level I</span>
+                        <span className="text-[10px] uppercase tracking-widest font-semibold text-on-surface-variant">Level I</span>
                         <div className="flex-1 h-px bg-outline-subtle" />
                         <SpellSlotPips total={character.spellcasting!.slotsTotal} used={character.spellcasting!.slotsUsed} size="md" />
                       </div>
@@ -211,7 +211,8 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
       {/* Resource tracker */}
       <div className="rounded-t-component bg-black/50 backdrop-blur-sm px-4 py-1">
         <ResourceTracker
-          actionUsed={resources.actionUsed}
+          actionsRemaining={resources.actionsRemaining}
+          actionsTotal={character.features.includes('Extra Attack') ? 2 : 1}
           bonusUsed={resources.bonusActionUsed}
           moveUsed={resources.movementUsed}
           spellSlotsTotal={character.spellcasting?.slotsTotal}
@@ -222,12 +223,12 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
       {/* Action tiles row */}
       <div className="flex items-center gap-2 rounded-card bg-black/70 backdrop-blur-md border border-outline-subtle px-3 py-2">
         <ActionTile icon={<Swords className="size-6" />} label="Attack" color={actionColors.action}
-          active={mode === 'attack-target'} disabled={resources.actionUsed}
+          active={mode === 'attack-target'} disabled={resources.actionsRemaining <= 0}
           onClick={() => setMode(mode === 'attack-target' ? 'idle' : 'attack-target')} />
 
         {character.spellcasting && (
           <ActionTile icon={<Sparkles className="size-6" />} label="Cast" color={schoolColors.illusion}
-            active={mode === 'cast-select' || mode === 'cast-target'} disabled={resources.actionUsed}
+            active={mode === 'cast-select' || mode === 'cast-target'} disabled={resources.actionsRemaining <= 0}
             onClick={() => { setMode(mode === 'cast-select' ? 'idle' : 'cast-select'); setSelectedSpell(null); }} />
         )}
 
@@ -236,12 +237,12 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
           onClick={() => setMode(mode === 'move-target' ? 'idle' : 'move-target')} />
 
         <ActionTile icon={<Shield className="size-6" />} label="Defend" color={actionColors.action}
-          disabled={resources.actionUsed}
+          disabled={resources.actionsRemaining <= 0}
           onClick={() => { onDefend(); setMode('idle'); }} />
 
         {character.consumables.some(c => c.quantity > 0) && (
           <ActionTile icon={<GameIcon category="item" name="consumable-potion" size="lg" />} label="Item" color={resourceColors.spellSlot}
-            active={mode === 'item-select' || mode === 'item-target'} disabled={resources.actionUsed}
+            active={mode === 'item-select' || mode === 'item-target'} disabled={resources.actionsRemaining <= 0}
             onClick={() => { setMode(mode === 'item-select' ? 'idle' : 'item-select'); setSelectedItem(null); }} />
         )}
 
@@ -259,7 +260,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
         <button onClick={() => { setMode('idle'); onEndTurn(); }}
           className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-component bg-white/5 hover:bg-white/10 cursor-pointer transition-all">
           <SkipForward className="size-5 text-on-surface-variant" />
-          <span className="text-[9px] font-semibold text-on-surface-variant uppercase tracking-[0.06em]">End</span>
+          <span className="text-[9px] font-semibold text-on-surface-variant uppercase tracking-wider">End</span>
         </button>
       </div>
 
@@ -296,7 +297,7 @@ function ActionTile({ icon, label, color, active, disabled, onClick }: {
 function PanelSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-[10px] uppercase tracking-[0.1em] font-semibold text-on-surface-variant">{label}</span>
+      <span className="text-[10px] uppercase tracking-widest font-semibold text-on-surface-variant">{label}</span>
       {children}
     </div>
   );

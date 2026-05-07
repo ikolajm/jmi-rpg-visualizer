@@ -128,26 +128,47 @@
 - [x] Deleted orphaned files (loot-pool.ts, monster-actions.ts)
 - [x] Draft page: refactored weapon helpers to use V1_WEAPONS roster data (58 → 25 lines)
 
-### Strategy Depth (next session)
+### Strategy Depth ✓
 - [x] Enemy Intent — broadcast next action as icon above token (sword/flame/shield/arrow)
 - [x] Rest Choices — Full Rest (50% HP, all slots) / Quick Rest (25% HP, 1 slot) / Train (+3 primary stat, no heal)
 - [x] Weakness Stagger — vulnerability hit triggers CON save or 1-turn stagger (skip next action)
 - [x] Floor Modifiers — 8 modifiers (Darkness, Hallowed Ground, Blood Moon, Ironhide, Thin Veil, Echoing Halls, Blessed Winds, Unstable Ground), floor 1 clean
 - [x] Equipment On-Hit Effects — 5 magic weapons (Flame Tongue, Frost Brand, Venom Dagger, Holy Avenger, Thunderous Maul) with on-hit conditions/damage
-- [ ] All-Out Attack — group attack when all enemies in a zone are disabled
 - [x] Zone Synergies — flanking (+2 melee hit), cleric aura (+1 saves), ranger overwatch (+2 ranged dmg)
+- All-Out Attack — cut from v1 scope
+
+### Architecture Refactors ✓
+- [x] useCombat split: combat-resolvers.ts (pure), enemy-turn.ts (context), combat-modifiers.ts (helpers)
+- [x] useRest hook extracted for shared rest logic
+- [x] createCharacter factory extracted from GameProvider into character-factory.ts
+- [x] CharacterInspect unified with mode='draft'|'combat' — shared by draft + game pages
+- [x] Action economy: actionUsed boolean → actionsRemaining counter (Extra Attack = 2 discrete picks)
+- [x] Ring slots removed from Character type (cut from v1)
+- [x] V1_FEATURES trimmed to mechanically active only (9 dead features removed)
+- [x] V1_FEATURE_SUMMARIES: data-driven feature badges with badge + detail fields
+- [x] Token dogfooding: ~50 tracking values, 17 font declarations, 2 border vars cleaned up
+- [x] Physical damage color fixed for dark mode (#9a9590 → #c4bdb8)
 
 ### UI — Polish (Track 2)
-- [ ] Component-by-component visual polish (BG3/FF direction)
+- [x] Title screen: tagline updated ("The dungeon awaits..."), standard Button
+- [x] Draft page: role subtitles on class cards, drafted indicators, iconic HP/AC placards, fade-out transition
+- [x] Inspect sheets: modifier-primary StatRow, tactical ResistanceRow, section dividers, on-hit surfacing, slot-labeled Gear tab, Items tab separated, data-driven feature list
+- [x] Enemy inspect: AC beside HP, CR/XP inline, species icon on defenses, behavior badge on attacks
+- [x] RoomPreview component (Motion): watermark icon, letter-tick title, threat-level coloring, floor modifier briefing
+- [x] LootScreen component (Motion): chest watermark, card drop, selection → assignment with stat comparison
+- [x] LevelUpScreen component (Motion): letter-tick title, staggered character cards, sequential stat reveals
+- [x] RestScreen component (Motion): rest watermark, sanctuary title, 3 choice cards with tradeoff coloring
+- [x] GameOverScreen component (Motion): death watermark, slow letter-tick, staggered stats, "Party: Wiped." tagline
+- [x] Motion (framer-motion) v12 installed, animations.css for shared keyframes + corner brackets
 - [ ] Style pass on ZoneTokens (visual weight, spacing, damage feedback)
 - [ ] Style pass on ActionBar (tile sizing, selection panel)
-- [ ] Hit/damage feedback animations (screen shake, flash)
+- [ ] Hit/damage feedback animations (screen shake, flash, floating numbers)
 - [ ] Death animation on zone tokens
-- [ ] Keyword highlighting in descriptions
-- [ ] Title → draft → game transition animations
+- [ ] Combat phase transitions (player phase / enemy phase banners)
+- [ ] Victory overlay before loot
 
 ### Status Effect Animations (Phase 6 — case study showcase)
-- [ ] Animated treatments on ConditionList DetailItems (CSS/Motion.js)
+- [ ] Animated treatments on ConditionList DetailItems (Motion)
 - [ ] Subtle token indicators (colored glow/tint per condition)
 - [ ] Reusable effect layer component
 
@@ -182,39 +203,63 @@
 frontend/src/
 ├── app/
 │   ├── page.tsx              — title screen
-│   ├── draft/page.tsx        — party builder
+│   ├── draft/page.tsx        — party builder (shared CharacterInspect)
 │   ├── game/page.tsx         — main game loop (room → combat → loot → level → repeat)
-│   └── dev/page.tsx          — dev harness (jump to any phase)
+│   ├── dev/page.tsx          — dev harness (jump to any phase)
+│   ├── animations.css        — shared keyframes + corner bracket component
+│   ├── title.css             — title screen choreography
+│   └── room.css              — room preview choreography (partially superseded by Motion)
 ├── data/
-│   ├── game-types.ts         — Character, Enemy, CombatState, Room, GamePhase, etc.
+│   ├── game-types.ts         — Character, Enemy, CombatState, Room, GamePhase, FloorModifier, EnemyIntent, WeaponOnHit, etc.
+│   ├── character-factory.ts  — shared createCharacter from ClassBuild (used by GameProvider + draft)
 │   ├── classes.ts            — 6 ClassBuilds + casterProgression
 │   ├── dice.ts               — rollD20, rollDice, statMod
 │   ├── zones.ts              — zone distance, reach, movement
+│   ├── zone-synergies.ts     — flanking, cleric aura, ranger overwatch
 │   ├── spell-meta.ts         — [generated] 319 spells
 │   ├── spell-engine.ts       — cast type classification (damage/healing/condition/buff/utility)
 │   ├── feature-meta.ts       — [generated] class features by level
 │   ├── monster-pool.ts       — [generated] 304 monsters by CR
 │   ├── loot-pool.ts          — [generated] 153 loot items
-│   ├── status-effects.ts     — ActiveEffect system, condition helpers
+│   ├── status-effects.ts     — ActiveEffect system, condition helpers, staggered condition
+│   ├── enemy-intent.ts       — planIntents() for enemy action prediction
+│   ├── floor-modifiers.ts    — 8 floor modifiers + pickFloorModifier()
+│   ├── condition-descriptions.ts — ConditionInfo for 15 conditions including staggered
 │   ├── encounter-config.ts   — floor tiers, room weights, boss interval
-│   ├── encounter-generator.ts — monster selection, zone assignment
+│   ├── encounter-generator.ts — monster selection, zone assignment, initiative bonus
 │   ├── loot-config.ts        — rarity tiers, drop rates
-│   ├── loot-generator.ts     — loot roll + pick-1-of-3
+│   ├── loot-generator.ts     — loot roll + pick-1-of-3, onHit propagation
+│   ├── v1-roster.ts          — curated monsters/spells/equipment/features, V1_FEATURE_SUMMARIES, magic weapons
 │   ├── room-generator.ts     — procedural room selection + flavor text
-│   ├── progression.ts        — XP, level-up, LevelUpResult
+│   ├── progression.ts        — XP, level-up, LevelUpResult, PRIMARY_STAT
 │   ├── game-colors.ts        — damage, school, action, rarity, status colors
 │   ├── bonus-actions.ts      — bonus action definitions
 │   ├── consumables.ts        — potion/scroll definitions
 │   ├── weapon-helpers.ts     — icon lookup (legacy, used by draft page)
-│   ├── monster-actions.ts    — SRD action normalizer
 │   └── mock-combat.ts        — test scenario + rollInitiative
 ├── hooks/
-│   └── useCombat.ts          — combat logic, enemy AI, spell casting, status effects
+│   ├── useCombat.ts          — combat glue: state, turns, spells, movement, bonus actions
+│   ├── combat-resolvers.ts   — pure: player attack + spell damage resolution
+│   ├── enemy-turn.ts         — enemy AI: DoT, movement, target selection, attack resolution
+│   ├── combat-modifiers.ts   — floor modifier helpers (getModifiers, bloodMoonDamage, hallowedHeal)
+│   └── useRest.ts            — shared rest logic (Full/Quick/Train) with onComplete callback
 ├── components/
-│   ├── game/                 — ActionBar, ZoneLayout, InitiativeBar, GameLog, InspectSheet, CharacterInspect, EnemyInspect
-│   ├── molecules/            — DetailItem, FeatureItem, SpellListItem, AttackLine, + 13 others
+│   ├── game/
+│   │   ├── ActionBar.tsx     — turn action UI with actionsRemaining pips
+│   │   ├── ZoneLayout.tsx    — 3-zone grid with enemy intent display
+│   │   ├── InitiativeBar.tsx — turn order tracker
+│   │   ├── GameLog.tsx       — combat event log
+│   │   ├── InspectSheet.tsx  — sheet wrapper for character/enemy inspect
+│   │   ├── CharacterInspect.tsx — unified inspect (mode='draft'|'combat'), data-driven features
+│   │   ├── EnemyInspect.tsx  — enemy inspect with species defenses, behavior badges
+│   │   ├── RoomPreview.tsx   — Motion-powered room preview with watermark + letter-tick
+│   │   ├── LootScreen.tsx    — Motion-powered loot selection + stat comparison assignment
+│   │   ├── LevelUpScreen.tsx — Motion-powered staggered level-up reveals
+│   │   ├── RestScreen.tsx    — Motion-powered rest choices with tradeoff coloring
+│   │   └── GameOverScreen.tsx — Motion-powered game over with run stats + "Party: Wiped."
+│   ├── molecules/            — StatRow (modifier-primary), ResistanceRow (tactical grid), + 14 others
 │   ├── atoms/                — 55 design system atoms + GameIcon, Logo
-│   └── providers/            — GameProvider (state), ThemeProvider
+│   └── providers/            — GameProvider (state + setFloorModifier), ThemeProvider
 └── scripts/
     └── generate-game-data.mjs — SRD → typed TS (spells, features, monsters, loot)
 ```

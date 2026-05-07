@@ -46,10 +46,6 @@ export function EquipmentCard({ slot, iconName, label, stats, note, acValue, cla
         {acValue !== undefined && (
           <AcShield value={acValue} size="sm" />
         )}
-        <span className="inline-flex items-center gap-1 text-[10px] text-on-surface-variant">
-          {slotInfo.icon}
-          {slotInfo.label}
-        </span>
       </div>
     </div>
   );

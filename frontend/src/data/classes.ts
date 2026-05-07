@@ -57,7 +57,7 @@ export const classBuilds: ClassBuild[] = [
     name: 'Fighter',
     index: 'fighter',
     hitDie: 10,
-    role: 'Melee DPS / Tank',
+    role: 'Melee DPS',
     stats: { str: 15, dex: 12, con: 14, int: 8, wis: 13, cha: 10 },
     savingThrows: ['STR', 'CON'],
     // Chain Mail (AC 16) + Shield (+2) = 18
@@ -107,7 +107,7 @@ export const classBuilds: ClassBuild[] = [
     name: 'Wizard',
     index: 'wizard',
     hitDie: 6,
-    role: 'Ranged AoE / Control',
+    role: 'Ranged Crowd Control',
     stats: { str: 8, dex: 14, con: 13, int: 15, wis: 12, cha: 10 },
     savingThrows: ['INT', 'WIS'],
     // No armor (10 + DEX +2) = 12, but starts with Mage Armor spell → 13 + DEX = 15

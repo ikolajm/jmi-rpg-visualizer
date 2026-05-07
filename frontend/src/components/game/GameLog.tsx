@@ -46,7 +46,7 @@ export function GameLog() {
         <div className="mb-2 w-[320px] max-h-[360px] flex flex-col rounded-card bg-black/80 backdrop-blur-md border border-outline-subtle overflow-hidden animate-[fade-in_0.15s_ease-out]">
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-2 border-b border-outline-subtle">
-            <span className="text-label-sm font-semibold text-on-surface-variant uppercase tracking-[0.08em]">Combat Log</span>
+            <span className="text-label-sm font-semibold text-on-surface-variant uppercase tracking-widest">Combat Log</span>
             <button onClick={() => setExpanded(false)} className="text-on-surface-variant hover:text-on-surface cursor-pointer bg-transparent border-none">
               <X className="size-4" />
             </button>

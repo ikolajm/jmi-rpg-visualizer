@@ -1,5 +1,5 @@
 /**
- * Encounter Config — copied from engine/config/encounters.ts
+ * Encounter Config
  * Maps floor tiers to CR pools, enemy counts, and room type weights.
  */
 

@@ -1,5 +1,5 @@
 /**
- * Loot Config — copied from engine/config/loot.ts
+ * Loot Config
  * Maps floor tiers to item rarity pools, drop rates, and category weights.
  */
 

@@ -1,18 +1,19 @@
 # Engine Rules — V1
 
-Settled design decisions for the game engine. Reference during implementation.
+The mechanics the v1 engine actually implements. Reference for how combat, rest, death, and rolls behave as built.
 
 ---
 
 ## Resource Economy
 
 ### Rest Rooms
-- Restore HP (% of max, per V1-SPEC)
-- Restore **one** spell slot (not all) — prevents caster dominance over long runs
-- Class resources (Rage, Second Wind, Action Surge) refresh **every encounter** — these are balanced around 5e's "per short rest" and each room is a short rest boundary
+Rest rooms offer a three-way choice (`useRest.ts`):
+- **Full Rest** — heal 50% of max HP, restore all spell slots, reset feature uses
+- **Quick Rest** — heal 25% of max HP, restore one spell slot, reset feature uses
+- **Train** — +3 to each character's primary stat until the next rest; no healing
 
 ### Spell Slot Scarcity
-Casters must manage slots across multiple rooms between rest rooms. Cantrips are the fallback. This is intentional — it makes rest rooms valuable and loot scrolls/potions meaningful.
+Casters must manage slots across multiple rooms between rest rooms. Cantrips are the fallback. This is intentional — it makes the Full/Quick rest tradeoff matter and loot scrolls/potions meaningful.
 
 ---
 
@@ -26,12 +27,12 @@ Casters must manage slots across multiple rooms between rest rooms. Cantrips are
   - Cleric: Healing Word
   - Rogue: Cunning Action (Disengage, Dash, Hide)
   - Ranger: Hunter's Mark (when unlocked at level 2)
-- **Reaction** — Shield spell only (Wizard). Auto-prompt when Wizard is hit and has a spell slot available. No other reactions in v1 (no opportunity attacks).
+- **Reaction** — none. There is no reaction system in v1. The Shield spell is cast on the Wizard's turn as a buff action (+5 AC for one turn), not as a reaction.
 
 ### What's Skipped
 - Opportunity attacks
 - Ready action
-- Full reaction system beyond Shield
+- Reactions entirely (Shield is a normal buff action, not a reaction)
 - Object interaction as a separate category
 
 ---
@@ -52,8 +53,11 @@ Casters must manage slots across multiple rooms between rest rooms. Cantrips are
 - Barbarian Reckless Attack (against you): enemies have advantage = effectively your disadvantage
 - Long range attacks (adjacent zone attacking far zone — optional, discuss during playtesting)
 
-### No Flanking
-Flanking is a house rule, not core 5e. Sneak Attack's ally-in-zone condition covers the same tactical ground without needing positional tracking within a zone.
+### Zone Synergies
+Positioning rewards make zone placement tactically meaningful (`zone-synergies.ts`):
+- **Flanking** — when 2+ alive allies share the target's zone, melee attacks get +2 to hit
+- **Cleric Aura** — an alive cleric grants +1 on saves to allies in their zone (the cleric doesn't benefit from their own aura)
+- **Ranger Overwatch** — when a ranger is alone in their zone (no enemies present), their ranged attacks and spells get +2 damage
 
 ---
 
@@ -62,29 +66,20 @@ Flanking is a house rule, not core 5e. Sneak Attack's ally-in-zone condition cov
 **Tracked.** One concentration spell per caster at a time.
 
 - When a concentrating caster takes damage: CON save, DC = max(10, damage / 2)
-- On failure: spell ends, `concentrating` status effect removed
+- On failure: the maintained spell ends
 - Casting a new concentration spell automatically drops the previous one
-- UI: `concentrating` status effect shows a subtle aura glow on the placard
+- Tracked on the spell's own `ActiveEffect` (`turnsRemaining: -1`, keyed to `sourceId`); when concentration breaks, all effects from that source are removed via `removeBySource`. There is no separate `concentrating` badge — the maintained effect (e.g. Blessed on the target) is what's shown.
 
 This is load-bearing for balance. Without it, casters stack Bless + Spirit Guardians + Hold Person simultaneously and break the game.
 
 ---
 
-## Death & Ally Looting
+## Death
 
-### Death
 - 0 HP = dead. No death saves. Keeps stakes brutal and code simple.
 - Dead characters are removed from the initiative order.
 - Healing cannot revive dead characters (no Revivify/Raise Dead in v1).
-
-### Looting Dead Allies
-Two paths:
-
-1. **Mid-combat (costs an action):** If a living character is in the same zone as a dead ally, they can spend their Action to take one piece of equipment from the corpse (weapon, armor, or consumable).
-
-2. **Post-combat (free):** After a room clears, before pressing on to the next room, a screen shows dead allies' equipment. Players can freely reassign any gear to surviving characters.
-
-**Once you leave the post-combat screen, dead allies' remaining gear is lost permanently.**
+- Ally looting (taking a dead character's gear) was designed but not built for v1 — a dead character's equipment is simply gone.
 
 ---
 
@@ -99,14 +94,7 @@ When a Fighter reaches level 5, the Attack action allows two attacks per turn.
 
 ## Game State Persistence
 
-Save to **localStorage** after each room completes:
-- Party state (HP, equipment, spells, level, XP)
-- Floor number, room count
-- Run stats accumulator
-- Score history (top 10)
-
-On page load: check for saved state → offer to resume or start fresh.
-Mid-room state is NOT saved — if you close during combat, you restart that room.
+There is no run save/resume in v1 — a run is one sitting, and closing the tab ends it. The only persisted state is the theme preference (`localStorage`) and the draft selection handed from the draft page to the game page (`sessionStorage`, cleared on read).
 
 ---
 
@@ -171,53 +159,19 @@ The engine reads `damage_at_character_level` and selects the correct die for the
 
 ---
 
-## Ability Checks in Non-Combat Rooms
+## Non-Combat Rooms
 
-Non-combat rooms use ability checks to create decisions, not just passive outcomes.
+Trap rooms were cut from v1. The two non-combat room types are:
 
-### Trap Rooms
-Player chooses one character to act:
-- **DEX check** — dodge the trap (success: no damage, failure: full damage)
-- **INT check** — disarm the trap (success: no damage + small loot, failure: damage + trap triggers on party)
-- **WIS check** — spot it early (success: avoid entirely, failure: walk into it, disadvantage on the DEX dodge)
+- **Treasure rooms** — grant a guaranteed loot pick (1 of 3). No trap, no check.
+- **Rest rooms** — the Full / Quick / Train choice (see Resource Economy above).
 
-DC scales with floor tier. The character's ability modifier + proficiency (if applicable) matters.
-
-### Treasure Rooms
-Chest may be trapped:
-- **Investigation (INT) check** to detect the trap
-- If detected: choose to disarm (Thieves' Tools / DEX check) or trigger it knowingly
-- If not detected: trap triggers on open (saving throw to halve damage)
-- Loot quality is the same either way — the trap is a tax, not a gate
-
-### Rest Rooms
-Choice:
-- **Rest** — heal % of max HP + restore one spell slot (safe, guaranteed)
-- **Search** — ability check (WIS/INT) for bonus loot (success: heal + loot, failure: heal only, no loot)
-
-This makes stat spreads matter outside combat. A party with a high-INT Wizard and a high-WIS Cleric handles non-combat rooms differently than four melee bruisers.
+The "ability checks create non-combat decisions" design from earlier planning was not built — non-combat rooms are a loot pick or a rest choice.
 
 ---
 
 ## Critical Failures (Nat 1)
 
-**Tracked.** A natural 1 on an attack roll is an automatic miss with a fumble consequence.
+A natural 1 on an attack roll is an automatic miss, regardless of modifiers, with a flavor log line ("swings wildly … fumble!"). It applies to both player and enemy attacks.
 
-### Fumble effects (weighted random from a flavor pool)
-- **Stumble** — lose remaining movement this turn
-- **Wide swing** — weapon clatters, next attack at disadvantage
-- **Overextend** — one enemy in your zone gets a free basic attack against you
-- **Pulled muscle** — 1d4 self-damage (non-typed, can't be resisted)
-
-Fumble messages are drawn from a flavor text pool — randomized descriptions that make each fumble feel different even when the mechanical effect repeats. The flavor pool is a future session's work (batch out 20-30 per fumble type).
-
-### What nat 1 does NOT do
-- Does not break weapons
-- Does not hit allies (too punishing, not fun)
-- Does not stack with other penalties
-
-### Nat 1 on saving throws
-Auto-fail the save. No additional fumble — the spell/effect landing is punishment enough.
-
-### Nat 1 on ability checks
-Auto-fail. Flavor text only, no mechanical penalty beyond the failure itself.
+The weighted mechanical fumble effects originally designed (lose movement, disadvantage on the next attack, a free enemy attack, self-damage) were not built for v1 — a nat 1 is a plain auto-miss with flavor text.

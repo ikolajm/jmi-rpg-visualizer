@@ -2,7 +2,6 @@
 
 import { cn } from '@/components/atoms/cn';
 import { DamageIcon } from './DamageIcon';
-import { damageColors } from '@/data/game-colors';
 import { Shield, ShieldOff, ShieldAlert } from 'lucide-react';
 
 type ResistanceRowProps = {
@@ -32,13 +31,6 @@ function extractTypes(entries: string[]): Set<string> {
 }
 
 type Relationship = 'immune' | 'resistant' | 'vulnerable' | 'normal';
-
-const RELATIONSHIP_CONFIG: Record<Relationship, { label: string; bg: string; border: string; textClass: string }> = {
-  immune:     { label: 'Immune',     bg: 'bg-error/15',   border: 'border-error/40',   textClass: 'text-error' },
-  resistant:  { label: 'Resistant',  bg: 'bg-surface-3',  border: 'border-outline-subtle', textClass: 'text-on-surface-variant' },
-  vulnerable: { label: 'Vulnerable', bg: 'bg-warning/15', border: 'border-warning/40', textClass: 'text-warning' },
-  normal:     { label: 'Normal',     bg: 'bg-surface-2',  border: 'border-transparent', textClass: 'text-on-surface-variant/40' },
-};
 
 export function ResistanceRow({ resistances = [], immunities = [], vulnerabilities = [], className }: ResistanceRowProps) {
   const hasAny = resistances.length > 0 || immunities.length > 0 || vulnerabilities.length > 0;

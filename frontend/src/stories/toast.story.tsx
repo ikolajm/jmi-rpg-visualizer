@@ -1,6 +1,6 @@
 import { ToastProvider, ToastViewport, Toast, ToastTitle, ToastDescription, ToastAction, ToastClose } from '../components/atoms/Toast';
 import { Button } from '../components/atoms/Button';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 
 type ToastData = { id: number; variant: string; title: string; description: string };
 

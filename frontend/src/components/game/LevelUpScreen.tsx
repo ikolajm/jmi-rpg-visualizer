@@ -27,11 +27,6 @@ const titleLetter = {
   show: { opacity: 1, y: 0 },
 };
 
-const fadeIn = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { duration: 0.3 } },
-};
-
 function formatSpell(s: string) {
   return s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }

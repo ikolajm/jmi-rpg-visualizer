@@ -3,7 +3,6 @@
  */
 
 import { casterProgression, rangerSpellcasting, classBuilds } from './classes';
-import { V1_FEATURES } from './v1-roster';
 import { rollDice, statMod } from './dice';
 import type { Character } from './game-types';
 

@@ -12,9 +12,6 @@ import { awardXP, checkLevelUp, applyLevelUp, type LevelUpResult } from '@/data/
 import { useRest } from '@/hooks/useRest';
 import { pickFloorModifier } from '@/data/floor-modifiers';
 import { statMod } from '@/data/dice';
-import { rarityColors } from '@/data/game-colors';
-import { GameIcon } from '@/components/atoms/GameIcon';
-import { Button } from '@/components/atoms/Button';
 import { InitiativeBar, ZoneLayout, ActionBar, GameLog, InspectSheet } from '@/components/game';
 import { RoomPreview } from '@/components/game/RoomPreview';
 import { LootScreen } from '@/components/game/LootScreen';
@@ -26,11 +23,11 @@ import { CombatOverlays } from '@/components/game/CombatOverlays';
 import { PhaseBanner } from '@/components/game/PhaseBanner';
 import { VictoryOverlay } from '@/components/game/VictoryOverlay';
 import { AnimatePresence, motion } from 'motion/react';
-import type { Character, Enemy, Zone, RoomType } from '@/data/game-types';
+import type { Character, Enemy, Zone } from '@/data/game-types';
 import type { LootItem } from '@/data/loot-generator';
 
 export default function GamePage() {
-  const { state, initParty, setPhase, setRoom, setCombat, addLog, updateCharacter, updateStats, advanceRoom, setFloorModifier } = useGame();
+  const { state, initParty, setPhase, setRoom, setCombat, addLog, updateCharacter, advanceRoom, setFloorModifier } = useGame();
 
   const router = useRouter();
   const [inspectId, setInspectId] = useState<string | null>(null);

@@ -303,7 +303,6 @@ export function useCombat(options: UseCombatOptions = {}) {
       : spendAction();
 
     // Capture snapshot before async delay
-    const combat = state.combat;
     const caster = activeCharacter;
 
     // Spell cast glow before resolving

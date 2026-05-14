@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Heart, Shield } from 'lucide-react';
 import { classBuilds, type ClassBuild } from '@/data/classes';

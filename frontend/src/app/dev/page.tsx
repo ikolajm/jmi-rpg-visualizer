@@ -7,8 +7,6 @@ import { classBuilds } from '@/data/classes';
 import { generateRoom } from '@/data/room-generator';
 import { generateEncounter } from '@/data/encounter-generator';
 import { generateLootChoices } from '@/data/loot-generator';
-import { GameIcon } from '@/components/atoms/GameIcon';
-import { Button } from '@/components/atoms/Button';
 import { InitiativeBar, ZoneLayout, ActionBar, GameLog, InspectSheet } from '@/components/game';
 import { RoomPreview } from '@/components/game/RoomPreview';
 import { LootScreen } from '@/components/game/LootScreen';
@@ -21,7 +19,7 @@ import { PhaseBanner } from '@/components/game/PhaseBanner';
 import type { Character, Enemy, Zone, GamePhase } from '@/data/game-types';
 import type { LootItem } from '@/data/loot-generator';
 import { statMod } from '@/data/dice';
-import { awardXP, checkLevelUp, applyLevelUp, XP_THRESHOLDS, type LevelUpResult } from '@/data/progression';
+import { awardXP, applyLevelUp, XP_THRESHOLDS, type LevelUpResult } from '@/data/progression';
 import { useRest } from '@/hooks/useRest';
 import { applyCondition, makeEffectId, type GameCondition } from '@/data/status-effects';
 import { FLOOR_MODIFIERS } from '@/data/floor-modifiers';
@@ -37,12 +35,12 @@ const PHASES: { id: GamePhase | 'room-preview-boss'; label: string }[] = [
 ];
 
 function DevHarness() {
-  const { state, initParty, setPhase, setRoom, setCombat, addLog, updateCharacter, updateStats, advanceRoom, setFloorModifier } = useGame();
+  const { state, initParty, setPhase, setRoom, setCombat, addLog, updateCharacter, updateStats, setFloorModifier } = useGame();
   const [activePhase, setActivePhase] = useState<string>('room-preview');
   const [inspectId, setInspectId] = useState<string | null>(null);
   const [inspectType, setInspectType] = useState<'character' | 'enemy'>('character');
   const [lootChoices, setLootChoices] = useState<LootItem[]>([]);
-  const [selectedLoot, setSelectedLoot] = useState<LootItem | null>(null);
+  const [, setSelectedLoot] = useState<LootItem | null>(null);
   const [levelUpResults, setLevelUpResults] = useState<LevelUpResult[]>([]);
   const { handleFullRest, handleQuickRest, handleTrain } = useRest();
 
@@ -91,7 +89,7 @@ function DevHarness() {
       for (const c of state.party) {
         if (!c.isAlive) continue;
         // Give enough XP to guarantee next level, then apply
-        let char = { ...c, xp: (XP_THRESHOLDS[c.level + 1] || 999999) };
+        const char = { ...c, xp: (XP_THRESHOLDS[c.level + 1] || 999999) };
         const result = applyLevelUp(char);
         updateCharacter(c.id, { ...result.character, xp: char.xp });
         results.push(result);

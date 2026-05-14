@@ -3,9 +3,7 @@
 import { forwardRef } from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { X } from 'lucide-react';
 import { cn } from './cn';
-import { Button } from './Button';
 
 const dialogContentVariants = cva(
   'fixed left-1/2 top-1/2 z-[var(--z-modal)] w-full -translate-x-1/2 -translate-y-1/2 flex flex-col bg-surface-1 text-on-surface shadow-[var(--shadow-3)]',

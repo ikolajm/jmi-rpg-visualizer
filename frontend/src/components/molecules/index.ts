@@ -13,5 +13,5 @@ export { DamageIcon, DamageInline } from './DamageIcon';
 export { CreatureHeader } from './CreatureHeader';
 export { ResistanceRow } from './ResistanceRow';
 export { StatusStack, type StatusEffect } from './StatusStack';
-export { ActionShape, ResourceTracker } from './ActionShape';
+export { ResourceTracker } from './ActionShape';
 export { ZoneToken } from './ZoneToken';

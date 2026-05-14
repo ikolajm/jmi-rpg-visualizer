@@ -11,7 +11,7 @@ const FormFieldDemo = ({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) => {
       <FormField>
         <Label size={size}>Email address</Label>
         <Input size={size} placeholder="you@example.com" />
-        <HelperText size={size}>We\'ll never share your email.</HelperText>
+        <HelperText size={size}>We&apos;ll never share your email.</HelperText>
       </FormField>
 
       <FormField error>

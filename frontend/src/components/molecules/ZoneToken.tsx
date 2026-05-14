@@ -89,6 +89,7 @@ export function ZoneToken({
 
   // Pulse on becoming active
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- deliberate: re-keys the token to replay its activation pulse
     if (isActive && !isDead) setPulseKey(k => k + 1);
   }, [isActive, isDead]);
 

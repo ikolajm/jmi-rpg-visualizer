@@ -3,7 +3,7 @@
 import { motion } from 'motion/react';
 import { GameIcon } from '@/components/atoms/GameIcon';
 import { Button } from '@/components/atoms/Button';
-import type { Room, FloorModifier, RoomType } from '@/data/game-types';
+import type { Room, FloorModifier } from '@/data/game-types';
 
 const ROOM_CONFIG: Record<string, { icon: string; label: string; color: string; glowColor: string }> = {
   combat:       { icon: 'combat',   label: 'Encounter',            color: 'text-on-surface',  glowColor: 'var(--on-surface-variant)' },

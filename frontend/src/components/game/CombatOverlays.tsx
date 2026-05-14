@@ -17,10 +17,12 @@ function getTokenPosition(targetId: string): { x: number; y: number } | null {
 // ─── Impact Slash ────────────────────────────────────────────
 
 function ImpactSlash({ event }: { event: CombatFeedbackEvent }) {
+  // Roll the slash angle once per mount — before the early return so hook order
+  // stays stable; Math.random() can't run during a plain render.
+  const [rotation] = useState(() => -15 + Math.random() * 30);
   const pos = getTokenPosition(event.targetId);
   if (!pos) return null;
   const color = event.damageType ? (damageColors[event.damageType] || '#c4bdb8') : '#c4bdb8';
-  const rotation = -15 + Math.random() * 30;
 
   return (
     <motion.div

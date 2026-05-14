@@ -33,6 +33,7 @@ export function PhaseBanner() {
     }
 
     prevType.current = newType;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on turn/round, not the whole combat object, so the banner fires per turn change only
   }, [state.combat?.currentTurnIndex, state.combat?.roundNumber, state.phase]);
 
   return (

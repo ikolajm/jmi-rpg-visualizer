@@ -43,7 +43,7 @@ export function CombatFeedback() {
         let color: string;
         let text: string;
         let fontSize: string;
-        let isCrit = event.type === 'crit';
+        const isCrit = event.type === 'crit';
 
         if (event.type === 'miss' || event.type === 'immune' || event.type === 'vulnerable' || event.type === 'resisted') {
           const style = TYPE_STYLES[event.type];

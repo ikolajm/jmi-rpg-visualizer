@@ -1,5 +1,5 @@
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '../components/atoms/HoverCard';
-import { Avatar, AvatarImage, AvatarFallback } from '../components/atoms/Avatar';
+import { Avatar, AvatarFallback } from '../components/atoms/Avatar';
 
 const titleSize = { sm: 'text-title-sm', md: 'text-title-md', lg: 'text-title-lg' } as const;
 const bodySize = { sm: 'text-body-sm', md: 'text-body-md', lg: 'text-body-lg' } as const;

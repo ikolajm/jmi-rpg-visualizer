@@ -44,7 +44,7 @@ export const SPELL_CAST_TYPE: Record<string, SpellCastType> = {
   'bless': 'buff',              // +1d4 on attacks for up to 3 allies
   'hunters-mark': 'buff',       // +1d6 damage to marked target
   'shield-of-faith': 'buff',   // +2 AC to one ally
-  'shield': 'buff',            // +5 AC reaction (self)
+  'shield': 'buff',            // +5 AC for one turn (self)
 
   // ─── Utility (no combat engine support — hidden from cast menu) ──
   'spare-the-dying': 'utility',

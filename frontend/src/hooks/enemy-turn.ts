@@ -3,6 +3,12 @@
  *
  * Extracted from useCombat. Receives a context object with state + callbacks.
  * Handles: DoT, status skip, movement, target selection, attack/breath resolution.
+ *
+ * State threading: combat changes are accumulated on a single `workingCombat`
+ * object. Every setCombat / advanceTurn call uses workingCombat — never the
+ * stale turn-start `combat` snapshot — so mid-turn changes (enemy movement,
+ * applied conditions, woken sleepers, broken concentration) compound instead
+ * of clobbering each other.
  */
 
 import { rollD20, rollDice, statMod } from '@/data/dice';
@@ -47,6 +53,9 @@ export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
   const abort = ctx.abortSignal || { cancelled: false };
   const { combat, party, mods, addLog, updateCharacter, updateStats, setCombat, setPhase, advanceTurn } = ctx;
 
+  // Single source of truth for combat mutations this turn.
+  let workingCombat: CombatState = combat;
+
   const aliveChars = party.filter(c => c.isAlive);
   if (aliveChars.length === 0) { addLog('Total Party Kill!', 'death'); setPhase('game-over'); return; }
 
@@ -57,16 +66,16 @@ export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
     addLog(`${enemy.name} is ${effectName === 'Command' ? 'commanded' : effectName === 'Sleep' ? 'asleep' : effectName === 'Staggered' ? 'staggered' : 'paralyzed'} — skips turn.`, 'system');
     const { freed } = resolveEndOfTurnSaves(enemyEffects, enemy.stats);
     if (freed.length > 0) {
-      const newEffects = combat.activeEffects.filter(e => !freed.some(f => f.id === e.id));
+      const newEffects = workingCombat.activeEffects.filter(e => !freed.some(f => f.id === e.id));
       freed.forEach(f => addLog(logConditionFree(enemy.name, f.name), 'combat'));
-      setCombat({ ...combat, activeEffects: newEffects });
+      workingCombat = { ...workingCombat, activeEffects: newEffects };
+      setCombat(workingCombat);
     }
-    advanceTurn();
+    advanceTurn(workingCombat);
     return;
   }
 
   // ─── Turn-start DoT ─────────────────────────────────────
-  let updatedEnemiesForSG = combat.enemies;
   const dotEffects = combat.activeEffects.filter(e => e.damagePerTurn);
   for (const dot of dotEffects) {
     if (dot.condition === 'spiritGuarded') {
@@ -85,13 +94,16 @@ export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
       addLog(logDot(enemy.name, dot.name, dmg, dot.damageType || 'fire'), 'combat');
     }
     const newHp = Math.max(0, enemy.hp - dmg);
-    updatedEnemiesForSG = updatedEnemiesForSG.map(e => e.id === enemy.id ? { ...e, hp: newHp, isAlive: newHp > 0 } : e);
+    workingCombat = {
+      ...workingCombat,
+      enemies: workingCombat.enemies.map(e => e.id === enemy.id ? { ...e, hp: newHp, isAlive: newHp > 0 } : e),
+    };
     updateStats({ totalDamageDealt: ctx.stats.totalDamageDealt + dmg });
     if (newHp <= 0) {
       addLog(logDeath(enemy.name, dot.name), 'death');
       updateStats({ enemiesKilled: ctx.stats.enemiesKilled + 1 });
-      setCombat({ ...combat, enemies: updatedEnemiesForSG });
-      advanceTurn();
+      setCombat(workingCombat);
+      advanceTurn(workingCombat);
       return;
     }
   }
@@ -102,10 +114,9 @@ export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
   if (abort.cancelled) return;
 
   const behavior = enemy.behavior || 'melee-aggro';
-  let currentEnemy = updatedEnemiesForSG.find(e => e.id === enemy.id) || enemy;
-  let updatedEnemies = updatedEnemiesForSG;
+  let currentEnemy = workingCombat.enemies.find(e => e.id === enemy.id) || enemy;
 
-  if (behavior === 'passive') { advanceTurn(); return; }
+  if (behavior === 'passive') { advanceTurn(workingCombat); return; }
 
   const sameZone = aliveChars.filter(c => c.zone === currentEnemy.zone);
   const nearest = aliveChars.reduce((best, c) =>
@@ -133,13 +144,13 @@ export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
 
     if (bestMove) {
       const bKey = getBoundaryKey(currentEnemy.zone as Zone, bestMove);
-      const bEffect = bKey ? combat.boundaries[bKey] : null;
+      const bEffect = bKey ? workingCombat.boundaries[bKey] : null;
 
       if (bEffect?.blocksMovement) {
         addLog(`${currentEnemy.name} is blocked by ${bEffect.name} — impassable!`, 'combat');
       } else {
         currentEnemy = { ...currentEnemy, zone: bestMove };
-        updatedEnemies = updatedEnemies.map(e => e.id === currentEnemy.id ? currentEnemy : e);
+        workingCombat = { ...workingCombat, enemies: workingCombat.enemies.map(e => e.id === currentEnemy.id ? currentEnemy : e) };
         addLog(logMove(currentEnemy.name, zoneLabel(bestMove)), 'combat');
 
         if (bEffect?.damage) {
@@ -154,11 +165,12 @@ export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
           }
           const newHp = Math.max(0, currentEnemy.hp - dmg);
           currentEnemy = { ...currentEnemy, hp: newHp, isAlive: newHp > 0 };
-          updatedEnemies = updatedEnemies.map(e => e.id === currentEnemy.id ? currentEnemy : e);
+          workingCombat = { ...workingCombat, enemies: workingCombat.enemies.map(e => e.id === currentEnemy.id ? currentEnemy : e) };
           if (newHp <= 0) {
             addLog(logDeath(currentEnemy.name, bEffect.name), 'death');
-            setCombat({ ...combat, enemies: updatedEnemies });
-            advanceTurn(); return;
+            setCombat(workingCombat);
+            advanceTurn(workingCombat);
+            return;
           }
         }
       }
@@ -200,11 +212,11 @@ export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
       : (dcAction || rangedActions[0]);
   }
 
-  let killedThisTurn: string[] = [];
+  const killedThisTurn: string[] = [];
 
   if (!action?.toHit && !action?.saveDC) {
-    if (updatedEnemies !== combat.enemies) setCombat({ ...combat, enemies: updatedEnemies });
-    advanceTurn(); return;
+    advanceTurn(workingCombat);
+    return;
   }
 
   // ─── Save-based damage (breath weapons) ─────────────────
@@ -231,13 +243,7 @@ export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
         addLog('Total Party Kill!', 'death'); setPhase('game-over'); return;
       }
     }
-    if (updatedEnemies !== combat.enemies) {
-      const combatWithEnemies = { ...combat, enemies: updatedEnemies };
-      setCombat(combatWithEnemies);
-      advanceTurn(combatWithEnemies, killedThisTurn);
-    } else {
-      advanceTurn(undefined, killedThisTurn);
-    }
+    advanceTurn(workingCombat, killedThisTurn);
     return;
   }
 
@@ -247,9 +253,9 @@ export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
   if (abort.cancelled) return;
 
   // ─── Melee/ranged attack ────────────────────────────────
-  const targetEffectsForAtk = combat.activeEffects.filter(e => e.targetId === target.id);
-  const attackerEffectsForAtk = combat.activeEffects.filter(e => e.targetId === currentEnemy.id);
-  const isDodging = combat.dodging.includes(target.id);
+  const targetEffectsForAtk = workingCombat.activeEffects.filter(e => e.targetId === target.id);
+  const attackerEffectsForAtk = workingCombat.activeEffects.filter(e => e.targetId === currentEnemy.id);
+  const isDodging = workingCombat.dodging.includes(target.id);
   const targetIsReckless = target.statusEffects?.includes('reckless');
   const targetConditionAdv = hasAdvantageAgainst(targetEffectsForAtk);
   const enemyRangedDisadv = mods.darkness && action.reach === 'any';
@@ -295,9 +301,10 @@ export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
           turnsRemaining: condition === 'prone' ? 1 : condition === 'poisoned' ? 3 : -1,
           ...(condition !== 'prone' && condition !== 'poisoned' ? { saveDC: action.conditionDC, saveAbility: action.conditionSave } : {}),
         };
-        const { effects: newEffects, applied } = applyCondition(combat.activeEffects, effect);
+        const { effects: newEffects, applied } = applyCondition(workingCombat.activeEffects, effect);
         if (applied) {
-          setCombat({ ...combat, activeEffects: newEffects });
+          workingCombat = { ...workingCombat, activeEffects: newEffects };
+          setCombat(workingCombat);
           addLog(logConditionApplied(target.name, condition, saveInfo), 'combat');
         }
       } else {
@@ -307,24 +314,24 @@ export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
 
     // Wake unconscious
     if (damage > 0) {
-      const sleepEffect = combat.activeEffects.find(e => e.targetId === target.id && e.condition === 'unconscious');
+      const sleepEffect = workingCombat.activeEffects.find(e => e.targetId === target.id && e.condition === 'unconscious');
       if (sleepEffect) {
-        const newEffects = combat.activeEffects.filter(e => e.id !== sleepEffect.id);
-        setCombat({ ...combat, activeEffects: newEffects });
+        workingCombat = { ...workingCombat, activeEffects: workingCombat.activeEffects.filter(e => e.id !== sleepEffect.id) };
+        setCombat(workingCombat);
         addLog(`${target.name} jolts awake!`, 'combat');
       }
     }
 
     // Concentration breaking
     if (damage > 0) {
-      const concEffects = combat.activeEffects.filter(e => e.sourceId === target.id && e.turnsRemaining === -1);
+      const concEffects = workingCombat.activeEffects.filter(e => e.sourceId === target.id && e.turnsRemaining === -1);
       if (concEffects.length > 0 && target.isAlive) {
         const dc = Math.max(10, Math.floor(damage / 2));
         const conSave = rollD20() + statMod(target.stats.con);
         if (conSave < dc) {
-          const newEffects = combat.activeEffects.filter(e => e.sourceId !== target.id || e.turnsRemaining !== -1);
+          workingCombat = { ...workingCombat, activeEffects: workingCombat.activeEffects.filter(e => e.sourceId !== target.id || e.turnsRemaining !== -1) };
           addLog(`${target.name}'s concentration shatters! (CON ${conSave} vs DC ${dc})`, 'combat');
-          setCombat({ ...combat, activeEffects: newEffects });
+          setCombat(workingCombat);
         }
       }
     }
@@ -344,11 +351,5 @@ export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
   await delay(400);
   if (abort.cancelled) return;
 
-  if (updatedEnemies !== combat.enemies) {
-    const combatWithEnemies = { ...combat, enemies: updatedEnemies };
-    setCombat(combatWithEnemies);
-    advanceTurn(combatWithEnemies, killedThisTurn);
-  } else {
-    advanceTurn(undefined, killedThisTurn);
-  }
+  advanceTurn(workingCombat, killedThisTurn);
 }

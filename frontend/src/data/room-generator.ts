@@ -2,7 +2,7 @@
  * Room Generator — procedural room selection for dungeon progression.
  */
 
-import { roomTypeWeights, BOSS_INTERVAL, getFloorTier } from './encounter-config';
+import { roomTypeWeights, BOSS_INTERVAL } from './encounter-config';
 import type { Room, RoomType } from './game-types';
 
 const flavorTexts: Record<RoomType, string[][]> = {
@@ -57,7 +57,6 @@ export function generateRoom(floor: number, roomNumber: number): Room {
   const isBoss = roomNumber > 0 && roomNumber % BOSS_INTERVAL === 0;
   const type: RoomType = isBoss ? 'boss' : rollWeightedRoomType();
 
-  const tier = getFloorTier(floor);
   const tierIndex = Math.min(
     Math.floor((floor - 1) / 5),
     flavorTexts[type].length - 1,

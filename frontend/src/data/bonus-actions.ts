@@ -63,7 +63,7 @@ export function getBonusActions(char: Character): BonusActionOption[] {
       actions.push({
         id: 'rage',
         name: 'Rage',
-        description: '+2 melee damage, resist physical',
+        description: '+2 melee damage (+3 at L9), resist physical',
         available: !isRaging && uses.used < uses.max,
         reason: isRaging ? 'Already raging' : uses.used >= uses.max ? 'No rages remaining' : undefined,
       });

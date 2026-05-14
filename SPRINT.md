@@ -9,7 +9,7 @@
 
 ### Data Pipeline
 - [x] 26 SRD datasets typed and seeded (monsters, spells, equipment, classes, features, levels, magic items, conditions, all reference tables)
-- [x] `generate-game-data.mjs` outputs 4 typed files: spell-meta (319), feature-meta (71), monster-pool (304 by CR), loot-pool (153 items)
+- [x] `generate-game-data.mjs` outputs 3 typed files: spell-meta (319), feature-meta (71), monster-pool (304 by CR). Loot comes from the curated `v1-roster.ts` + `loot-generator.ts`, not a generated pool.
 - [x] Zone range mapping (SRD range → melee/adjacent/any)
 - [x] Monster AI classifier (6 behaviors: melee-aggro, flexible, caster, boss, boss-caster, passive)
 
@@ -232,7 +232,6 @@ frontend/src/
 │   ├── spell-engine.ts       — cast type classification (damage/healing/condition/buff/utility)
 │   ├── feature-meta.ts       — [generated] class features by level
 │   ├── monster-pool.ts       — [generated] 304 monsters by CR
-│   ├── loot-pool.ts          — [generated] 153 loot items
 │   ├── status-effects.ts     — ActiveEffect system, condition helpers, staggered condition
 │   ├── enemy-intent.ts       — planIntents() for enemy action prediction
 │   ├── floor-modifiers.ts    — 8 floor modifiers + pickFloorModifier()

@@ -15,7 +15,7 @@ import type { Zone } from '@/data/game-types';
 
 export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction, onMove, onEndTurn }: {
   onAttack: (targetId: string) => void;
-  onCast: (spellIndex: string, targetId: string) => void;
+  onCast: (spellIndex: string, targetId: string, asBonusAction?: boolean) => void;
   onDefend: () => void;
   onUseItem: (itemId: string, targetId: string) => void;
   onBonusAction: (action: string, targetId?: string) => void;
@@ -26,6 +26,9 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
   const [mode, setMode] = useState<'idle' | 'attack-target' | 'cast-select' | 'cast-target' | 'item-select' | 'item-target' | 'bonus-select' | 'move-target'>('idle');
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [selectedSpell, setSelectedSpell] = useState<string | null>(null);
+  // True when the active cast was launched from the Bonus Action menu
+  // (Healing Word, Hunter's Mark) — spends the bonus action, not the action.
+  const [castingAsBonus, setCastingAsBonus] = useState(false);
 
   const currentEntity = state.combat?.initiativeOrder[state.combat.currentTurnIndex];
   const character = currentEntity?.type === 'character'
@@ -66,7 +69,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
                   <div className="flex-1 h-px bg-outline-subtle" />
                 </div>
                 {[...character.spellcasting.cantrips].filter(isSpellCastable).sort().map((spell) => (
-                  <SpellRow key={spell} spell={spell} available onClick={() => { setSelectedSpell(spell); setMode('cast-target'); }} />
+                  <SpellRow key={spell} spell={spell} available onClick={() => { setSelectedSpell(spell); setCastingAsBonus(false); setMode('cast-target'); }} />
                 ))}
                 {(() => {
                   const castableSlotSpells = [...character.spellcasting.preparedSpells].filter(isSpellCastable).sort();
@@ -81,7 +84,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
                       </div>
                       {castableSlotSpells.map((spell) => (
                         <SpellRow key={spell} spell={spell} available={hasSlots}
-                          onClick={() => { if (hasSlots) { setSelectedSpell(spell); setMode('cast-target'); } }}>
+                          onClick={() => { if (hasSlots) { setSelectedSpell(spell); setCastingAsBonus(false); setMode('cast-target'); } }}>
                           {!hasSlots && <span className="text-label-sm text-error">No slots</span>}
                         </SpellRow>
                       ))}
@@ -110,7 +113,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
                     const existing = state.combat!.boundaries[key];
                     return (
                       <TargetButton key={key} variant="ally"
-                        onClick={() => { onCast(selectedSpell, key); setMode('idle'); setSelectedSpell(null); }}
+                        onClick={() => { onCast(selectedSpell, key, castingAsBonus); setMode('idle'); setSelectedSpell(null); setCastingAsBonus(false); }}
                         icon={<span className="text-lg">🔥</span>}
                         name={`Zone ${a} | Zone ${b}`}
                         detail={existing ? `${existing.name} (replace)` : 'Empty'} />
@@ -118,7 +121,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
                   })}
                   {targetsAllies && state.party.filter(c => c.isAlive).map((ally) => (
                     <TargetButton key={ally.id} variant="ally"
-                      onClick={() => { onCast(selectedSpell, ally.id); setMode('idle'); setSelectedSpell(null); }}
+                      onClick={() => { onCast(selectedSpell, ally.id, castingAsBonus); setMode('idle'); setSelectedSpell(null); setCastingAsBonus(false); }}
                       icon={<GameIcon category="class" name={ally.classIndex} size="lg" className="text-primary" />}
                       name={ally.name} detail={`${ally.hp}/${ally.maxHp} HP`} />
                   ))}
@@ -127,7 +130,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
                     if (targets.length === 0) return <EmptyHint>No targets in range</EmptyHint>;
                     return targets.map((e) => (
                       <TargetButton key={e.id} variant="enemy"
-                        onClick={() => { onCast(selectedSpell, e.id); setMode('idle'); setSelectedSpell(null); }}
+                        onClick={() => { onCast(selectedSpell, e.id, castingAsBonus); setMode('idle'); setSelectedSpell(null); setCastingAsBonus(false); }}
                         icon={<GameIcon category="monster" name={e.type} size="lg" className="text-error" />}
                         name={e.name} detail={`${e.hp}/${e.maxHp} HP`} />
                     ));
@@ -175,7 +178,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
                   <button key={ba.id}
                     onClick={() => {
                       if (!ba.available) return;
-                      if (ba.id === 'healing-word') { setSelectedSpell('healing-word'); setMode('cast-target'); }
+                      if (ba.id === 'healing-word' || ba.id === 'hunters-mark') { setSelectedSpell(ba.id); setCastingAsBonus(true); setMode('cast-target'); }
                       else { onBonusAction(ba.id); setMode('idle'); }
                     }}
                     disabled={!ba.available}
@@ -229,7 +232,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
         {character.spellcasting && (
           <ActionTile icon={<Sparkles className="size-6" />} label="Cast" color={schoolColors.illusion}
             active={mode === 'cast-select' || mode === 'cast-target'} disabled={resources.actionsRemaining <= 0}
-            onClick={() => { setMode(mode === 'cast-select' ? 'idle' : 'cast-select'); setSelectedSpell(null); }} />
+            onClick={() => { setMode(mode === 'cast-select' ? 'idle' : 'cast-select'); setSelectedSpell(null); setCastingAsBonus(false); }} />
         )}
 
         <ActionTile icon={<ArrowRight className="size-6" />} label="Move" color={actionColors.free}

@@ -105,7 +105,7 @@ export function useCombat(options: UseCombatOptions = {}) {
     });
     tickedEffects = tickEffects(tickedEffects);
 
-    let cleanedBoundaries = { ...combat.boundaries };
+    const cleanedBoundaries = { ...combat.boundaries };
     const allDeadIds = new Set([...deadCharIds, ...deadEnemyIds, ...(killedIds || [])]);
     for (const key of ['1|2', '2|3'] as BoundaryKey[]) {
       if (cleanedBoundaries[key] && allDeadIds.has(cleanedBoundaries[key]!.sourceId)) {
@@ -175,6 +175,7 @@ export function useCombat(options: UseCombatOptions = {}) {
 
     // DoT at turn start
     const dotEffects = charEffects.filter(e => e.damagePerTurn);
+    let charDied = false;
     if (dotEffects.length > 0) {
       for (const dot of dotEffects) {
         const dmg = rollDice(dot.damagePerTurn!);
@@ -188,9 +189,14 @@ export function useCombat(options: UseCombatOptions = {}) {
           if (state.party.filter(c => c.isAlive && c.id !== char.id).length === 0) {
             addLog('Total Party Kill!', 'death'); setPhase('game-over'); return;
           }
+          charDied = true;
+          break;
         }
       }
     }
+
+    // DoT killed the active character (not a TPK) — skip their turn
+    if (charDied) { advanceTurn(undefined, [char.id]); return; }
 
     if (!shouldSkipTurn(charEffects)) return;
 
@@ -286,9 +292,15 @@ export function useCombat(options: UseCombatOptions = {}) {
     }
   }
 
-  async function handleCast(spellIndex: string, targetId: string) {
+  async function handleCast(spellIndex: string, targetId: string, asBonusAction = false) {
     if (!activeCharacter || !state.combat || !activeCharacter.spellcasting) return;
     const meta = spellMeta[spellIndex]; if (!meta) return;
+
+    // Bonus-action spells (Healing Word, Hunter's Mark) spend the bonus action,
+    // not the turn's action.
+    const castResources = (): TurnResources => asBonusAction
+      ? { ...state.combat!.turnResources, bonusActionUsed: true }
+      : spendAction();
 
     // Capture snapshot before async delay
     const combat = state.combat;
@@ -323,7 +335,7 @@ export function useCombat(options: UseCombatOptions = {}) {
         updateCharacter(activeCharacter.id, { hp: selfNewHp });
         addLog(logHeal(activeCharacter.name, 'Blessed Healer', activeCharacter.name, selfHeal, activeCharacter.hp, selfNewHp), 'combat');
       }
-      finishAction({ turnResources: spendAction() });
+      finishAction({ turnResources: castResources() });
       return;
     }
 
@@ -356,14 +368,14 @@ export function useCombat(options: UseCombatOptions = {}) {
         const effect: ActiveEffect = { id: makeEffectId(), name: 'Shield', condition: 'shielded', sourceId: activeCharacter.id, targetId: activeCharacter.id, turnsRemaining: 1, value: 5 };
         if (tryApply(effect, activeCharacter.name)) addLog(`${activeCharacter.name} raises a magical shield — +5 AC.`, 'combat');
       }
-      finishAction({ activeEffects: effects, turnResources: spendAction() });
+      finishAction({ activeEffects: effects, turnResources: castResources() });
       return;
     }
 
     // ── Condition ────────────────────────────────────────
     if (castType === 'condition') {
       const target = state.combat.enemies.find(e => e.id === targetId);
-      if (!target) { finishAction({ turnResources: spendAction() }); return; }
+      if (!target) { finishAction({ turnResources: castResources() }); return; }
 
       if (spellIndex === 'hold-person') {
         const saveRoll = rollD20() + statMod(target.stats.wis);
@@ -378,8 +390,8 @@ export function useCombat(options: UseCombatOptions = {}) {
           if (e.hp <= remaining) {
             remaining -= e.hp;
             const effect: ActiveEffect = { id: makeEffectId(), name: 'Sleep', condition: 'unconscious', sourceId: activeCharacter.id, targetId: e.id, turnsRemaining: 10 };
-            const { applied } = applyCondition(effects, effect);
-            if (applied) { const result = applyCondition(effects, effect); effects.length = 0; effects.push(...result.effects); slept.push(e.name); }
+            const { effects: newEffects, applied } = applyCondition(effects, effect);
+            if (applied) { effects.length = 0; effects.push(...newEffects); slept.push(e.name); }
           }
         }
         addLog(slept.length > 0 ? `${activeCharacter.name}'s Sleep washes over the zone (${hpPool} HP) — ${slept.join(', ')} collapse!` : `${activeCharacter.name}'s Sleep has no effect — enemies too strong (${hpPool} HP).`, 'combat');
@@ -405,10 +417,10 @@ export function useCombat(options: UseCombatOptions = {}) {
         });
         addLog(`${activeCharacter.name} conjures Spike Growth — thorns shred enemies for ${totalDmg} piercing!`, 'combat');
         updateStats({ totalDamageDealt: state.stats.totalDamageDealt + totalDmg });
-        finishAction({ enemies: newEnemies, activeEffects: effects, turnResources: spendAction() });
+        finishAction({ enemies: newEnemies, activeEffects: effects, turnResources: castResources() });
         return;
       }
-      finishAction({ activeEffects: effects, turnResources: spendAction() });
+      finishAction({ activeEffects: effects, turnResources: castResources() });
       return;
     }
 
@@ -425,7 +437,7 @@ export function useCombat(options: UseCombatOptions = {}) {
       if (oldBoundary) addLog(`${name} erupts across the boundary, consuming ${oldBoundary.name}!`, 'combat');
       const newBoundaries = { ...state.combat.boundaries, [boundaryKey]: newBoundary };
       addLog(`${activeCharacter.name} conjures ${name} across the Zone ${boundaryKey.replace('|', '–')} boundary!`, 'combat');
-      finishAction({ boundaries: newBoundaries, turnResources: spendAction() });
+      finishAction({ boundaries: newBoundaries, turnResources: castResources() });
       return;
     }
 
@@ -453,16 +465,16 @@ export function useCombat(options: UseCombatOptions = {}) {
           e.id === result.enemyUpdates!.id ? { ...e, hp: result.enemyUpdates!.hp, isAlive: result.enemyUpdates!.isAlive } : e
         );
         if (!result.enemyUpdates.isAlive) updateStats({ enemiesKilled: state.stats.enemiesKilled + 1 });
-        const combatUpdate: Partial<CombatState> = { enemies: newEnemies, turnResources: spendAction() };
+        const combatUpdate: Partial<CombatState> = { enemies: newEnemies, turnResources: castResources() };
         if (result.effectsChanged) combatUpdate.activeEffects = result.effects;
         finishAction(combatUpdate);
       } else {
-        finishAction({ turnResources: spendAction() });
+        finishAction({ turnResources: castResources() });
       }
       return;
     }
 
-    finishAction({ turnResources: spendAction() });
+    finishAction({ turnResources: castResources() });
   }
 
   function handleDefend() {
@@ -589,6 +601,13 @@ export function useCombat(options: UseCombatOptions = {}) {
       if (newHp <= 0) {
         addLog(logDeath(activeCharacter.name), 'death');
         updateStats({ charactersLost: state.stats.charactersLost + 1 });
+        if (state.party.filter(c => c.isAlive && c.id !== activeCharacter.id).length === 0) {
+          addLog('Total Party Kill!', 'death');
+          setPhase('game-over');
+        } else {
+          advanceTurn(undefined, [activeCharacter.id]);
+        }
+        return;
       }
     }
 

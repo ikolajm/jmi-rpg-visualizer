@@ -139,7 +139,7 @@ export function resolvePlayerAttack(
   let damage = rollDice(weapon.damage) + mod;
   if (isCrit) damage += rollDice(weapon.damage);
 
-  if (attacker.statusEffects.includes('raging') && !isRanged) damage += 2;
+  if (attacker.statusEffects.includes('raging') && !isRanged) damage += attacker.level >= 9 ? 3 : 2;
   if (isCrit && attacker.features.includes('Brutal Critical')) damage += rollDice(weapon.damage);
 
   if (attacker.classIndex === 'rogue' && attacker.features.includes('Sneak Attack')) {

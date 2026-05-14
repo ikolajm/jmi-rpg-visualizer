@@ -6,8 +6,8 @@
 import { monstersByCR, type MonsterTemplate } from './monster-pool';
 import { getFloorTier } from './encounter-config';
 import { V1_MONSTERS } from './v1-roster';
-import { rollInitiative } from './mock-combat';
-import type { Enemy, CombatState, Character, Zone, RoomType } from './game-types';
+import { rollD20, statMod } from './dice';
+import type { Enemy, CombatState, Character, CombatEntity, Zone } from './game-types';
 
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -133,6 +133,31 @@ function deduplicateNames(enemies: Enemy[]): void {
       suffixCounters[e.monsterIndex] = idx + 1;
     }
   }
+}
+
+/** Roll initiative for the party + enemies, sorted high to low. */
+function rollInitiative(party: Character[], enemies: Enemy[], enemyInitiativeBonus = 0): CombatEntity[] {
+  const entries: CombatEntity[] = [];
+
+  for (const char of party) {
+    if (!char.isAlive) continue;
+    entries.push({
+      type: 'character',
+      id: char.id,
+      initiative: rollD20() + statMod(char.stats.dex),
+    });
+  }
+
+  for (const enemy of enemies) {
+    entries.push({
+      type: 'enemy',
+      id: enemy.id,
+      initiative: rollD20() + statMod(enemy.stats.dex) + enemyInitiativeBonus,
+    });
+  }
+
+  entries.sort((a, b) => b.initiative - a.initiative);
+  return entries;
 }
 
 export function generateEncounter(

@@ -207,7 +207,7 @@ export default function GamePage() {
         });
       } else {
         updateCharacter(charId, {
-          consumables: [...char.consumables, { id: item.index, name: item.name, quantity: 1, effect: 'heal', value: 7 }],
+          consumables: [...char.consumables, { id: item.index, quantity: 1 }],
         });
       }
       addLog(`${char.name} receives ${item.name}.`, 'loot');

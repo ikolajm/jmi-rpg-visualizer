@@ -6,6 +6,8 @@
  * Update a spell's tag here when adding engine support for it.
  */
 
+import { spellMeta, type SpellMeta } from './spell-meta';
+
 export type SpellCastType = 'damage' | 'healing' | 'condition' | 'buff' | 'boundary' | 'utility';
 
 export const SPELL_CAST_TYPE: Record<string, SpellCastType> = {
@@ -20,23 +22,20 @@ export const SPELL_CAST_TYPE: Record<string, SpellCastType> = {
   'inflict-wounds': 'damage',
   'thunderwave': 'damage',
   'scorching-ray': 'damage',
-  'spiritual-weapon': 'damage',
-  'fireball': 'damage',
-  'wall-of-fire': 'boundary',
-  'flame-strike': 'damage',
-  'cone-of-cold': 'damage',
+
+  // ─── Boundary (zone-control walls) ────────────────────────
+  'wall-of-fire': 'boundary',   // fire wall — damage on cross
+  'wall-of-frost': 'boundary',  // ice wall — blocks movement (custom)
 
   // ─── Healing (target ally) ────────────────────────────────
   'cure-wounds': 'healing',
   'healing-word': 'healing',
-  'aid': 'healing',
   'heal': 'healing',
 
   // ─── Conditions (save-or-suck, apply status effect) ───────
   'hold-person': 'condition',    // WIS save → paralyzed
   'sleep': 'condition',          // HP pool → unconscious
   'web': 'condition',            // DEX save → restrained
-  'spirit-guardians': 'condition', // zone AoE aura → radiant/necrotic damage per turn
   'command': 'condition',        // WIS save → skip next turn (simplified)
   'spike-growth': 'condition',   // zone hazard → damage on movement
 
@@ -80,4 +79,23 @@ export function isSpellCastable(spellIndex: string): boolean {
 /** Get the cast type, defaulting to utility for unknown spells */
 export function getSpellCastType(spellIndex: string): SpellCastType {
   return SPELL_CAST_TYPE[spellIndex] || 'utility';
+}
+
+/**
+ * Custom (non-SRD) spell metadata, merged over the generated spellMeta.
+ * wall-of-frost is homebrew — it has no SRD source, so its meta lives here.
+ */
+export const CUSTOM_SPELL_META: Record<string, SpellMeta> = {
+  'wall-of-frost': {
+    school: 'evocation',
+    level: 2,
+    range: '60 feet',
+    concentration: true,
+    description: 'Conjure a wall of jagged ice across a zone boundary. Creatures cannot move across the boundary while the wall stands.',
+  },
+};
+
+/** Look up spell metadata — custom spells first, then the generated SRD pool. */
+export function getSpellMeta(spellIndex: string): SpellMeta | undefined {
+  return CUSTOM_SPELL_META[spellIndex] ?? spellMeta[spellIndex];
 }

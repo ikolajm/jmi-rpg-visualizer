@@ -5,7 +5,7 @@ import type { Character } from './game-types';
 export function hasBonusActions(char: Character): boolean {
   // Fighter: Second Wind, Action Surge
   if (char.classIndex === 'fighter') return true;
-  // Barbarian: Rage, Reckless Attack, Frenzy
+  // Barbarian: Rage, Reckless Attack
   if (char.classIndex === 'barbarian') return true;
   // Cleric: Channel Divinity, Healing Word
   if (char.classIndex === 'cleric') return true;

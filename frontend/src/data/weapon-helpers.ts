@@ -2,7 +2,6 @@
 
 const WEAPON_ICONS: Record<string, string> = {
   // Base weapons
-  dagger: 'bowie-knife',
   shortsword: 'sword',
   mace: 'mace',
   quarterstaff: 'orb-wand',
@@ -10,10 +9,8 @@ const WEAPON_ICONS: Record<string, string> = {
   rapier: 'sword',
   warhammer: 'mace',
   longbow: 'bow',
-  glaive: 'sword',
   'heavy-crossbow': 'crossbow',
   greataxe: 'axe',
-  greatsword: 'sword',
   // Magic weapons
   'flame-tongue': 'sword',
   'frost-brand': 'sword',

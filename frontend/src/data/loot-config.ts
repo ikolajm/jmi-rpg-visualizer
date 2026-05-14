@@ -61,7 +61,6 @@ export const dropRates = {
   boss: 1.0,
   treasure: 1.0,
   rest: 0,
-  trap: 0.2,
 } as const;
 
 export function getLootTier(floor: number): LootTier {

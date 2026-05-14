@@ -14,8 +14,6 @@ const BEHAVIOR_LABELS: Record<string, { label: string; color: string }> = {
   'melee-aggro': { label: 'Melee', color: '#ef4444' },
   'flexible': { label: 'Flexible', color: '#f59e0b' },
   'caster': { label: 'Caster', color: '#8b5cf6' },
-  'boss': { label: 'Boss', color: '#ef4444' },
-  'boss-caster': { label: 'Boss Caster', color: '#8b5cf6' },
   'passive': { label: 'Passive', color: '#6b7280' },
 };
 

@@ -128,7 +128,7 @@ export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
   const isFrozen = moveEffects.some(e => e.condition === 'frozen');
   const frightOf = moveEffects.find(e => e.condition === 'frightened');
 
-  if ((behavior === 'melee-aggro' || behavior === 'boss') && sameZone.length === 0 && !isFrozen && !mods.unstableGround) {
+  if (behavior === 'melee-aggro' && sameZone.length === 0 && !isFrozen && !mods.unstableGround) {
     const moves = movableZones(currentEnemy.zone as Zone);
     const targetZone = nearest.zone;
     let bestMove: Zone | null = moves.reduce((best, z) =>
@@ -197,7 +197,7 @@ export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
 
   let action;
 
-  if (behavior === 'caster' || behavior === 'boss-caster' || behavior === 'boss') {
+  if (behavior === 'caster') {
     action = dcAction || condAction
       || rangedActions[0]
       || (inMeleeRange ? meleeActions[0] : undefined);

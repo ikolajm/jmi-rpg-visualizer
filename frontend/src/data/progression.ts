@@ -54,10 +54,9 @@ const LEVEL_FEATURES: Record<string, Record<number, string[]>> = {
     5: ['Extra Attack'],
   },
   rogue: {
-    2: ['Cunning Action'],
+    // No new named features — Rogue's progression is Sneak Attack scaling.
   },
   wizard: {
-    6: ['Potent Cantrip'],
     10: ['Empowered Evocation'],
   },
   cleric: {
@@ -71,7 +70,6 @@ const LEVEL_FEATURES: Record<string, Record<number, string[]>> = {
   },
   barbarian: {
     2: ['Reckless Attack'],
-    3: ['Frenzy'],
     5: ['Extra Attack'],
     9: ['Brutal Critical'],
   },

@@ -31,11 +31,6 @@ const flavorTexts: Record<RoomType, string[][]> = {
     ['Treasure spills from a collapsed wall.', 'A merchant\u2019s lost caravan, swallowed by the dungeon long ago.'],
     ['Gemstones are embedded in the walls. Someone left something behind.', 'A sealed vault. Whatever is inside was meant to stay hidden.'],
   ],
-  trap: [
-    ['Click. The floor shifts beneath your feet.', 'Strange glyphs pulse on the ground. Something is wrong.'],
-    ['The corridor narrows. Pressure plates line the floor.', 'Poison darts line the walls. Tread carefully.'],
-    ['A shimmering barrier blocks the path. Magic crackles.', 'The ceiling groans. This room is rigged to collapse.'],
-  ],
 };
 
 function pickRandom<T>(arr: T[]): T {
@@ -58,7 +53,7 @@ export function generateRoom(floor: number, roomNumber: number): Room {
   const type: RoomType = isBoss ? 'boss' : rollWeightedRoomType();
 
   const tierIndex = Math.min(
-    Math.floor((floor - 1) / 5),
+    floor - 1,
     flavorTexts[type].length - 1,
   );
   const flavorPool = flavorTexts[type][tierIndex] || flavorTexts[type][0];

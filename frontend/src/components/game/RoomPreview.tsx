@@ -11,7 +11,6 @@ const ROOM_CONFIG: Record<string, { icon: string; label: string; color: string; 
   boss:         { icon: 'boss',     label: "Guardian's Chamber",   color: 'text-error',       glowColor: 'var(--error)' },
   rest:         { icon: 'rest',     label: 'Sanctuary',            color: 'text-primary',     glowColor: 'var(--primary)' },
   treasure:     { icon: 'treasure', label: 'Hidden Cache',         color: 'text-primary',     glowColor: 'var(--primary)' },
-  trap:         { icon: 'trap',     label: 'Trap',                 color: 'text-warning',     glowColor: 'var(--warning)' },
 };
 
 // ─── Variants ────────────────────────────────────────────────

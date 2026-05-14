@@ -262,26 +262,22 @@ export const casterProgression: Record<string, {
 }> = {
   wizard: {
     newSpellsPerLevel: {
-      2: ['sleep'],              // extra L1 if not already known
-      3: ['scorching-ray', 'web'],
-      5: ['fireball'],
-      7: ['wall-of-fire'],
-      9: ['cone-of-cold'],
+      2: ['scorching-ray'],
+      3: ['wall-of-fire'],   // re-tiered into demonstrated scope
+      4: ['web'],
+      5: ['wall-of-frost'],  // ice wall — zone lockdown
     },
   },
   cleric: {
     newSpellsPerLevel: {
       2: ['inflict-wounds'],
-      3: ['spiritual-weapon', 'hold-person'],
-      4: ['aid'],
-      5: ['spirit-guardians'],
-      8: ['flame-strike'],
+      3: ['hold-person'],
     },
   },
   ranger: {
     newSpellsPerLevel: {
       // L2 spells come from rangerSpellcasting.startingSpells (hunters-mark, cure-wounds)
-      5: ['spike-growth'],
+      3: ['spike-growth'],
     },
   },
 };

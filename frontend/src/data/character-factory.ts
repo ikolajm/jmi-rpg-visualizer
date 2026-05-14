@@ -77,7 +77,7 @@ export function createCharacter(build: ClassBuild, slotIndex: number): Character
       shield: build.startingEquipment.shield,
     },
     consumables: [
-      { id: 'health-potion', name: 'Health Potion', quantity: 2, effect: 'heal', value: 7 },
+      { id: 'potion-of-healing', quantity: 2 },
     ],
     spellcasting: build.spellcasting ? {
       ability: build.spellcasting.ability,

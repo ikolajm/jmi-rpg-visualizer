@@ -145,7 +145,7 @@ function DevHarness() {
       if (existing) {
         updateCharacter(charId, { consumables: char.consumables.map(c => c.id === item.index ? { ...c, quantity: c.quantity + 1 } : c) });
       } else {
-        updateCharacter(charId, { consumables: [...char.consumables, { id: item.index, name: item.name, quantity: 1, effect: 'heal', value: 7 }] });
+        updateCharacter(charId, { consumables: [...char.consumables, { id: item.index, quantity: 1 }] });
       }
       addLog(`${char.name} receives ${item.name}.`, 'loot');
     }

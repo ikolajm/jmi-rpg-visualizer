@@ -9,7 +9,7 @@ import {
 } from '@/components/molecules';
 import { classFeatures } from '@/data/feature-meta';
 import { casterProgression } from '@/data/classes';
-import { V1_FEATURES, V1_FEATURE_SUMMARIES } from '@/data/v1-roster';
+import { V1_FEATURES, V1_FEATURE_SUMMARIES, getConsumable } from '@/data/v1-roster';
 import { getWeaponIcon } from '@/data/weapon-helpers';
 import { statMod } from '@/data/dice';
 import { XP_THRESHOLDS, proficiencyBonus } from '@/data/progression';
@@ -319,16 +319,22 @@ export function CharacterInspect({ char, mode = 'combat' }: CharacterInspectProp
         {hasItems && (
           <TabsContent value="items">
             <div className="flex flex-col gap-2">
-              {[...char.consumables].filter(c => c.quantity > 0).sort((a, b) => a.name.localeCompare(b.name)).map((item) => (
-                <div key={item.id} className="flex items-center gap-3 p-2 rounded-component bg-surface-2">
-                  <GameIcon category="item" name="consumable-potion" size="md" className="text-on-surface-variant" />
-                  <div className="flex flex-col flex-1">
-                    <span className="text-body-sm text-on-surface">{item.name}</span>
-                    <span className="text-label-sm text-on-surface-variant">{item.effect === 'heal' ? `Restores HP` : item.effect}</span>
-                  </div>
-                  <span className="text-label-sm tabular-nums text-on-surface-variant">&times;{item.quantity}</span>
-                </div>
-              ))}
+              {[...char.consumables].filter(c => c.quantity > 0)
+                .sort((a, b) => (getConsumable(a.id)?.name ?? '').localeCompare(getConsumable(b.id)?.name ?? ''))
+                .map((item) => {
+                  const def = getConsumable(item.id);
+                  if (!def) return null;
+                  return (
+                    <div key={item.id} className="flex items-center gap-3 p-2 rounded-component bg-surface-2">
+                      <GameIcon category="item" name="consumable-potion" size="md" className="text-on-surface-variant" />
+                      <div className="flex flex-col flex-1">
+                        <span className="text-body-sm text-on-surface">{def.name}</span>
+                        <span className="text-label-sm text-on-surface-variant">{def.effect === 'heal' ? 'Restores HP' : 'Casts a spell'}</span>
+                      </div>
+                      <span className="text-label-sm tabular-nums text-on-surface-variant">&times;{item.quantity}</span>
+                    </div>
+                  );
+                })}
             </div>
           </TabsContent>
         )}

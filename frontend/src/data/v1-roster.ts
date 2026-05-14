@@ -8,119 +8,111 @@
  * Philosophy: FF GBA / BG1 / Fallout 1 — small scope, everything works.
  */
 
-// ─── Monsters (46 curated from 304) ────────────────────────────
+// ─── Monsters (19 curated from 304) ────────────────────────────
+//
+// Curation rule: every entry either offers a strategy loop the engine
+// actually wires (a damage-type weakness/immunity, or a condition the
+// player saves against), OR is a deliberate vanilla "mob" for dungeon-
+// crawl texture. Distributed across the compressed 5-floor cadence.
+// Cut creatures whose loop was dead data (specialAbility / desc-only)
+// or redundant with a kept loop.
 
 export const V1_MONSTERS = new Set([
-  // Tier 1 — Floors 1-5 (CR 0.125–1): 15 monsters
-  'giant-rat',        // 0.125 — intro fodder
-  'kobold',           // 0.125 — pack tactics, teaches positioning
-  'skeleton',         // 0.125 — poison immune, bludgeoning vulnerable (teaches damage types)
-  'stirge',           // 0.125 — blood drain grapple
-  'goblin',           // 0.25  — flexible melee + ranged, nimble escape
-  'sprite',           // 0.25  — poison sleep arrow, invisibility, high AC
-  'flying-sword',     // 0.25  — construct, AC 17, condition immunities
-  'wolf',             // 0.25  — pack tactics + knockdown
-  'cockatrice',       // 0.5   — petrification (first real threat)
-  'hobgoblin',        // 0.5   — martial advantage +2d6 with ally, AC 18
-  'shadow',           // 0.5   — necrotic drain, STR reduction
-  'worg',             // 0.5   — knockdown bite, tanky wolf upgrade
-  'bugbear',          // 1     — brute + surprise damage
-  'ghoul',            // 1     — paralysis claws (first condition enemy)
-  'giant-spider',     // 1     — web restrain + poison
+  // ─ Floor 1 — CR 0.125–0.25 ─
+  'giant-rat',          // 0.125 — mob: vanilla cleanup fodder
+  'goblin',             // 0.25  — mob: vanilla flexible attacker
+  'skeleton',           // 0.25  — bludgeoning-vulnerable + poison-immune (damage-type teacher)
+  'wolf',               // 0.25  — Bite inflicts prone (STR save)
 
-  // Tier 2 — Floors 6-10 (CR 2–5): 15 monsters
-  'ogre',             // 2 — big HP sack, hits hard
-  'ghast',            // 2 — stench aura poison, paralyzing claws (ghoul upgrade)
-  'ankheg',           // 2 — acid spray line AoE + grapple
-  'gelatinous-cube',  // 2 — engulf mechanic, transparent ambush
-  'mimic',            // 2 — adhesive grapple, shapechanger surprise
-  'hell-hound',       // 3 — fire immune, fire breath cone, pack tactics
-  'owlbear',          // 3 — multi-attack bruiser, iconic
-  'mummy',            // 3 — rot curse (reduce max HP), dreadful glare fear
-  'phase-spider',     // 3 — ethereal jaunt vanish, poison bite
-  'winter-wolf',      // 3 — cold immune, cold breath AoE, pack tactics
-  'troll',            // 5 — regeneration 10/turn (fire/acid stops it)
-  'air-elemental',    // 5 — whirlwind AoE knockback
-  'fire-elemental',   // 5 — fire form passive damage, water vulnerability
-  'gorgon',           // 5 — petrifying breath cone
-  'vampire-spawn',    // 5 — life drain, regen, sunlight vulnerability
+  // ─ Floor 2 — CR 0.5–1 ─
+  'cockatrice',         // 0.5   — Bite inflicts petrified (CON save)
+  'shadow',             // 0.5   — resists nonmagical physical, vulnerable to radiant
+  'ghoul',              // 1     — Claws inflict paralyzed (CON save)
+  'giant-spider',       // 1     — Bite inflicts poisoned (CON save); the poison creature
 
-  // Tier 3 — Floors 11-15 (CR 6–8): 8 monsters
-  'chimera',          // 6 — 3 heads multi-attack + fire breath
-  'drider',           // 6 — spider hybrid, poison + spellcasting
-  'medusa',           // 6 — petrifying gaze, snake hair, ranged poison
-  'wyvern',           // 6 — poison stinger 7d6
-  'stone-giant',      // 7 — rock throw + greatclub tank
-  'oni',              // 7 — regen, shapechanger, innate spellcasting
-  'young-white-dragon', // 6 — cold breath, cold immune
-  'young-black-dragon', // 7 — acid breath, acid immune
+  // ─ Floor 3 — CR 2 ─
+  'ankheg',             // 2     — Acid Spray: save-for-half AoE
+  'gelatinous-cube',    // 2     — Engulf: restrain + save-or-full AoE
+  'ogre',               // 2     — mob: vanilla "watch your HP" bruiser
 
-  // Tier 4 — Floors 16-20 (CR 9–10): 5 monsters
-  'young-red-dragon',    // 10 — fire breath 16d6, iconic boss
-  'young-blue-dragon',   // 9  — lightning breath
-  'aboleth',             // 10 — tentacle disease, legendary actions
-  'guardian-naga',        // 10 — spellcaster boss, poison spit
-  'young-silver-dragon',  // 9  — cold breath + paralyze breath
+  // ─ Floor 4 — CR 3 ─
+  'hell-hound',         // 3     — fire-immune + fire-breath AoE
+  'mummy',              // 3     — fire-vulnerable + frighten-inflict + resists physical
+  'winter-wolf',        // 3     — cold-immune + prone-inflict + cold-breath AoE
+  'owlbear',            // 3     — mob: vanilla high-damage bruiser
 
-  // Death March — Floors 21+ (CR 11+): 3 monsters
-  'remorhaz',          // 11 — heated body, swallow
-  'purple-worm',       // 15 — 247 HP, swallow, tail stinger
-  'adult-red-dragon',  // 17 — the final wall
+  // ─ Floor 5+ — CR 3–5 ─
+  'gorgon',             // 5     — Petrifying Breath: restrain + save-or-full AoE
+
+  // ─ Bosses (cycle across floors, multiplicatively scaled — see V1_BOSSES) ─
+  'chimera',            // 6 base — multiattack + Fire Breath save-AoE
+  'young-black-dragon', // 7 base — acid-immune + Acid Breath save-AoE
+  'stone-giant',        // 7 base — Rock: ranged prone-inflict + heavy melee
 ]);
 
-// ─── Spells (27 curated from 52) ───────────────────────────────
+/**
+ * Bosses — a subset of V1_MONSTERS. Spawned only in boss rooms, never as
+ * regular encounters. The encounter generator cycles them by floor and
+ * scales them multiplicatively (CR 6-7 stats are the ceiling — they're
+ * scaled down for the floor they actually appear on).
+ */
+export const V1_BOSSES = new Set([
+  'chimera',
+  'young-black-dragon',
+  'stone-giant',
+]);
+
+// ─── Spells (23 curated from 52) ───────────────────────────────
+//
+// Curation rule: every spell is a distinct, wired player tool. The deep
+// tail (L3+ spells unlocked at character level 5+) was cut — average runs
+// never reach it. Boundary spells are the exception: kept and re-tiered
+// into demonstrated scope, since the boundary subsystem is an extensible
+// zone-control playstyle worth promoting.
 
 export const V1_SPELLS = new Set([
-  // Cantrips (4)
-  'fire-bolt',         // Wizard — 1d10 fire, 120ft
-  'ray-of-frost',      // Wizard — 1d8 cold + slow, 60ft
-  'shocking-grasp',    // Wizard — 1d8 lightning, touch, no reactions
-  'sacred-flame',      // Cleric — 1d8 radiant, 60ft, DEX save
+  // ─ Cantrips (4) ─
+  'fire-bolt',         // Wizard — 1d10 fire
+  'ray-of-frost',      // Wizard — 1d8 cold
+  'shocking-grasp',    // Wizard — 1d8 lightning, melee
+  'sacred-flame',      // Cleric — 1d8 radiant, DEX save
 
-  // Level 1 Damage (5)
+  // ─ Damage (6) ─
   'magic-missile',     // Wizard — 3×(1d4+1) force, auto-hit
   'burning-hands',     // Wizard — 3d6 fire cone, DEX save
-  'guiding-bolt',      // Cleric — 4d6 radiant, next attack advantage
-  'inflict-wounds',    // Cleric — 3d10 necrotic, melee touch
-  'thunderwave',       // Wizard — 2d8 thunder + push, CON save
+  'guiding-bolt',      // Cleric — 4d6 radiant
+  'inflict-wounds',    // Cleric — 3d10 necrotic, melee
+  'thunderwave',       // Wizard — 2d8 thunder, CON save
+  'scorching-ray',     // Wizard — fire, single-target
 
-  // Level 1 Conditions (2)
+  // ─ Conditions (5) ─
   'sleep',             // Wizard — 5d8 HP pool, lowest HP first
   'command',           // Cleric — WIS save or skip next turn
-
-  // Level 1 Buffs (3)
-  'bless',             // Cleric — +1d4 attacks/saves, up to 3 allies
-  'hunters-mark',      // Ranger — +1d6 damage to marked target
-  'shield-of-faith',   // Cleric — +2 AC to one ally
-
-  // Level 1 Defense (1)
-  'shield',            // Wizard — +5 AC until next turn
-
-  // Level 1 Healing (2)
-  'cure-wounds',       // Cleric/Ranger — 1d8+MOD, touch
-  'healing-word',      // Cleric — 1d4+MOD, bonus action, 60ft
-
-  // Level 2 (6)
-  'scorching-ray',     // Wizard — 3×2d6 fire
-  'spiritual-weapon',  // Cleric — 1d8+MOD, bonus action
   'hold-person',       // Cleric — WIS save or paralyzed
   'web',               // Wizard — DEX save or restrained
   'spike-growth',      // Ranger — zone hazard, 2d4 piercing
-  'aid',               // Cleric — +5 max HP to up to 3 targets
 
-  // Level 3 (2)
-  'fireball',          // Wizard — 8d6 fire, DEX save
-  'spirit-guardians',  // Cleric — zone aura, 3d8 radiant/turn
+  // ─ Buffs / Defense (4) ─
+  'bless',             // Cleric — +1d4 attacks/saves
+  'hunters-mark',      // Ranger — +1d6 damage to marked target
+  'shield-of-faith',   // Cleric — +2 AC to one ally
+  'shield',            // Wizard — +5 AC self until next turn
 
-  // Level 4 (1)
-  'wall-of-fire',      // Wizard — boundary spell, 5d8 fire on crossing
+  // ─ Healing (2) ─
+  'cure-wounds',       // Cleric/Ranger — 1d8+MOD, touch
+  'healing-word',      // Cleric — 1d4+MOD, bonus action
 
-  // Level 5 (2)
-  'flame-strike',      // Cleric — 4d6 fire + 4d6 radiant, DEX save
-  'cone-of-cold',      // Wizard — 8d8 cold, CON save
+  // ─ Boundary — zone-control walls (2) ─
+  'wall-of-fire',      // Wizard — fire wall: damage on cross (re-tiered into early access)
+  'wall-of-frost',     // Wizard — ice wall: blocks movement entirely (custom, completes the boundary system)
 ]);
 
-// ─── Weapons (12 curated from 37) ──────────────────────────────
+// ─── Weapons (14 curated from 37 — 9 base + 5 magic) ───────────
+//
+// Only damage / damageType / range / finesse / on-hit are mechanically
+// wired; all other properties are flavor. Base weapons are kept where
+// they occupy a distinct point on that grid or are a class starter;
+// the 5 magic weapons each carry a unique damage type + wired on-hit.
 
 import type { WeaponOnHit } from './game-types';
 
@@ -136,7 +128,6 @@ export interface RosterWeapon {
 }
 
 export const V1_WEAPONS: RosterWeapon[] = [
-  { index: 'dagger', name: 'Dagger', damage: '1d4', damageType: 'piercing', weaponRange: 'melee', properties: ['finesse', 'light', 'thrown'] },
   { index: 'shortsword', name: 'Shortsword', damage: '1d6', damageType: 'piercing', weaponRange: 'melee', properties: ['finesse', 'light'] },
   { index: 'mace', name: 'Mace', damage: '1d6', damageType: 'bludgeoning', weaponRange: 'melee', properties: [] },
   { index: 'quarterstaff', name: 'Quarterstaff', damage: '1d6', damageType: 'bludgeoning', weaponRange: 'melee', properties: [] },
@@ -144,11 +135,9 @@ export const V1_WEAPONS: RosterWeapon[] = [
   { index: 'rapier', name: 'Rapier', damage: '1d8', damageType: 'piercing', weaponRange: 'melee', properties: ['finesse'] },
   { index: 'warhammer', name: 'Warhammer', damage: '1d8', damageType: 'bludgeoning', weaponRange: 'melee', properties: ['versatile'] },
   { index: 'longbow', name: 'Longbow', damage: '1d8', damageType: 'piercing', weaponRange: 'ranged', properties: ['ammunition', 'heavy', 'two-handed'] },
-  { index: 'glaive', name: 'Glaive', damage: '1d10', damageType: 'slashing', weaponRange: 'melee', properties: ['heavy', 'reach', 'two-handed'] },
   { index: 'heavy-crossbow', name: 'Heavy Crossbow', damage: '1d10', damageType: 'piercing', weaponRange: 'ranged', properties: ['ammunition', 'heavy', 'loading', 'two-handed'] },
   { index: 'greataxe', name: 'Greataxe', damage: '1d12', damageType: 'slashing', weaponRange: 'melee', properties: ['heavy', 'two-handed'] },
-  { index: 'greatsword', name: 'Greatsword', damage: '2d6', damageType: 'slashing', weaponRange: 'melee', properties: ['heavy', 'two-handed'] },
-  // Magic weapons
+  // Magic weapons — each a unique damage type + wired on-hit
   { index: 'flame-tongue', name: 'Flame Tongue', damage: '2d6', damageType: 'fire', weaponRange: 'melee', properties: ['versatile'], rarity: 'Rare',
     onHit: { trigger: 'crit', condition: 'burning', conditionDuration: 3, description: 'On crit: target burns (1d6 fire/turn, 3 turns)' } },
   { index: 'frost-brand', name: 'Frost Brand', damage: '1d8', damageType: 'cold', weaponRange: 'melee', properties: ['versatile'], rarity: 'Rare',
@@ -163,7 +152,11 @@ export const V1_WEAPONS: RosterWeapon[] = [
 
 export const V1_WEAPON_SET = new Set(V1_WEAPONS.map(w => w.index));
 
-// ─── Armor (8 curated from 13) ─────────────────────────────────
+// ─── Armor (6 curated from 13) ─────────────────────────────────
+//
+// A pure AC ladder — only acBase + acDexCap are wired (light = full DEX,
+// medium = cap 2, heavy = no DEX). Kept ~2 rungs per category; the
+// category DEX rule is the only tactical texture.
 
 export interface RosterArmor {
   index: string;
@@ -176,42 +169,46 @@ export interface RosterArmor {
 export const V1_ARMOR: RosterArmor[] = [
   { index: 'leather-armor', name: 'Leather Armor', acBase: 11, category: 'light' },
   { index: 'studded-leather-armor', name: 'Studded Leather', acBase: 12, category: 'light' },
-  { index: 'chain-shirt', name: 'Chain Shirt', acBase: 13, acDexCap: 2, category: 'medium' },
   { index: 'scale-mail', name: 'Scale Mail', acBase: 14, acDexCap: 2, category: 'medium' },
   { index: 'half-plate-armor', name: 'Half Plate', acBase: 15, acDexCap: 2, category: 'medium' },
   { index: 'chain-mail', name: 'Chain Mail', acBase: 16, acDexCap: 0, category: 'heavy' },
-  { index: 'splint-armor', name: 'Splint', acBase: 17, acDexCap: 0, category: 'heavy' },
   { index: 'plate-armor', name: 'Plate', acBase: 18, acDexCap: 0, category: 'heavy' },
 ];
 
 export const V1_ARMOR_SET = new Set(V1_ARMOR.map(a => a.index));
 
-// ─── Consumables (9 curated) ───────────────────────────────────
+// ─── Consumables (6 curated) ───────────────────────────────────
+//
+// Two effect types, both fully wired: 'heal' (rolls healDice) and 'spell'
+// (a scroll — casts spellIndex as the reader, no slot cost, fixed DC).
+// Buff potions were cut — each needed a new mechanic (temp HP, player
+// damage-resistance, haste) the engine doesn't have.
 
 export interface RosterConsumable {
   index: string;
   name: string;
   rarity: string;
-  effect: 'heal' | 'buff' | 'spell';
-  healDice?: string;      // for potions: dice expression
-  buffDescription?: string;
-  spellIndex?: string;     // for scrolls: which spell it casts
+  effect: 'heal' | 'spell';
+  healDice?: string;       // 'heal' — dice expression
+  spellIndex?: string;     // 'spell' — the spell the scroll casts
   category: 'consumable';
 }
 
 export const V1_CONSUMABLES: RosterConsumable[] = [
   { index: 'potion-of-healing', name: 'Potion of Healing', rarity: 'Common', effect: 'heal', healDice: '2d4+2', category: 'consumable' },
   { index: 'potion-of-greater-healing', name: 'Potion of Greater Healing', rarity: 'Uncommon', effect: 'heal', healDice: '4d4+4', category: 'consumable' },
-  { index: 'potion-of-superior-healing', name: 'Potion of Superior Healing', rarity: 'Rare', effect: 'heal', healDice: '8d4+8', category: 'consumable' },
-  { index: 'potion-of-heroism', name: 'Potion of Heroism', rarity: 'Rare', effect: 'buff', buffDescription: '+10 temporary HP and Bless effect for 1 hour.', category: 'consumable' },
-  { index: 'potion-of-fire-resistance', name: 'Potion of Fire Resistance', rarity: 'Uncommon', effect: 'buff', buffDescription: 'Resistance to fire damage for 1 hour.', category: 'consumable' },
-  { index: 'potion-of-speed', name: 'Potion of Speed', rarity: 'Very Rare', effect: 'buff', buffDescription: 'Haste effect for 1 minute. Extra action each turn.', category: 'consumable' },
-  { index: 'scroll-of-fireball', name: 'Scroll of Fireball', rarity: 'Uncommon', effect: 'spell', spellIndex: 'fireball', category: 'consumable' },
   { index: 'scroll-of-cure-wounds', name: 'Scroll of Cure Wounds', rarity: 'Common', effect: 'spell', spellIndex: 'cure-wounds', category: 'consumable' },
   { index: 'scroll-of-hold-person', name: 'Scroll of Hold Person', rarity: 'Uncommon', effect: 'spell', spellIndex: 'hold-person', category: 'consumable' },
+  { index: 'scroll-of-wall-of-fire', name: 'Scroll of Wall of Fire', rarity: 'Rare', effect: 'spell', spellIndex: 'wall-of-fire', category: 'consumable' },
+  { index: 'scroll-of-wall-of-frost', name: 'Scroll of Wall of Frost', rarity: 'Rare', effect: 'spell', spellIndex: 'wall-of-frost', category: 'consumable' },
 ];
 
 export const V1_CONSUMABLE_SET = new Set(V1_CONSUMABLES.map(c => c.index));
+
+/** Resolve a consumable's curated definition by index. */
+export function getConsumable(index: string): RosterConsumable | undefined {
+  return V1_CONSUMABLES.find(c => c.index === index);
+}
 
 // ─── Combat-Relevant Features (per class) ──────────────────────
 
@@ -287,30 +284,36 @@ export const V1_FEATURE_SUMMARIES: Record<string, FeatureCombatSummary> = {
 
 // ─── Loot Tier Mapping ─────────────────────────────────────────
 
-/** Which equipment is available at each floor tier */
+/**
+ * Which equipment is available at each floor tier, keyed to the compressed
+ * cadence (floors turn over every 5 rooms). Pools are cumulative — a deeper
+ * tier adds to everything below it. Weapons are re-distributed in the weapon
+ * trim pass; armor + consumable distributions are provisional until their
+ * own passes.
+ */
 export const LOOT_TIERS = {
-  // Floors 1-5: starting gear + minor upgrades
+  // Floors 1-2 — average-run scope
   early: {
-    weapons: ['dagger', 'shortsword', 'mace', 'quarterstaff', 'longsword', 'longbow', 'greataxe'],
-    armor: ['leather-armor', 'studded-leather-armor', 'chain-shirt', 'scale-mail', 'chain-mail'],
+    weapons: ['shortsword', 'mace', 'quarterstaff', 'longsword', 'longbow', 'greataxe'],
+    armor: ['leather-armor', 'studded-leather-armor'],
     consumables: ['potion-of-healing', 'scroll-of-cure-wounds'],
   },
-  // Floors 6-10: full base roster + uncommon consumables + first magic weapons
+  // Floors 3-4 — good-run scope
   mid: {
-    weapons: ['rapier', 'warhammer', 'glaive', 'heavy-crossbow', 'greatsword', 'venom-dagger', 'flame-tongue', 'frost-brand'],
-    armor: ['half-plate-armor', 'splint-armor'],
-    consumables: ['potion-of-greater-healing', 'potion-of-fire-resistance', 'scroll-of-fireball', 'scroll-of-hold-person'],
+    weapons: ['rapier', 'warhammer', 'heavy-crossbow', 'venom-dagger'],
+    armor: ['scale-mail', 'half-plate-armor'],
+    consumables: ['potion-of-greater-healing', 'scroll-of-hold-person'],
   },
-  // Floors 11-15: top-tier base + rare consumables + endgame magic weapons
+  // Floors 5-6 — deep-run scope (the boundary-scroll playstyle drops here)
   late: {
-    weapons: ['greatsword', 'glaive', 'heavy-crossbow', 'holy-avenger', 'thunderous-maul'],
-    armor: ['splint-armor', 'plate-armor'],
-    consumables: ['potion-of-superior-healing', 'potion-of-heroism'],
+    weapons: ['flame-tongue', 'frost-brand'],
+    armor: ['chain-mail', 'plate-armor'],
+    consumables: ['scroll-of-wall-of-fire', 'scroll-of-wall-of-frost'],
   },
-  // Floors 16+: endgame
+  // Floors 7+ — exceptional-run scope
   endgame: {
-    weapons: ['greatsword', 'glaive', 'holy-avenger', 'thunderous-maul'],
-    armor: ['plate-armor'],
-    consumables: ['potion-of-superior-healing', 'potion-of-heroism', 'potion-of-speed'],
+    weapons: ['holy-avenger', 'thunderous-maul'],
+    armor: [],
+    consumables: [],
   },
 } as const;

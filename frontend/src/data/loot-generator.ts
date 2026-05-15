@@ -30,7 +30,6 @@ export type LootItem = {
   armorCategory?: string;
   // Consumables
   healDice?: string;
-  buffDescription?: string;
   spellIndex?: string;
   // All
   description: string;
@@ -41,9 +40,10 @@ function pickRandom<T>(arr: T[]): T {
 }
 
 function getTierKey(floor: number): keyof typeof LOOT_TIERS {
-  if (floor <= 5) return 'early';
-  if (floor <= 10) return 'mid';
-  if (floor <= 15) return 'late';
+  // Keyed to the compressed cadence — floors turn over every 5 rooms.
+  if (floor <= 2) return 'early';
+  if (floor <= 4) return 'mid';
+  if (floor <= 6) return 'late';
   return 'endgame';
 }
 
@@ -102,10 +102,9 @@ function armorToLoot(a: RosterArmor): LootItem {
 }
 
 function consumableToLoot(c: RosterConsumable): LootItem {
-  let description = '';
-  if (c.effect === 'heal') description = `Restores ${c.healDice} HP.`;
-  else if (c.effect === 'buff') description = c.buffDescription || '';
-  else if (c.effect === 'spell') description = `Cast ${c.spellIndex?.replace(/-/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase())} (one use).`;
+  const description = c.effect === 'heal'
+    ? `Restores ${c.healDice} HP.`
+    : `Cast ${c.spellIndex?.replace(/-/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase())} (one use).`;
 
   return {
     index: c.index,
@@ -113,7 +112,6 @@ function consumableToLoot(c: RosterConsumable): LootItem {
     category: 'consumable',
     rarity: c.rarity,
     healDice: c.healDice,
-    buffDescription: c.buffDescription,
     spellIndex: c.spellIndex,
     description,
   };

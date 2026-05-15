@@ -6,7 +6,7 @@
  * but mutable during gameplay (HP changes, equipment swaps, etc.)
  */
 
-import type { StatusEffect } from '@/components/molecules/StatusStack';
+import type { StatusFlag } from './condition-visuals';
 
 // ─── Zones ───────────────────────────────────────────────────
 // Zones are numeric positions (1, 2, 3). Distance between entities
@@ -79,7 +79,9 @@ export interface Character {
     armor: EquippedArmor | null;
     shield: boolean;
   };
-  consumables: { id: string; name: string; quantity: number; effect: string; value: number }[];
+  // Live inventory carries only id + quantity; the curated definition
+  // (name, effect, healDice, spellIndex) is resolved from V1_CONSUMABLES.
+  consumables: { id: string; quantity: number }[];
 
   // Spellcasting (null for non-casters)
   spellcasting: {
@@ -103,7 +105,7 @@ export interface Character {
 
   // Combat state
   zone: Zone;
-  statusEffects: StatusEffect[];
+  statusEffects: StatusFlag[];
   isAlive: boolean;
 }
 
@@ -117,6 +119,7 @@ export interface Enemy {
   cr: number;
   xp: number;
   behavior: string;
+  isBoss: boolean;
 
   hp: number;
   maxHp: number;
@@ -160,7 +163,7 @@ export interface Enemy {
 
   // Combat state
   zone: Zone;
-  statusEffects: StatusEffect[];
+  statusEffects: StatusFlag[];
   isAlive: boolean;
 }
 
@@ -219,7 +222,7 @@ export interface CombatState {
 
 // ─── Rooms ───────────────────────────────────────────────────
 
-export type RoomType = 'combat' | 'elite_combat' | 'boss' | 'rest' | 'treasure' | 'trap';
+export type RoomType = 'combat' | 'elite_combat' | 'boss' | 'rest' | 'treasure';
 
 export interface Room {
   type: RoomType;
@@ -236,7 +239,6 @@ export type GamePhase =
   | 'combat'
   | 'loot'
   | 'rest'
-  | 'trap'
   | 'level-up'
   | 'game-over';
 

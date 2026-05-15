@@ -20,38 +20,32 @@ function getSystemTheme(): 'light' | 'dark' {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-function resolveTheme(theme: Theme): 'light' | 'dark' {
-  return theme === 'system' ? getSystemTheme() : theme;
-}
-
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(DEFAULT_THEME);
-  const [resolved, setResolved] = useState<'light' | 'dark'>('dark');
+  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(getSystemTheme);
 
+  // resolved is derived during render — no synced state, no sync effect.
+  const resolved: 'light' | 'dark' = theme === 'system' ? systemTheme : theme;
+
+  // Hydrate the saved theme after mount + track OS preference changes.
+  // localStorage isn't available during SSR, so this can't move into the
+  // useState initializer without risking a hydration mismatch.
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY) as Theme | null;
     if (saved && ['light', 'dark', 'system'].includes(saved)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR-safe external-store hydration
       setThemeState(saved);
-      setResolved(resolveTheme(saved));
     }
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = () => setSystemTheme(getSystemTheme());
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
   }, []);
 
+  // Reflect the resolved theme onto <html data-theme>.
   useEffect(() => {
-    const r = resolveTheme(theme);
-    setResolved(r);
-    document.documentElement.setAttribute('data-theme', r);
-
-    if (theme === 'system') {
-      const mq = window.matchMedia('(prefers-color-scheme: dark)');
-      const handler = () => {
-        const sys = getSystemTheme();
-        setResolved(sys);
-        document.documentElement.setAttribute('data-theme', sys);
-      };
-      mq.addEventListener('change', handler);
-      return () => mq.removeEventListener('change', handler);
-    }
-  }, [theme]);
+    document.documentElement.setAttribute('data-theme', resolved);
+  }, [resolved]);
 
   const setTheme = (t: Theme) => {
     setThemeState(t);

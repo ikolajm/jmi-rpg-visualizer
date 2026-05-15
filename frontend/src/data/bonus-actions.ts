@@ -5,7 +5,7 @@ import type { Character } from './game-types';
 export function hasBonusActions(char: Character): boolean {
   // Fighter: Second Wind, Action Surge
   if (char.classIndex === 'fighter') return true;
-  // Barbarian: Rage, Reckless Attack, Frenzy
+  // Barbarian: Rage, Reckless Attack
   if (char.classIndex === 'barbarian') return true;
   // Cleric: Channel Divinity, Healing Word
   if (char.classIndex === 'cleric') return true;
@@ -63,7 +63,7 @@ export function getBonusActions(char: Character): BonusActionOption[] {
       actions.push({
         id: 'rage',
         name: 'Rage',
-        description: '+2 melee damage, resist physical',
+        description: '+2 melee damage (+3 at L9), resist physical',
         available: !isRaging && uses.used < uses.max,
         reason: isRaging ? 'Already raging' : uses.used >= uses.max ? 'No rages remaining' : undefined,
       });

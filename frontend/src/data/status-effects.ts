@@ -28,21 +28,19 @@ export type GameCondition =
   | 'poisoned'      // disadvantage on attacks
   | 'frightened'    // disadvantage on attacks, can't move toward source
   | 'prone'         // melee advantage against, ranged disadvantage against
-  | 'petrified'     // skip turn, auto-crit, resistance to all damage
   | 'burning'       // DoT at turn start
   | 'frozen'        // skip movement
   | 'blessed'       // +1d4 on attack rolls
   | 'hunterMarked'  // +1d6 damage from marker
   | 'shielded'      // +AC bonus
-  | 'spiritGuarded' // zone aura, enemies in zone take damage
   | 'commanded'     // skip next turn (one-shot)
   | 'staggered';    // skip next turn (vulnerability exploit)
 
 /** Conditions that prevent the entity from acting */
-export const SKIP_TURN_CONDITIONS: GameCondition[] = ['paralyzed', 'unconscious', 'commanded', 'petrified', 'staggered'];
+export const SKIP_TURN_CONDITIONS: GameCondition[] = ['paralyzed', 'unconscious', 'commanded', 'staggered'];
 
 /** Conditions that grant advantage on attacks against the affected entity */
-export const ADVANTAGE_AGAINST_CONDITIONS: GameCondition[] = ['paralyzed', 'unconscious', 'restrained', 'prone', 'petrified'];
+export const ADVANTAGE_AGAINST_CONDITIONS: GameCondition[] = ['paralyzed', 'unconscious', 'restrained', 'prone'];
 
 /** Conditions that give the affected entity disadvantage on their attacks */
 export const DISADVANTAGE_ON_ATTACK_CONDITIONS: GameCondition[] = ['restrained', 'poisoned', 'frightened', 'prone'];
@@ -135,7 +133,6 @@ export function makeEffectId(): string {
 
 /** Condition severity hierarchy — higher supersedes lower */
 const SEVERITY: Partial<Record<GameCondition, number>> = {
-  petrified: 5,
   paralyzed: 4,
   unconscious: 3,
   prone: 1,

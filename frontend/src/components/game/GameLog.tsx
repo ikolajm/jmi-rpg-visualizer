@@ -4,21 +4,33 @@ import React, { useState, useEffect } from 'react';
 import { useGame } from '@/components/providers/GameProvider';
 import { Scroll, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { damageColors } from '@/data/game-colors';
+import { DAMAGE_VISUALS } from '@/data/damage-visuals';
+import { CONDITION_VISUALS } from '@/data/condition-visuals';
 
 const KEYWORD_COLORS: Record<string, string> = {
-  // Damage types
-  fire: damageColors.fire, cold: damageColors.cold, lightning: damageColors.lightning,
-  thunder: damageColors.thunder, acid: damageColors.acid, poison: damageColors.poison,
-  necrotic: damageColors.necrotic, radiant: damageColors.radiant, force: damageColors.force,
-  psychic: damageColors.psychic, slashing: damageColors.slashing, piercing: damageColors.piercing,
-  bludgeoning: damageColors.bludgeoning,
-  // Conditions
-  paralyzed: '#8b5cf6', unconscious: '#8b5cf6', restrained: '#8b5cf6',
-  poisoned: '#5bad5a', frightened: '#8b5cf6', staggered: '#f97316',
-  burning: damageColors.fire, frozen: damageColors.cold,
+  // Damage types — every entry of DAMAGE_VISUALS
+  fire:        DAMAGE_VISUALS.fire.color,
+  cold:        DAMAGE_VISUALS.cold.color,
+  lightning:   DAMAGE_VISUALS.lightning.color,
+  thunder:     DAMAGE_VISUALS.thunder.color,
+  acid:        DAMAGE_VISUALS.acid.color,
+  necrotic:    DAMAGE_VISUALS.necrotic.color,
+  radiant:     DAMAGE_VISUALS.radiant.color,
+  force:       DAMAGE_VISUALS.force.color,
+  slashing:    DAMAGE_VISUALS.slashing.color,
+  piercing:    DAMAGE_VISUALS.piercing.color,
+  bludgeoning: DAMAGE_VISUALS.bludgeoning.color,
+  // Conditions — pulled from the visual registry
+  paralyzed:   CONDITION_VISUALS.paralyzed.color,
+  unconscious: CONDITION_VISUALS.unconscious.color,
+  restrained:  CONDITION_VISUALS.restrained.color,
+  poisoned:    CONDITION_VISUALS.poisoned.color,
+  frightened:  CONDITION_VISUALS.frightened.color,
+  staggered:   CONDITION_VISUALS.staggered.color,
+  burning:     CONDITION_VISUALS.burning.color,
+  frozen:      CONDITION_VISUALS.frozen.color,
   // Keywords
-  'CRIT': '#e8c263', 'critical': '#e8c263',
+  'CRIT': 'var(--qualifier-crit)', 'critical': 'var(--qualifier-crit)',
 };
 
 const KEYWORD_PATTERN = new RegExp(

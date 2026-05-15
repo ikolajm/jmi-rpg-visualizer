@@ -61,7 +61,7 @@ export function planIntents(
     const condAction = enemy.actions.find(a => a.conditionDC && !a.saveDC);
     let action;
 
-    if (behavior === 'caster' || behavior === 'boss-caster' || behavior === 'boss') {
+    if (behavior === 'caster') {
       action = dcAction || condAction
         || enemy.actions.find(a => a.reach === 'any')
         || enemy.actions[0];

@@ -1,0 +1,110 @@
+/**
+ * game-tokens.css — Game-semantic color tokens
+ *
+ * Single source of truth for all gameplay-vocabulary colors. Imported
+ * after tokens.css in globals.css so it can read design-system primitives.
+ *
+ * TS visual registries reference these via `var(--token)` strings —
+ * never raw hex. Edit values here, not in TS.
+ */
+
+:root {
+  /* ─── Damage families ─────────────────────────────────── */
+  --damage-physical:    #c4bdb8;
+  --damage-fire:        #e8723a;
+  --damage-cold:        #5b9bd5;
+  --damage-lightning:   #d4c94a;
+  --damage-thunder:     #9b7fd4;
+  --damage-acid:        #8cc43c;
+  --damage-radiant:     #e8c263;
+  --damage-necrotic:    #4aba8a;
+  --damage-force:       #8b7fd4;
+  --damage-healing:     #d45b6e;
+
+  /* ─── Conditions (13 GameConditions + 2 StatusFlags) ─── */
+  --condition-paralyzed:     #e0b341;
+  --condition-unconscious:   #7c83a8;
+  --condition-restrained:    #b08948;
+  --condition-poisoned:      #5bad5a;
+  --condition-frightened:    #9b7fd4;
+  --condition-prone:         #94a3b8;
+  --condition-burning:       #e8723a;
+  --condition-frozen:        #5b9bd5;
+  --condition-commanded:     #a78bfa;
+  --condition-staggered:     #d4a356;
+  --condition-hunter-marked: #f59e0b;
+  --condition-blessed:       #e8c263;
+  --condition-shielded:      #6ba9d4;
+  --condition-raging:        #c43c3c;
+  --condition-reckless:      #e87633;
+
+  /* ─── Damage qualifiers (CRIT / VULNERABLE / RESISTED ribbons) ─── */
+  --qualifier-crit:       #e8c263;
+  --qualifier-vulnerable: #5bad5a;
+  --qualifier-resisted:   #f59e0b;
+
+  /* ─── Hit-event labels (standalone, no number) ─── */
+  --hit-miss:   #94a3b8;
+  --hit-immune: #94a3b8;
+
+  /* ─── Enemy intent badges (5 IntentTypes) ─── */
+  --intent-melee:     #ef4444;
+  --intent-ranged:    #f59e0b;
+  --intent-breath:    #f97316;
+  --intent-condition: #a78bfa;
+  --intent-skip:      #64748b;
+
+  /* ─── Enemy behavior badges (4 EnemyBehaviors) ─── */
+  --behavior-melee-aggro: #ef4444;
+  --behavior-flexible:    #f59e0b;
+  --behavior-caster:      #8b5cf6;
+  --behavior-passive:     #6b7280;
+
+  /* ─── Spell schools (8 D&D schools) ─── */
+  --school-evocation:     #e8723a;
+  --school-necromancy:    #4aba8a;
+  --school-illusion:      #9b7fd4;
+  --school-abjuration:    #e8c263;
+  --school-conjuration:   #3abab4;
+  --school-divination:    #5b9bd5;
+  --school-enchantment:   #d47fa8;
+  --school-transmutation: #9a9590;
+
+  /* ─── Action economy ─── */
+  --action-primary:  #e8c263;
+  --action-bonus:    #e8723a;
+  --action-reaction: #5b9bd5;
+  --action-ritual:   #9b7fd4;
+  --action-free:     #5bad5a;
+
+  /* ─── Item rarity ─── */
+  --rarity-common:    #9a9590;
+  --rarity-uncommon:  #5bad5a;
+  --rarity-rare:      #5b9bd5;
+  --rarity-very-rare: #9b7fd4;
+  --rarity-legendary: #e8c263;
+  --rarity-artifact:  #e8723a;
+
+  /* ─── Class identities (6 classes, used in draft + party UI) ─── */
+  --class-fighter:   #c43c3c;
+  --class-rogue:     #8b7fd4;
+  --class-wizard:    #5b9bd5;
+  --class-cleric:    #e8c263;
+  --class-ranger:    #5bad5a;
+  --class-barbarian: #e8723a;
+
+  /* ─── Feature types (left border accents) ─── */
+  --feature-attack:   #c43c3c;
+  --feature-defense:  #e8c263;
+  --feature-resource: #5b9bd5;
+  --feature-passive:  #9a9590;
+  --feature-stat:     #5bad5a;
+
+  /* ─── Resources (HP / slots / XP) ─── */
+  --resource-hp:          #c43c3c;
+  --resource-hp-low:      #e8723a;
+  --resource-hp-critical: #d42b2b;
+  --resource-hp-dead:     #6b7280;
+  --resource-spell-slot:  #4a7fd4;
+  --resource-xp:          #5bad5a;
+}

@@ -9,18 +9,11 @@ import { DetailItem } from '@/components/molecules/DetailItem';
 import { ConditionList } from '@/components/molecules/ConditionList';
 import { useGame } from '@/components/providers/GameProvider';
 import type { Enemy } from '@/data/game-types';
-
-const BEHAVIOR_LABELS: Record<string, { label: string; color: string }> = {
-  'melee-aggro': { label: 'Melee', color: '#ef4444' },
-  'flexible': { label: 'Flexible', color: '#f59e0b' },
-  'caster': { label: 'Caster', color: '#8b5cf6' },
-  'boss': { label: 'Boss', color: '#ef4444' },
-  'boss-caster': { label: 'Boss Caster', color: '#8b5cf6' },
-  'passive': { label: 'Passive', color: '#6b7280' },
-};
+import { BEHAVIOR_VISUALS, type EnemyBehavior } from '@/data/behavior-visuals';
+import { tint } from '@/data/color-utils';
 
 export function EnemyInspect({ enemy }: { enemy: Enemy }) {
-  const behaviorInfo = BEHAVIOR_LABELS[enemy.behavior] || BEHAVIOR_LABELS['melee-aggro'];
+  const behaviorInfo = BEHAVIOR_VISUALS[enemy.behavior as EnemyBehavior] || BEHAVIOR_VISUALS['melee-aggro'];
   const { state } = useGame();
   const activeEffects = state.combat?.activeEffects.filter(e => e.targetId === enemy.id) || [];
 
@@ -77,7 +70,7 @@ export function EnemyInspect({ enemy }: { enemy: Enemy }) {
               <h4 className="text-label-md uppercase tracking-widest text-on-surface-variant font-semibold">Attacks</h4>
               <span
                 className="text-label-sm font-semibold px-1.5 py-0.5 rounded-full"
-                style={{ color: behaviorInfo.color, backgroundColor: `${behaviorInfo.color}18` }}
+                style={{ color: behaviorInfo.color, backgroundColor: tint(behaviorInfo.color, 9) }}
               >
                 {behaviorInfo.label}
               </span>

@@ -7,24 +7,37 @@
 
 import type { Character, EquippedWeapon, EquippedArmor } from './game-types';
 import type { ClassBuild } from './classes';
+import { V1_WEAPONS, V1_ARMOR } from './v1-roster';
 
-// ─── Starting Equipment Data ────────────────────────────────
+// ─── Starting Equipment Resolvers ───────────────────────────
+// Starting gear is resolved from the curated roster by index — single
+// source of truth, no duplicated weapon/armor stat tables.
 
-const STARTING_WEAPONS: Record<string, EquippedWeapon> = {
-  longsword: { index: 'longsword', name: 'Longsword', damage: '1d8', damageType: 'slashing', weaponRange: 'melee', properties: [] },
-  shortsword: { index: 'shortsword', name: 'Shortsword', damage: '1d6', damageType: 'piercing', weaponRange: 'melee', properties: ['finesse', 'light'] },
-  greataxe: { index: 'greataxe', name: 'Greataxe', damage: '1d12', damageType: 'slashing', weaponRange: 'melee', properties: ['heavy', 'two-handed'] },
-  mace: { index: 'mace', name: 'Mace', damage: '1d6', damageType: 'bludgeoning', weaponRange: 'melee', properties: [] },
-  longbow: { index: 'longbow', name: 'Longbow', damage: '1d8', damageType: 'piercing', weaponRange: 'ranged', properties: ['ammunition', 'heavy', 'two-handed'] },
-  quarterstaff: { index: 'quarterstaff', name: 'Quarterstaff', damage: '1d6', damageType: 'bludgeoning', weaponRange: 'melee', properties: [] },
-};
+function resolveWeapon(index: string): EquippedWeapon {
+  const w = V1_WEAPONS.find(x => x.index === index)
+    ?? V1_WEAPONS.find(x => x.index === 'longsword')!;
+  return {
+    index: w.index,
+    name: w.name,
+    damage: w.damage,
+    damageType: w.damageType,
+    weaponRange: w.weaponRange,
+    properties: [...w.properties],
+    ...(w.onHit ? { onHit: w.onHit } : {}),
+  };
+}
 
-const STARTING_ARMOR: Record<string, EquippedArmor | null> = {
-  'chain-mail': { index: 'chain-mail', name: 'Chain Mail', acBase: 16, acDexCap: 0 },
-  'leather-armor': { index: 'leather-armor', name: 'Leather Armor', acBase: 11 },
-  'scale-mail': { index: 'scale-mail', name: 'Scale Mail', acBase: 14, acDexCap: 2 },
-  'none': null,
-};
+function resolveArmor(index: string): EquippedArmor | null {
+  if (index === 'none') return null;
+  const a = V1_ARMOR.find(x => x.index === index);
+  if (!a) return null;
+  return {
+    index: a.index,
+    name: a.name,
+    acBase: a.acBase,
+    ...(a.acDexCap !== undefined ? { acDexCap: a.acDexCap } : {}),
+  };
+}
 
 // ─── Feature Uses Factory ────────────────────────────────────
 
@@ -59,12 +72,12 @@ export function createCharacter(build: ClassBuild, slotIndex: number): Character
     stats: { ...build.stats },
     savingThrows: [...build.savingThrows],
     equipment: {
-      weapon: STARTING_WEAPONS[build.startingEquipment.weapon] || STARTING_WEAPONS.longsword,
-      armor: STARTING_ARMOR[build.startingEquipment.armor] ?? null,
+      weapon: resolveWeapon(build.startingEquipment.weapon),
+      armor: resolveArmor(build.startingEquipment.armor),
       shield: build.startingEquipment.shield,
     },
     consumables: [
-      { id: 'health-potion', name: 'Health Potion', quantity: 2, effect: 'heal', value: 7 },
+      { id: 'potion-of-healing', quantity: 2 },
     ],
     spellcasting: build.spellcasting ? {
       ability: build.spellcasting.ability,

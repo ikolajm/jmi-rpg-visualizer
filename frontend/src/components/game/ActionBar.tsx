@@ -6,16 +6,16 @@ import { GameIcon } from '@/components/atoms/GameIcon';
 import { ResourceTracker, SpellSlotPips } from '@/components/molecules';
 import { DamageIcon } from '@/components/molecules/DamageIcon';
 import { Swords, Shield, ArrowRight, Sparkles, SkipForward } from 'lucide-react';
-import { spellMeta } from '@/data/spell-meta';
-import { isSpellCastable, getSpellCastType } from '@/data/spell-engine';
+import { isSpellCastable, getSpellCastType, getSpellMeta } from '@/data/spell-engine';
 import { canReach, movableZones, weaponReach, spellReach, reachLabels, zoneLabel } from '@/data/zones';
 import { hasBonusActions, getBonusActions } from '@/data/bonus-actions';
+import { getConsumable } from '@/data/v1-roster';
 import { actionColors, resourceColors } from '@/data/game-colors';
 import type { Zone } from '@/data/game-types';
 
 export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction, onMove, onEndTurn }: {
   onAttack: (targetId: string) => void;
-  onCast: (spellIndex: string, targetId: string) => void;
+  onCast: (spellIndex: string, targetId: string, asBonusAction?: boolean) => void;
   onDefend: () => void;
   onUseItem: (itemId: string, targetId: string) => void;
   onBonusAction: (action: string, targetId?: string) => void;
@@ -26,6 +26,12 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
   const [mode, setMode] = useState<'idle' | 'attack-target' | 'cast-select' | 'cast-target' | 'item-select' | 'item-target' | 'bonus-select' | 'move-target'>('idle');
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [selectedSpell, setSelectedSpell] = useState<string | null>(null);
+  // True when the active cast was launched from the Bonus Action menu
+  // (Healing Word, Hunter's Mark) — spends the bonus action, not the action.
+  const [castingAsBonus, setCastingAsBonus] = useState(false);
+  // Set when the active cast was launched from a spell scroll — routes the
+  // target pick through onUseItem (consume the scroll) instead of onCast.
+  const [scrollItemId, setScrollItemId] = useState<string | null>(null);
 
   const currentEntity = state.combat?.initiativeOrder[state.combat.currentTurnIndex];
   const character = currentEntity?.type === 'character'
@@ -66,7 +72,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
                   <div className="flex-1 h-px bg-outline-subtle" />
                 </div>
                 {[...character.spellcasting.cantrips].filter(isSpellCastable).sort().map((spell) => (
-                  <SpellRow key={spell} spell={spell} available onClick={() => { setSelectedSpell(spell); setMode('cast-target'); }} />
+                  <SpellRow key={spell} spell={spell} available onClick={() => { setSelectedSpell(spell); setCastingAsBonus(false); setScrollItemId(null); setMode('cast-target'); }} />
                 ))}
                 {(() => {
                   const castableSlotSpells = [...character.spellcasting.preparedSpells].filter(isSpellCastable).sort();
@@ -81,7 +87,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
                       </div>
                       {castableSlotSpells.map((spell) => (
                         <SpellRow key={spell} spell={spell} available={hasSlots}
-                          onClick={() => { if (hasSlots) { setSelectedSpell(spell); setMode('cast-target'); } }}>
+                          onClick={() => { if (hasSlots) { setSelectedSpell(spell); setCastingAsBonus(false); setScrollItemId(null); setMode('cast-target'); } }}>
                           {!hasSlots && <span className="text-label-sm text-error">No slots</span>}
                         </SpellRow>
                       ))}
@@ -93,7 +99,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
           )}
 
           {mode === 'cast-target' && selectedSpell && (() => {
-            const meta = spellMeta[selectedSpell];
+            const meta = getSpellMeta(selectedSpell);
             const castType = getSpellCastType(selectedSpell);
             const r = meta?.range ? spellReach(meta.range) : 'any';
             const spellName = selectedSpell.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -101,6 +107,14 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
             const targetsAllies = (castType === 'healing' || castType === 'buff') && !isEnemyBuff;
             const targetsEnemies = castType === 'damage' || castType === 'condition' || isEnemyBuff;
             const targetsBoundary = castType === 'boundary';
+
+            // A scroll cast routes through onUseItem (consume the scroll);
+            // a normal or bonus-action cast routes through onCast.
+            const confirmTarget = (target: string) => {
+              if (scrollItemId) onUseItem(scrollItemId, target);
+              else onCast(selectedSpell, target, castingAsBonus);
+              setMode('idle'); setSelectedSpell(null); setCastingAsBonus(false); setScrollItemId(null);
+            };
 
             return (
               <PanelSection label={`Cast ${spellName}${targetsBoundary ? ' — select wall' : ' — select target'}`}>
@@ -110,7 +124,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
                     const existing = state.combat!.boundaries[key];
                     return (
                       <TargetButton key={key} variant="ally"
-                        onClick={() => { onCast(selectedSpell, key); setMode('idle'); setSelectedSpell(null); }}
+                        onClick={() => confirmTarget(key)}
                         icon={<span className="text-lg">🔥</span>}
                         name={`Zone ${a} | Zone ${b}`}
                         detail={existing ? `${existing.name} (replace)` : 'Empty'} />
@@ -118,7 +132,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
                   })}
                   {targetsAllies && state.party.filter(c => c.isAlive).map((ally) => (
                     <TargetButton key={ally.id} variant="ally"
-                      onClick={() => { onCast(selectedSpell, ally.id); setMode('idle'); setSelectedSpell(null); }}
+                      onClick={() => confirmTarget(ally.id)}
                       icon={<GameIcon category="class" name={ally.classIndex} size="lg" className="text-primary" />}
                       name={ally.name} detail={`${ally.hp}/${ally.maxHp} HP`} />
                   ))}
@@ -127,7 +141,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
                     if (targets.length === 0) return <EmptyHint>No targets in range</EmptyHint>;
                     return targets.map((e) => (
                       <TargetButton key={e.id} variant="enemy"
-                        onClick={() => { onCast(selectedSpell, e.id); setMode('idle'); setSelectedSpell(null); }}
+                        onClick={() => confirmTarget(e.id)}
                         icon={<GameIcon category="monster" name={e.type} size="lg" className="text-error" />}
                         name={e.name} detail={`${e.hp}/${e.maxHp} HP`} />
                     ));
@@ -140,17 +154,29 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
           {mode === 'item-select' && (
             <PanelSection label="Select Item">
               <div className="flex flex-col gap-1">
-                {character.consumables.map((item) => (
-                  <button key={item.id}
-                    onClick={() => { if (item.quantity > 0) { setSelectedItem(item.id); setMode('item-target'); } }}
-                    disabled={item.quantity <= 0}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-component transition-all text-left
-                      ${item.quantity > 0 ? 'bg-white/5 hover:bg-white/10 cursor-pointer' : 'opacity-30 cursor-not-allowed'}`}>
-                    <GameIcon category="item" name="consumable-potion" size="md" className="text-on-surface-variant" />
-                    <span className="text-body-sm font-medium text-on-surface">{item.name}</span>
-                    <span className="text-label-sm text-on-surface-variant ml-auto">×{item.quantity}</span>
-                  </button>
-                ))}
+                {character.consumables.map((item) => {
+                  const def = getConsumable(item.id);
+                  if (!def) return null;
+                  return (
+                    <button key={item.id}
+                      onClick={() => {
+                        if (item.quantity <= 0) return;
+                        if (def.effect === 'spell' && def.spellIndex) {
+                          // Scroll — route into the cast-target picker for its spell.
+                          setSelectedSpell(def.spellIndex); setScrollItemId(item.id); setMode('cast-target');
+                        } else {
+                          setSelectedItem(item.id); setMode('item-target');
+                        }
+                      }}
+                      disabled={item.quantity <= 0}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-component transition-all text-left
+                        ${item.quantity > 0 ? 'bg-white/5 hover:bg-white/10 cursor-pointer' : 'opacity-30 cursor-not-allowed'}`}>
+                      <GameIcon category="item" name="consumable-potion" size="md" className="text-on-surface-variant" />
+                      <span className="text-body-sm font-medium text-on-surface">{def.name}</span>
+                      <span className="text-label-sm text-on-surface-variant ml-auto">×{item.quantity}</span>
+                    </button>
+                  );
+                })}
               </div>
             </PanelSection>
           )}
@@ -175,7 +201,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
                   <button key={ba.id}
                     onClick={() => {
                       if (!ba.available) return;
-                      if (ba.id === 'healing-word') { setSelectedSpell('healing-word'); setMode('cast-target'); }
+                      if (ba.id === 'healing-word' || ba.id === 'hunters-mark') { setSelectedSpell(ba.id); setCastingAsBonus(true); setScrollItemId(null); setMode('cast-target'); }
                       else { onBonusAction(ba.id); setMode('idle'); }
                     }}
                     disabled={!ba.available}
@@ -229,7 +255,7 @@ export function ActionBar({ onAttack, onCast, onDefend, onUseItem, onBonusAction
         {character.spellcasting && (
           <ActionTile icon={<Sparkles className="size-6" />} label="Cast" color={schoolColors.illusion}
             active={mode === 'cast-select' || mode === 'cast-target'} disabled={resources.actionsRemaining <= 0}
-            onClick={() => { setMode(mode === 'cast-select' ? 'idle' : 'cast-select'); setSelectedSpell(null); }} />
+            onClick={() => { setMode(mode === 'cast-select' ? 'idle' : 'cast-select'); setSelectedSpell(null); setCastingAsBonus(false); setScrollItemId(null); }} />
         )}
 
         <ActionTile icon={<ArrowRight className="size-6" />} label="Move" color={actionColors.free}
@@ -327,7 +353,7 @@ function TargetButton({ icon, name, detail, variant, onClick }: {
 function SpellRow({ spell, available, onClick, children }: {
   spell: string; available: boolean; onClick: () => void; children?: React.ReactNode;
 }) {
-  const meta = spellMeta[spell];
+  const meta = getSpellMeta(spell);
   const reach = meta?.range ? spellReach(meta.range) : null;
   const reachLabel = reach ? reachLabels[reach] : null;
   return (

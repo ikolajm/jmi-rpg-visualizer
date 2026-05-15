@@ -5,7 +5,7 @@
  * combat effects. Used by combat resolvers and the enemy turn logic.
  */
 
-import type { FloorModifier, FloorModifierId } from '@/data/game-types';
+import type { FloorModifier } from '@/data/game-types';
 
 export interface CombatModifiers {
   darkness: boolean;

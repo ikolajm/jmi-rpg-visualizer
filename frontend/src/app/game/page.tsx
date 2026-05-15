@@ -12,25 +12,21 @@ import { awardXP, checkLevelUp, applyLevelUp, type LevelUpResult } from '@/data/
 import { useRest } from '@/hooks/useRest';
 import { pickFloorModifier } from '@/data/floor-modifiers';
 import { statMod } from '@/data/dice';
-import { rarityColors } from '@/data/game-colors';
-import { GameIcon } from '@/components/atoms/GameIcon';
-import { Button } from '@/components/atoms/Button';
 import { InitiativeBar, ZoneLayout, ActionBar, GameLog, InspectSheet } from '@/components/game';
 import { RoomPreview } from '@/components/game/RoomPreview';
 import { LootScreen } from '@/components/game/LootScreen';
 import { LevelUpScreen } from '@/components/game/LevelUpScreen';
 import { RestScreen } from '@/components/game/RestScreen';
 import { GameOverScreen } from '@/components/game/GameOverScreen';
-import { CombatFeedback } from '@/components/game/CombatFeedback';
-import { CombatOverlays } from '@/components/game/CombatOverlays';
+import { GlobalFeedbackOverlay } from '@/components/game/feedback';
 import { PhaseBanner } from '@/components/game/PhaseBanner';
 import { VictoryOverlay } from '@/components/game/VictoryOverlay';
 import { AnimatePresence, motion } from 'motion/react';
-import type { Character, Enemy, Zone, RoomType } from '@/data/game-types';
+import type { Character, Enemy, Zone } from '@/data/game-types';
 import type { LootItem } from '@/data/loot-generator';
 
 export default function GamePage() {
-  const { state, initParty, setPhase, setRoom, setCombat, addLog, updateCharacter, updateStats, advanceRoom, setFloorModifier } = useGame();
+  const { state, initParty, setPhase, setRoom, setCombat, addLog, updateCharacter, advanceRoom, setFloorModifier } = useGame();
 
   const router = useRouter();
   const [inspectId, setInspectId] = useState<string | null>(null);
@@ -210,7 +206,7 @@ export default function GamePage() {
         });
       } else {
         updateCharacter(charId, {
-          consumables: [...char.consumables, { id: item.index, name: item.name, quantity: 1, effect: 'heal', value: 7 }],
+          consumables: [...char.consumables, { id: item.index, quantity: 1 }],
         });
       }
       addLog(`${char.name} receives ${item.name}.`, 'loot');
@@ -305,8 +301,7 @@ export default function GamePage() {
 
       {state.combat && <InitiativeBar />}
       <GameLog />
-      {state.phase === 'combat' && <CombatFeedback />}
-      {state.phase === 'combat' && <CombatOverlays />}
+      {state.phase === 'combat' && <GlobalFeedbackOverlay />}
       {state.phase === 'combat' && <PhaseBanner />}
       <AnimatePresence>
         {victoryXp !== null && <VictoryOverlay xpGained={victoryXp} />}

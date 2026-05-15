@@ -113,14 +113,14 @@ Keep the d20 core, strip the edge cases:
 ### Included
 
 - Advantage/disadvantage (roll 2d20, take higher/lower) — too good and too cheap to skip
+- Concentration — one concentration spell per caster; CON save to maintain when the caster takes damage
+- Auto-ASI — +2 to the primary stat at level-up (auto-applied, no manual choice)
 
 ### Skipped (v1)
 
 - Reactions / opportunity attacks
-- Concentration checks
 - Multiclassing
 - Feats
-- Ability score improvements (just give HP + features on level-up)
 
 ---
 
@@ -128,21 +128,26 @@ Keep the d20 core, strip the edge cases:
 
 Procedural room sequence. Each room = one encounter.
 
-| Room Type | Frequency | What Happens |
-|-----------|-----------|-------------|
-| **Combat** | ~60% | 1-N enemies, scaled to floor level |
-| **Elite Combat** | ~15% | Tougher enemies, better loot drop |
-| **Boss** | Every 5th room | Single powerful enemy or enemy + adds. Guaranteed loot. |
-| **Rest** | ~10% | Heal party for % of max HP. Optional: rest vs. search for loot |
-| **Treasure** | ~10% | Guaranteed item drop. Maybe trapped (DEX save) |
-| **Trap** | ~5% | Saving throw to avoid damage. No enemies. |
+| Room Type | Weight | What Happens |
+|-----------|--------|-------------|
+| **Combat** | 55 | 1-N enemies, scaled to floor tier |
+| **Elite Combat** | 15 | Tougher enemies, better loot drop |
+| **Boss** | Every 10th room | Single powerful enemy or enemy + adds. Guaranteed loot. |
+| **Rest** | 15 | Choice of Full / Quick / Train (see Leveling and ENGINE-RULES) |
+| **Treasure** | 15 | Guaranteed item drop → loot pick |
+
+Trap rooms were cut from v1 — a save roll with no player agency. The room-type weights are relative, not exact percentages; the boss room overrides on every 10th room.
 
 ### Scaling
 
-- **Floor 1-5:** CR 1/4 to CR 1 enemies, basic loot
-- **Floor 6-10:** CR 2-5, uncommon loot
-- **Floor 11-15:** CR 5-8, rare loot
-- **Floor 16+:** CR 8+, escalating until TPK is inevitable
+Six floor tiers, each with its own CR pool and enemy counts:
+
+- **Floor 1-2:** CR 1/8–1/2
+- **Floor 3-4:** CR 1/2–2
+- **Floor 5-7:** CR 2-5
+- **Floor 8-10:** CR 5-8
+- **Floor 11-15:** CR 8-10
+- **Floor 16+:** CR 10-17, escalating until TPK is inevitable
 
 ### Between Rooms
 
@@ -199,11 +204,13 @@ Each status effect gets a distinct CSS/Motion.js/Three.js animation on the chara
 | **Concentrating** (caster) | Maintaining a spell | Subtle aura glow in spell school color |
 
 ### Tech Mix
-- **Pure CSS** (`@keyframes`, `backdrop-filter`, layered `box-shadow`) for simpler effects (blessed, stunned, concentrating)
-- **Motion.js** for physics-based animations (cursed pulse, rage intensity)
-- **Three.js** for 1-2 standout effects where WebGL adds value CSS can't (poison fog, flame particles)
+- **Pure CSS** (`@keyframes`, `backdrop-filter`, layered `box-shadow`) for simpler effects
+- **Motion** for physics-based animations
+- **Three.js** for standout effects where WebGL adds value CSS can't
 
 The mix itself demonstrates range.
+
+> **Note (2026-05): the table above predates the shipped engine.** The implemented condition set is 15 `GameCondition`s in `status-effects.ts` — paralyzed, unconscious, restrained, poisoned, frightened, prone, petrified, burning, frozen, blessed, hunterMarked, shielded, spiritGuarded, commanded, staggered. The per-condition visual treatment is being reworked in a dedicated visual overhaul pass; this section is reconciled then.
 
 ---
 
@@ -222,36 +229,30 @@ TPK triggers the score screen.
 - Run duration
 - Loot collected
 
-Local scoreboard. Top 10 runs with expandable details.
+The game over screen shows the full run stats. No persistent scoreboard in v1 — a run is one sitting.
 
 ---
 
-## UI Layout — Persistent Dashboard
+## UI Layout — Phase-Driven Flow
 
-NES/SNES-inspired aesthetic. Text + icons, no sprites. Corner bracket motif (established on title screen). Lucide icons for v1, custom icons + Three.js status effects added during polish.
+NES/SNES-inspired aesthetic. Text, icons, and tokens — no sprites. Corner bracket motif. Hybrid icon system (pixel-art + Lucide source SVGs); CSS/Motion/Three.js status effect animations layered in during polish.
 
-The game uses a **persistent dashboard layout**, NOT discrete screen navigation:
+The game is a **phase-driven full-screen flow**, not a persistent dashboard. `GameProvider` holds the current phase; the game page renders one full-screen component per phase. A floating **HUD overlay layer** sits on top regardless of phase: floor/room chip, initiative bar, game log, combat feedback/overlays, phase banner, the animated action bar, and the inspect sheet.
 
-- **Party panel** (left, always visible) — 4 character placards with HP bars, status effects, equipment summary
-- **Center stage** (contextual) — swaps content based on game phase (draft, combat zones, loot, rest, level-up, etc.)
-- **Action bar** (bottom, contextual) — phase-appropriate actions
-- **Game log** (collapsible) — combat events, loot drops, ability check results
-
-Title screen is the only standalone screen — it transitions into the dashboard shell on "Start."
+Title and draft are standalone pages; `/dev` jumps to any phase for testing.
 
 ## Screens / Phases
 
-| Phase | Center Stage Content | Key Components |
-|-------|---------------------|---------------|
-| **Title** | Standalone screen (no dashboard) | Logo (pixelated → letter reveal), breathing corner bracket "Start" button, scoreboard button |
-| **Party Draft** | 6 class cards in bottom row, 4 empty placards up top | Select card → sheet pull-out with tabbed breakdown (movesets, spells, equipment, level progression) → confirm to fill placard |
-| **Dungeon View** | Room sequence, floor indicator | Room type icon, floor counter, party HP summary in left panel |
-| **Combat** | Three zone panels (melee / ranged / far) | Initiative bar at top, action menu, game log. Chips represent characters/enemies in zones |
-| **Level Up** | Before/after stat comparison | New features, spell slots, HP increase. Confirm to proceed |
-| **Loot** | 3 item options | Pick 1, assign to character via party panel |
-| **Rest** | Rest vs. Search choice | Heal % + restore spell slot, or ability check for bonus loot |
-| **Game Over** | Full run stats | Rooms cleared, damage dealt/taken, characters lost, score. Save to local scoreboard |
-| **Scoreboard** | Top 10 runs | Expandable run details |
+| Phase | Content | Key Components |
+|-------|---------|---------------|
+| **Title** | Standalone page | Logo (pixelated → letter reveal), breathing corner bracket "Start" button |
+| **Party Draft** | Standalone page — 6 class cards, 4 placards | Select card → sheet pull-out with tabbed breakdown (stats, movesets, spells, equipment, progression) → confirm to fill placard |
+| **Room Preview** | Room type, flavor text, floor modifier | Room icon, floor/room counter, enter button |
+| **Combat** | Three zone panels (melee / ranged / far) | Initiative bar, action bar, game log. Tokens represent characters/enemies in zones |
+| **Loot** | 3 item options | Pick 1, assign to a character |
+| **Rest** | Full / Quick / Train choice cards | Each option's HP / spell-slot / stat tradeoff |
+| **Level Up** | Recap of all level-ups since last room | New features, spell slots, HP per character |
+| **Game Over** | Full run stats | Rooms cleared, damage dealt/taken, characters lost, floor reached |
 
 ---
 
@@ -270,9 +271,9 @@ Title screen is the only standalone screen — it transitions into the dashboard
 
 ### Data Licensing — SRD vs. Full 5e Content
 
-See [data-licensing.md](data-licensing.md) for full analysis.
+See [DATA-LICENSING.md](DATA-LICENSING.md) for full analysis.
 
-**TL;DR:** Use only 5e SRD content (CC-BY-4.0). More than enough for v1. The Kaggle/Roll20 dataset likely mixes SRD and licensed content — needs filtering or replacement with a clean SRD source.
+**TL;DR:** Only 5e SRD content (CC-BY-4.0) is used — more than enough for v1. Data comes from the clean dnd5eapi.co SRD dataset, not a mixed Roll20/Kaggle source.
 
 ---
 
@@ -297,22 +298,24 @@ Steps 1-3 can overlap. Step 4 is the heaviest lift. Steps 5-6 are where design s
 - 6 classes, fixed stat arrays
 - Zone-based combat (melee/ranged/far)
 - Turn-based, initiative order
-- Advantage/disadvantage
+- Advantage/disadvantage, concentration
 - Procedural rooms with scaling difficulty
-- Boss every 5 rooms
+- Boss every 10 rooms
 - Loot (pick 1 of 3), equipment slots
-- Leveling to 10
-- Status effect animations on placards
-- TPK scoring + local scoreboard
-- Roll20 5e SRD data as backbone
+- Leveling to 10, auto-ASI
+- Status effect animations in combat
+- TPK scoring (run stats on game over)
+- 5e SRD data (dnd5eapi.co) as backbone
 - Design system pipeline proof #2
 
-### Out (v2+)
+### Out
 - Multiplayer / WebSocket
 - Sprites or character-specific art
 - Grid-based movement
-- Full 5e rules (reactions, concentration, feats, multiclass)
+- Reactions / opportunity attacks, feats, multiclassing
 - Death saves
+- Trap rooms (cut — a save roll with no player agency)
+- Local scoreboard / run persistence (the game over screen covers it)
 - Homebrew extension system
 - Skill trees / deep equipment upgrades
 - Online leaderboards

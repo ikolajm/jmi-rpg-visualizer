@@ -3,7 +3,7 @@
 import { motion } from 'motion/react';
 import { GameIcon } from '@/components/atoms/GameIcon';
 import { Button } from '@/components/atoms/Button';
-import type { Room, FloorModifier, RoomType } from '@/data/game-types';
+import type { Room, FloorModifier } from '@/data/game-types';
 
 const ROOM_CONFIG: Record<string, { icon: string; label: string; color: string; glowColor: string }> = {
   combat:       { icon: 'combat',   label: 'Encounter',            color: 'text-on-surface',  glowColor: 'var(--on-surface-variant)' },
@@ -11,7 +11,6 @@ const ROOM_CONFIG: Record<string, { icon: string; label: string; color: string; 
   boss:         { icon: 'boss',     label: "Guardian's Chamber",   color: 'text-error',       glowColor: 'var(--error)' },
   rest:         { icon: 'rest',     label: 'Sanctuary',            color: 'text-primary',     glowColor: 'var(--primary)' },
   treasure:     { icon: 'treasure', label: 'Hidden Cache',         color: 'text-primary',     glowColor: 'var(--primary)' },
-  trap:         { icon: 'trap',     label: 'Trap',                 color: 'text-warning',     glowColor: 'var(--warning)' },
 };
 
 // ─── Variants ────────────────────────────────────────────────

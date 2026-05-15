@@ -6,6 +6,7 @@ import { GameIcon } from '@/components/atoms/GameIcon';
 import { Button } from '@/components/atoms/Button';
 import { DamageInline } from '@/components/molecules/DamageIcon';
 import { rarityColors } from '@/data/game-colors';
+import { tint } from '@/data/color-utils';
 import { statMod } from '@/data/dice';
 import type { LootItem } from '@/data/loot-generator';
 import type { Character } from '@/data/game-types';
@@ -127,8 +128,12 @@ export function LootScreen({ choices, party, onPick, onSkip }: LootScreenProps) 
                     key={item.index}
                     variants={cardDrop}
                     onClick={() => handleSelect(item)}
-                    className="flex flex-col items-start gap-2 p-4 rounded-card bg-surface-2 border-2 border-outline-subtle hover:border-primary transition-colors w-56 text-left"
-                    whileHover={{ y: -4 }}
+                    className="flex flex-col items-start gap-2 p-4 rounded-card border-2 transition-colors w-56 text-left"
+                    style={{
+                      borderColor: rarityColor,
+                      backgroundColor: tint(rarityColor, 5),
+                    }}
+                    whileHover={{ y: -4, boxShadow: `0 0 20px ${tint(rarityColor, 30)}` }}
                     whileTap={{ scale: 0.98 }}
                   >
                     <div className="flex items-center justify-between w-full">
@@ -169,11 +174,15 @@ export function LootScreen({ choices, party, onPick, onSkip }: LootScreenProps) 
               variants={container}
             >
               {/* Selected item summary */}
+              {(() => {
+                const sel = rarityColors[selected.rarity.toLowerCase()] || rarityColors.common;
+                return (
               <motion.div
-                className="flex flex-col items-center gap-1 px-5 py-3 rounded-card bg-surface-2 border border-primary/30"
+                className="flex flex-col items-center gap-1 px-5 py-3 rounded-card border-2"
+                style={{ borderColor: sel, backgroundColor: tint(sel, 5) }}
                 variants={fadeIn}
               >
-                <span className="text-label-sm font-semibold uppercase tracking-widest" style={{ color: rarityColors[selected.rarity.toLowerCase()] || rarityColors.common }}>
+                <span className="text-label-sm font-semibold uppercase tracking-widest" style={{ color: sel }}>
                   {selected.rarity} {selected.category}
                 </span>
                 {selected.damage && selected.damageType && (
@@ -186,6 +195,8 @@ export function LootScreen({ choices, party, onPick, onSkip }: LootScreenProps) 
                   <span className="text-label-sm text-primary">{selected.onHit.description}</span>
                 )}
               </motion.div>
+                );
+              })()}
 
               {/* Recipient list with stat comparison */}
               <motion.span className="text-label-sm uppercase tracking-widest text-on-surface-variant" variants={fadeIn}>

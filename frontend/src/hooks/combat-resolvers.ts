@@ -7,11 +7,9 @@
 
 import { rollD20, rollDice, statMod } from '@/data/dice';
 import { spellMeta } from '@/data/spell-meta';
-import { getSpellCastType } from '@/data/spell-engine';
 import { proficiencyBonus } from '@/data/progression';
 import {
   logAttackHit, logAttackMiss, logNat1, logSpellHit, logSpellMiss,
-  logHeal, logConditionApplied, logConditionResisted,
   logDeath, logImmune,
 } from '@/data/combat-log';
 import {
@@ -21,7 +19,7 @@ import {
 } from '@/data/status-effects';
 import { bloodMoonDamage, type CombatModifiers } from './combat-modifiers';
 import { getFlankingBonus, getRangerOverwatchBonus } from '@/data/zone-synergies';
-import type { Character, Enemy, CombatState, BoundaryKey, Zone } from '@/data/game-types';
+import type { Character, CombatState, BoundaryKey, Zone } from '@/data/game-types';
 
 // ─── Shared Types ────────────────────────────────────────────
 
@@ -139,7 +137,7 @@ export function resolvePlayerAttack(
   let damage = rollDice(weapon.damage) + mod;
   if (isCrit) damage += rollDice(weapon.damage);
 
-  if (attacker.statusEffects.includes('raging') && !isRanged) damage += 2;
+  if (attacker.statusEffects.includes('raging') && !isRanged) damage += attacker.level >= 9 ? 3 : 2;
   if (isCrit && attacker.features.includes('Brutal Critical')) damage += rollDice(weapon.damage);
 
   if (attacker.classIndex === 'rogue' && attacker.features.includes('Sneak Attack')) {

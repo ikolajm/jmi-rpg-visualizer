@@ -69,7 +69,8 @@ const SHAPE_MAP: Record<ActionType, (props: { size: number; filled: boolean; col
   free: ({ size, color }) => <FreeCircle size={size} color={color} />,
 };
 
-export function ActionShape({ type, used = false, size = 'md', showLabel = false, className }: ActionShapeProps) {
+/** Internal — the single shape glyph. Composed by ResourceTracker (the only export). */
+function ActionShape({ type, used = false, size = 'md', showLabel = false, className }: ActionShapeProps) {
   const s = SIZE_MAP[size];
   const color = actionColors[type];
   const filled = !used;

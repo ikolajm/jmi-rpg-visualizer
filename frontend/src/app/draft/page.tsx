@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Heart, Shield } from 'lucide-react';
 import { classBuilds, type ClassBuild } from '@/data/classes';
@@ -14,6 +14,9 @@ import {
 } from '@/components/atoms/Sheet';
 import { SpellSlotPips } from '@/components/molecules';
 import { CharacterInspect } from '@/components/game/CharacterInspect';
+import { classColor } from '@/data/class-visuals';
+import { tint } from '@/data/color-utils';
+import { motion } from 'motion/react';
 
 function getHp(build: ClassBuild) {
   return build.hitDie + statMod(build.stats.con);
@@ -74,73 +77,83 @@ export default function DraftPage() {
 
       {/* Party Placards — 4 slots */}
       <section className="grid grid-cols-4 gap-4 max-w-[960px] w-full mx-auto">
-        {party.map((member, i) => (
-          <div
-            key={i}
-            className={`
-              relative flex flex-col items-center justify-center gap-2 min-h-[180px] px-3
-              rounded-card transition-all duration-200
-              ${member
-                ? 'border-2 border-solid border-primary bg-surface-2'
-                : 'border-2 border-dashed border-outline-subtle bg-surface-1'
-              }
-            `}
-          >
-            {member ? (
-              <>
-                <button
-                  onClick={() => removeFromSlot(i)}
-                  className="absolute top-2 right-2 bg-transparent border-none text-on-surface-variant cursor-pointer p-1 rounded-component transition-colors hover:text-error hover:bg-error-container"
-                >
-                  <X className="size-4" />
-                </button>
-                <GameIcon category="class" name={member.index} size="xl" className="text-primary" />
-                <span className="font-heading text-body-sm font-medium tracking-widest text-primary">
-                  {member.name}
+        {party.map((member, i) => {
+          const accent = member ? classColor(member.index) : null;
+          return (
+            <div
+              key={i}
+              className={`
+                relative flex flex-col items-center justify-center gap-2 min-h-[180px] px-3
+                rounded-card transition-all duration-200
+                ${member
+                  ? 'border-2 border-solid'
+                  : 'border-2 border-dashed border-outline-subtle bg-surface-1'
+                }
+              `}
+              style={member && accent ? { borderColor: accent, backgroundColor: tint(accent, 7) } : undefined}
+            >
+              {member && accent ? (
+                <>
+                  <button
+                    onClick={() => removeFromSlot(i)}
+                    className="absolute top-2 right-2 bg-transparent border-none text-on-surface-variant cursor-pointer p-1 rounded-component transition-colors hover:text-error hover:bg-error-container"
+                  >
+                    <X className="size-4" />
+                  </button>
+                  <GameIcon category="class" name={member.index} size="xl" style={{ color: accent }} />
+                  <span className="font-heading text-body-sm font-medium tracking-widest" style={{ color: accent }}>
+                    {member.name}
+                  </span>
+                  <span className="text-label-sm text-on-surface-variant">{member.role}</span>
+                  <div className="flex items-center justify-center gap-3">
+                    <span className="inline-flex items-center gap-1 text-label-md tabular-nums text-on-surface-variant">
+                      <Heart className="size-5 fill-current text-error" />{getHp(member)}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-label-md tabular-nums text-on-surface-variant">
+                      <Shield className="size-5" style={{ color: accent }} />{member.ac}
+                    </span>
+                  </div>
+                  {member.spellcasting && (
+                    <SpellSlotPips total={member.spellcasting.spellSlotsLevel1} size="sm" />
+                  )}
+                </>
+              ) : (
+                <span className="font-heading text-[clamp(2rem,4vw,3rem)] font-semibold text-outline-subtle leading-none">
+                  {i + 1}
                 </span>
-                <span className="text-label-sm text-on-surface-variant">{member.role}</span>
-                <div className="flex items-center justify-center gap-3">
-                  <span className="inline-flex items-center gap-1 text-label-md tabular-nums text-on-surface-variant">
-                    <Heart className="size-5 fill-current text-error" />{getHp(member)}
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-label-md tabular-nums text-on-surface-variant">
-                    <Shield className="size-5 text-primary" />{member.ac}
-                  </span>
-                </div>
-                {member.spellcasting && (
-                  <SpellSlotPips total={member.spellcasting.spellSlotsLevel1} size="sm" />
-                )}
-              </>
-            ) : (
-              <span className="font-heading text-[clamp(2rem,4vw,3rem)] font-semibold text-outline-subtle leading-none">
-                {i + 1}
-              </span>
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          );
+        })}
       </section>
 
       {/* Class Cards — 6 options */}
       <section className="grid grid-cols-3 md:grid-cols-6 gap-4 max-w-[960px] w-full mx-auto">
         {classBuilds.map((build) => {
           const draftedCount = party.filter(m => m?.index === build.index).length;
+          const accent = classColor(build.index);
           return (
-            <button
+            <motion.button
               key={build.index}
               onClick={() => inspectClass(build)}
               disabled={partyFull}
-              className={`flex flex-col items-center gap-2 px-3 py-4 border rounded-card bg-surface-1 cursor-pointer transition-all duration-200 hover:border-primary hover:bg-surface-2 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:border-outline-subtle
-                ${draftedCount > 0 ? 'border-primary/40' : 'border-outline-subtle'}`}
+              className="flex flex-col items-center gap-2 px-3 py-4 border-2 rounded-card cursor-pointer transition-colors duration-200 active:translate-y-0 disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{
+                borderColor: accent,
+                backgroundColor: draftedCount > 0 ? tint(accent, 12) : tint(accent, 4),
+              }}
+              whileHover={partyFull ? {} : { y: -3 }}
+              whileTap={partyFull ? {} : { y: 0 }}
             >
-              <GameIcon category="class" name={build.index} size="xl" className={draftedCount > 0 ? 'text-primary' : 'text-on-surface-variant'} />
+              <GameIcon category="class" name={build.index} size="xl" style={{ color: accent }} />
               <span className="font-heading text-body-sm font-medium tracking-wider text-on-surface">
                 {build.name}
               </span>
               <span className="text-label-sm text-on-surface-variant">{build.role}</span>
               {draftedCount > 0 && (
-                <span className="text-label-sm font-semibold text-primary">{draftedCount}× drafted</span>
+                <span className="text-label-sm font-semibold" style={{ color: accent }}>{draftedCount}× drafted</span>
               )}
-            </button>
+            </motion.button>
           );
         })}
       </section>

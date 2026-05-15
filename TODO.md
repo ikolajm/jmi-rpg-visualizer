@@ -1,7 +1,7 @@
 # Party Wipe — Build TODO
 
 > Historical build checklist. Phases 0–3 were the foundation.
-> Phases 4–5 are mostly complete as of May 2025.
+> Phases 4–5 are mostly complete as of May 2026.
 > **Active work tracked in `SPRINT.md`** — that's the source of truth for what's left.
 
 ---

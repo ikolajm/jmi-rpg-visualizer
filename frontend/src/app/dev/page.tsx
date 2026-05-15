@@ -7,21 +7,18 @@ import { classBuilds } from '@/data/classes';
 import { generateRoom } from '@/data/room-generator';
 import { generateEncounter } from '@/data/encounter-generator';
 import { generateLootChoices } from '@/data/loot-generator';
-import { GameIcon } from '@/components/atoms/GameIcon';
-import { Button } from '@/components/atoms/Button';
 import { InitiativeBar, ZoneLayout, ActionBar, GameLog, InspectSheet } from '@/components/game';
 import { RoomPreview } from '@/components/game/RoomPreview';
 import { LootScreen } from '@/components/game/LootScreen';
 import { LevelUpScreen } from '@/components/game/LevelUpScreen';
 import { RestScreen } from '@/components/game/RestScreen';
 import { GameOverScreen } from '@/components/game/GameOverScreen';
-import { CombatFeedback } from '@/components/game/CombatFeedback';
-import { CombatOverlays } from '@/components/game/CombatOverlays';
+import { GlobalFeedbackOverlay } from '@/components/game/feedback';
 import { PhaseBanner } from '@/components/game/PhaseBanner';
 import type { Character, Enemy, Zone, GamePhase } from '@/data/game-types';
 import type { LootItem } from '@/data/loot-generator';
 import { statMod } from '@/data/dice';
-import { awardXP, checkLevelUp, applyLevelUp, XP_THRESHOLDS, type LevelUpResult } from '@/data/progression';
+import { awardXP, applyLevelUp, XP_THRESHOLDS, type LevelUpResult } from '@/data/progression';
 import { useRest } from '@/hooks/useRest';
 import { applyCondition, makeEffectId, type GameCondition } from '@/data/status-effects';
 import { FLOOR_MODIFIERS } from '@/data/floor-modifiers';
@@ -37,12 +34,12 @@ const PHASES: { id: GamePhase | 'room-preview-boss'; label: string }[] = [
 ];
 
 function DevHarness() {
-  const { state, initParty, setPhase, setRoom, setCombat, addLog, updateCharacter, updateStats, advanceRoom, setFloorModifier } = useGame();
+  const { state, initParty, setPhase, setRoom, setCombat, addLog, updateCharacter, updateStats, setFloorModifier } = useGame();
   const [activePhase, setActivePhase] = useState<string>('room-preview');
   const [inspectId, setInspectId] = useState<string | null>(null);
   const [inspectType, setInspectType] = useState<'character' | 'enemy'>('character');
   const [lootChoices, setLootChoices] = useState<LootItem[]>([]);
-  const [selectedLoot, setSelectedLoot] = useState<LootItem | null>(null);
+  const [, setSelectedLoot] = useState<LootItem | null>(null);
   const [levelUpResults, setLevelUpResults] = useState<LevelUpResult[]>([]);
   const { handleFullRest, handleQuickRest, handleTrain } = useRest();
 
@@ -91,7 +88,7 @@ function DevHarness() {
       for (const c of state.party) {
         if (!c.isAlive) continue;
         // Give enough XP to guarantee next level, then apply
-        let char = { ...c, xp: (XP_THRESHOLDS[c.level + 1] || 999999) };
+        const char = { ...c, xp: (XP_THRESHOLDS[c.level + 1] || 999999) };
         const result = applyLevelUp(char);
         updateCharacter(c.id, { ...result.character, xp: char.xp });
         results.push(result);
@@ -147,7 +144,7 @@ function DevHarness() {
       if (existing) {
         updateCharacter(charId, { consumables: char.consumables.map(c => c.id === item.index ? { ...c, quantity: c.quantity + 1 } : c) });
       } else {
-        updateCharacter(charId, { consumables: [...char.consumables, { id: item.index, name: item.name, quantity: 1, effect: 'heal', value: 7 }] });
+        updateCharacter(charId, { consumables: [...char.consumables, { id: item.index, quantity: 1 }] });
       }
       addLog(`${char.name} receives ${item.name}.`, 'loot');
     }
@@ -195,7 +192,7 @@ function DevHarness() {
       {state.phase === 'combat' && state.combat && (
         <div className="absolute top-10 left-0 right-0 z-50 flex items-center gap-1 px-3 py-1.5 bg-black/70 backdrop-blur-sm overflow-x-auto">
           <span className="text-label-sm text-error font-semibold uppercase tracking-wider mr-2 shrink-0">Inflict</span>
-          {(['paralyzed', 'unconscious', 'restrained', 'poisoned', 'frightened', 'prone', 'petrified', 'burning', 'frozen', 'commanded', 'staggered', 'hunterMarked'] as GameCondition[]).map(cond => (
+          {(['paralyzed', 'unconscious', 'restrained', 'poisoned', 'frightened', 'prone', 'burning', 'frozen', 'commanded', 'staggered', 'hunterMarked'] as GameCondition[]).map(cond => (
             <button key={cond} onClick={() => {
               // Apply to first alive enemy
               const target = state.combat!.enemies.find(e => e.isAlive);
@@ -207,7 +204,6 @@ function DevHarness() {
                 ...(cond === 'paralyzed' ? { saveDC: 12, saveAbility: 'wis' } : {}),
                 ...(cond === 'restrained' ? { saveDC: 12, saveAbility: 'dex' } : {}),
                 ...(cond === 'shielded' ? { value: 5 } : {}),
-                ...(cond === 'spiritGuarded' ? { damagePerTurn: '3d8', damageType: 'radiant', saveDC: 12, saveAbility: 'wis' } : {}),
                 ...(cond === 'burning' ? { damagePerTurn: '1d6', damageType: 'fire', turnsRemaining: 3 } : {}),
               };
               const { effects: newEffects, applied, reason } = applyCondition(state.combat!.activeEffects, effect);
@@ -224,7 +220,7 @@ function DevHarness() {
             </button>
           ))}
           <span className="text-label-sm text-primary font-semibold uppercase tracking-wider mx-2 shrink-0">Buff Ally</span>
-          {(['blessed', 'shielded', 'spiritGuarded'] as GameCondition[]).map(cond => (
+          {(['blessed', 'shielded'] as GameCondition[]).map(cond => (
             <button key={`ally-${cond}`} onClick={() => {
               const target = state.party.find(c => c.isAlive);
               if (!target) return;
@@ -328,8 +324,7 @@ function DevHarness() {
 
       {state.combat && <InitiativeBar />}
       <GameLog />
-      {state.phase === 'combat' && <CombatFeedback />}
-      {state.phase === 'combat' && <CombatOverlays />}
+      {state.phase === 'combat' && <GlobalFeedbackOverlay />}
       {state.phase === 'combat' && <PhaseBanner />}
 
       {state.phase === 'combat' && combat.isPlayerTurn && combat.activeCharacter && (

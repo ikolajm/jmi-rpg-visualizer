@@ -49,7 +49,6 @@ const CONDITION_VERBS: Record<string, string[]> = {
   poisoned:    ['turns green', 'starts retching', 'staggers, sickened', 'is wracked with nausea', 'feels the venom spread'],
   frightened:  ['recoils in terror', 'trembles with fear', 'backs away, wide-eyed', 'is gripped by dread', 'panics'],
   prone:       ['is knocked flat', 'hits the ground', 'is swept off their feet', 'stumbles and falls', 'crashes down'],
-  petrified:   ['turns to stone', 'hardens into rock', 'is frozen solid', 'becomes a statue', 'calcifies'],
   burning:     ['catches fire', 'is set ablaze', 'erupts in flames', 'is wreathed in fire', 'starts smoldering'],
   frozen:      ['is flash-frozen', 'is encased in ice', 'is locked in frost', 'crystallizes', 'is frozen in place'],
   commanded:   ['obeys against their will', 'is compelled', 'moves involuntarily', 'has no choice but to comply', 'submits to the command'],

@@ -3,8 +3,7 @@
 import { useEffect } from 'react';
 import { useGame } from '@/components/providers/GameProvider';
 import { rollD20, rollDice, statMod } from '@/data/dice';
-import { spellMeta } from '@/data/spell-meta';
-import { getSpellCastType } from '@/data/spell-engine';
+import { getSpellCastType, getSpellMeta } from '@/data/spell-engine';
 import {
   logHeal, logConditionApplied, logConditionResisted, logConditionFree,
   logDot, logMove, logBoundaryCross, logDeath,
@@ -19,8 +18,9 @@ import { getModifiers, hallowedHeal } from './combat-modifiers';
 import { getClericAuraBonus } from '@/data/zone-synergies';
 import { resolvePlayerAttack, resolveSpellDamage } from './combat-resolvers';
 import { executeEnemyTurn } from './enemy-turn';
-import { emitCombatFeedback, delay } from '@/data/combat-events';
-import type { Zone, CombatState, Enemy, BoundaryKey, TurnResources } from '@/data/game-types';
+import { emitCombatFeedback, delay, CAST_CHARGE_MS, type DamageQualifier } from '@/data/combat-events';
+import { getConsumable } from '@/data/v1-roster';
+import type { Zone, CombatState, Enemy, BoundaryKey, TurnResources, Character } from '@/data/game-types';
 
 function getBoundaryKey(from: Zone, to: Zone): BoundaryKey | null {
   const low = Math.min(from, to);
@@ -28,6 +28,18 @@ function getBoundaryKey(from: Zone, to: Zone): BoundaryKey | null {
   if (high - low !== 1) return null;
   return `${low}|${high}` as BoundaryKey;
 }
+
+/** Fixed spellcasting context for scroll casts — anyone can read a scroll,
+ *  at a flat DC, with no spell slot spent (the scroll is the cost). */
+const SCROLL_SC: NonNullable<Character['spellcasting']> = {
+  ability: 'INT',
+  spellSaveDC: 13,
+  spellAttackBonus: 5,
+  cantrips: [],
+  preparedSpells: [],
+  slotsTotal: 0,
+  slotsUsed: 0,
+};
 
 interface UseCombatOptions {
   onVictory?: (defeatedEnemies: Enemy[]) => void;
@@ -105,7 +117,7 @@ export function useCombat(options: UseCombatOptions = {}) {
     });
     tickedEffects = tickEffects(tickedEffects);
 
-    let cleanedBoundaries = { ...combat.boundaries };
+    const cleanedBoundaries = { ...combat.boundaries };
     const allDeadIds = new Set([...deadCharIds, ...deadEnemyIds, ...(killedIds || [])]);
     for (const key of ['1|2', '2|3'] as BoundaryKey[]) {
       if (cleanedBoundaries[key] && allDeadIds.has(cleanedBoundaries[key]!.sourceId)) {
@@ -175,6 +187,7 @@ export function useCombat(options: UseCombatOptions = {}) {
 
     // DoT at turn start
     const dotEffects = charEffects.filter(e => e.damagePerTurn);
+    let charDied = false;
     if (dotEffects.length > 0) {
       for (const dot of dotEffects) {
         const dmg = rollDice(dot.damagePerTurn!);
@@ -188,9 +201,14 @@ export function useCombat(options: UseCombatOptions = {}) {
           if (state.party.filter(c => c.isAlive && c.id !== char.id).length === 0) {
             addLog('Total Party Kill!', 'death'); setPhase('game-over'); return;
           }
+          charDied = true;
+          break;
         }
       }
     }
+
+    // DoT killed the active character (not a TPK) — skip their turn
+    if (charDied) { advanceTurn(undefined, [char.id]); return; }
 
     if (!shouldSkipTurn(charEffects)) return;
 
@@ -260,10 +278,9 @@ export function useCombat(options: UseCombatOptions = {}) {
       emitCombatFeedback({ type: 'immune', targetId });
     } else if (result.damage > 0) {
       const isCrit = result.logs.some(l => l.message.includes('CRIT') || l.message.includes('critical'));
-      emitCombatFeedback({ type: isCrit ? 'crit' : 'damage', targetId, value: result.damage, damageType: attacker.equipment.weapon.damageType });
-      emitCombatFeedback({ type: 'impact', targetId, damageType: attacker.equipment.weapon.damageType });
-      if (result.isVulnerable) emitCombatFeedback({ type: 'vulnerable', targetId });
-      if (result.isResisted) emitCombatFeedback({ type: 'resisted', targetId });
+      const qualifier: DamageQualifier | undefined =
+        isCrit ? 'crit' : result.isVulnerable ? 'vulnerable' : result.isResisted ? 'resisted' : undefined;
+      emitCombatFeedback({ type: 'damage', targetId, value: result.damage, damageType: attacker.equipment.weapon.damageType, qualifier });
       if (result.enemyUpdates && !result.enemyUpdates.isAlive) {
         emitCombatFeedback({ type: 'kill', targetId, isPartyMember: false });
       }
@@ -286,23 +303,30 @@ export function useCombat(options: UseCombatOptions = {}) {
     }
   }
 
-  async function handleCast(spellIndex: string, targetId: string) {
-    if (!activeCharacter || !state.combat || !activeCharacter.spellcasting) return;
-    const meta = spellMeta[spellIndex]; if (!meta) return;
+  async function handleCast(spellIndex: string, targetId: string, asBonusAction = false, fromScroll = false) {
+    // A scroll can be read by anyone — no spellcasting required.
+    if (!activeCharacter || !state.combat || (!fromScroll && !activeCharacter.spellcasting)) return;
+    const meta = getSpellMeta(spellIndex); if (!meta) return;
+
+    // Bonus-action spells (Healing Word, Hunter's Mark) spend the bonus action,
+    // not the turn's action.
+    const castResources = (): TurnResources => asBonusAction
+      ? { ...state.combat!.turnResources, bonusActionUsed: true }
+      : spendAction();
 
     // Capture snapshot before async delay
-    const combat = state.combat;
     const caster = activeCharacter;
 
-    // Spell cast glow before resolving
+    // Caster charge-up plays for CAST_CHARGE_MS before the spell impacts
     emitCombatFeedback({ type: 'spell-cast', targetId: caster.id, spellSchool: meta.school });
-    await delay(200);
-    const rawSc = caster.spellcasting!;
+    await delay(CAST_CHARGE_MS);
+    // Scrolls cast at a flat DC and never spend a slot; otherwise use the caster's.
+    const rawSc = fromScroll ? SCROLL_SC : caster.spellcasting!;
     const sc = mods.thinVeil ? { ...rawSc, spellSaveDC: rawSc.spellSaveDC - 2 } : rawSc;
     const castType = getSpellCastType(spellIndex);
     const isCantrip = meta.level === 0;
     const name = spellIndex.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    if (!isCantrip) updateCharacter(activeCharacter.id, { spellcasting: { ...rawSc, slotsUsed: rawSc.slotsUsed + 1 } });
+    if (!isCantrip && !fromScroll) updateCharacter(activeCharacter.id, { spellcasting: { ...rawSc, slotsUsed: rawSc.slotsUsed + 1 } });
 
     const effects = [...state.combat.activeEffects];
 
@@ -323,7 +347,7 @@ export function useCombat(options: UseCombatOptions = {}) {
         updateCharacter(activeCharacter.id, { hp: selfNewHp });
         addLog(logHeal(activeCharacter.name, 'Blessed Healer', activeCharacter.name, selfHeal, activeCharacter.hp, selfNewHp), 'combat');
       }
-      finishAction({ turnResources: spendAction() });
+      finishAction({ turnResources: castResources() });
       return;
     }
 
@@ -356,14 +380,14 @@ export function useCombat(options: UseCombatOptions = {}) {
         const effect: ActiveEffect = { id: makeEffectId(), name: 'Shield', condition: 'shielded', sourceId: activeCharacter.id, targetId: activeCharacter.id, turnsRemaining: 1, value: 5 };
         if (tryApply(effect, activeCharacter.name)) addLog(`${activeCharacter.name} raises a magical shield — +5 AC.`, 'combat');
       }
-      finishAction({ activeEffects: effects, turnResources: spendAction() });
+      finishAction({ activeEffects: effects, turnResources: castResources() });
       return;
     }
 
     // ── Condition ────────────────────────────────────────
     if (castType === 'condition') {
       const target = state.combat.enemies.find(e => e.id === targetId);
-      if (!target) { finishAction({ turnResources: spendAction() }); return; }
+      if (!target) { finishAction({ turnResources: castResources() }); return; }
 
       if (spellIndex === 'hold-person') {
         const saveRoll = rollD20() + statMod(target.stats.wis);
@@ -378,8 +402,8 @@ export function useCombat(options: UseCombatOptions = {}) {
           if (e.hp <= remaining) {
             remaining -= e.hp;
             const effect: ActiveEffect = { id: makeEffectId(), name: 'Sleep', condition: 'unconscious', sourceId: activeCharacter.id, targetId: e.id, turnsRemaining: 10 };
-            const { applied } = applyCondition(effects, effect);
-            if (applied) { const result = applyCondition(effects, effect); effects.length = 0; effects.push(...result.effects); slept.push(e.name); }
+            const { effects: newEffects, applied } = applyCondition(effects, effect);
+            if (applied) { effects.length = 0; effects.push(...newEffects); slept.push(e.name); }
           }
         }
         addLog(slept.length > 0 ? `${activeCharacter.name}'s Sleep washes over the zone (${hpPool} HP) — ${slept.join(', ')} collapse!` : `${activeCharacter.name}'s Sleep has no effect — enemies too strong (${hpPool} HP).`, 'combat');
@@ -387,9 +411,6 @@ export function useCombat(options: UseCombatOptions = {}) {
         const saveRoll = rollD20() + statMod(target.stats.dex);
         if (saveRoll >= sc.spellSaveDC) { addLog(logConditionResisted(target.name, 'restrained', `DEX ${saveRoll} vs DC ${sc.spellSaveDC}`), 'combat'); }
         else { const effect: ActiveEffect = { id: makeEffectId(), name: 'Web', condition: 'restrained', sourceId: activeCharacter.id, targetId, turnsRemaining: -1, saveDC: sc.spellSaveDC, saveAbility: 'dex' }; if (tryApply(effect, target.name)) addLog(logConditionApplied(target.name, 'restrained', `DEX ${saveRoll} vs DC ${sc.spellSaveDC}`), 'combat'); }
-      } else if (spellIndex === 'spirit-guardians') {
-        const effect: ActiveEffect = { id: makeEffectId(), name: 'Spirit Guardians', condition: 'spiritGuarded', sourceId: activeCharacter.id, targetId: activeCharacter.id, turnsRemaining: -1, damagePerTurn: '3d8', damageType: 'radiant', saveDC: sc.spellSaveDC, saveAbility: 'wis' };
-        if (tryApply(effect, activeCharacter.name)) addLog(`${activeCharacter.name} summons Spirit Guardians — radiant spirits orbit, dealing 3d8 to enemies in zone!`, 'combat');
       } else if (spellIndex === 'command') {
         const saveRoll = rollD20() + statMod(target.stats.wis);
         if (saveRoll >= sc.spellSaveDC) { addLog(logConditionResisted(target.name, 'commanded', `WIS ${saveRoll} vs DC ${sc.spellSaveDC}`), 'combat'); }
@@ -405,27 +426,35 @@ export function useCombat(options: UseCombatOptions = {}) {
         });
         addLog(`${activeCharacter.name} conjures Spike Growth — thorns shred enemies for ${totalDmg} piercing!`, 'combat');
         updateStats({ totalDamageDealt: state.stats.totalDamageDealt + totalDmg });
-        finishAction({ enemies: newEnemies, activeEffects: effects, turnResources: spendAction() });
+        finishAction({ enemies: newEnemies, activeEffects: effects, turnResources: castResources() });
         return;
       }
-      finishAction({ activeEffects: effects, turnResources: spendAction() });
+      finishAction({ activeEffects: effects, turnResources: castResources() });
       return;
     }
 
     // ── Boundary ─────────────────────────────────────────
     if (castType === 'boundary') {
       const boundaryKey = targetId as BoundaryKey;
-      const element = 'fire' as const;
-      const newBoundary: import('@/data/game-types').BoundaryEffect = {
-        id: makeEffectId(), name, element,
-        damage: meta.damage || '5d8', damageType: meta.damageType || 'fire',
-        saveDC: sc.spellSaveDC, saveAbility: 'dex', sourceId: activeCharacter.id,
-      };
+      const isFrost = spellIndex === 'wall-of-frost';
+      const newBoundary: import('@/data/game-types').BoundaryEffect = isFrost
+        ? {
+            // Frost wall — pure zone control: enemies cannot cross at all.
+            id: makeEffectId(), name, element: 'ice',
+            blocksMovement: true,
+            sourceId: activeCharacter.id,
+          }
+        : {
+            // Fire wall — soft control: crossing it deals damage.
+            id: makeEffectId(), name, element: 'fire',
+            damage: meta.damage || '5d8', damageType: meta.damageType || 'fire',
+            saveDC: sc.spellSaveDC, saveAbility: 'dex', sourceId: activeCharacter.id,
+          };
       const oldBoundary = state.combat.boundaries[boundaryKey];
-      if (oldBoundary) addLog(`${name} erupts across the boundary, consuming ${oldBoundary.name}!`, 'combat');
+      if (oldBoundary) addLog(`${name} ${isFrost ? 'freezes over' : 'erupts across'} the boundary, consuming ${oldBoundary.name}!`, 'combat');
       const newBoundaries = { ...state.combat.boundaries, [boundaryKey]: newBoundary };
       addLog(`${activeCharacter.name} conjures ${name} across the Zone ${boundaryKey.replace('|', '–')} boundary!`, 'combat');
-      finishAction({ boundaries: newBoundaries, turnResources: spendAction() });
+      finishAction({ boundaries: newBoundaries, turnResources: castResources() });
       return;
     }
 
@@ -439,10 +468,12 @@ export function useCombat(options: UseCombatOptions = {}) {
         emitCombatFeedback({ type: 'immune', targetId });
       } else if (result.damage > 0) {
         const isCrit = result.logs.some(l => l.message.includes('CRIT') || l.message.includes('critical'));
-        emitCombatFeedback({ type: isCrit ? 'crit' : 'damage', targetId, value: result.damage, damageType: meta.damageType });
-        emitCombatFeedback({ type: 'impact', targetId, damageType: meta.damageType });
-        if (result.isVulnerable) emitCombatFeedback({ type: 'vulnerable', targetId });
-        if (result.isResisted) emitCombatFeedback({ type: 'resisted', targetId });
+        const qualifier: DamageQualifier | undefined =
+          isCrit ? 'crit' : result.isVulnerable ? 'vulnerable' : result.isResisted ? 'resisted' : undefined;
+        emitCombatFeedback({ type: 'damage', targetId, value: result.damage, damageType: meta.damageType, qualifier });
+        if (result.enemyUpdates && !result.enemyUpdates.isAlive) {
+          emitCombatFeedback({ type: 'kill', targetId, isPartyMember: false });
+        }
       } else if (result.enemyUpdates === null) {
         emitCombatFeedback({ type: 'miss', targetId });
       }
@@ -453,16 +484,16 @@ export function useCombat(options: UseCombatOptions = {}) {
           e.id === result.enemyUpdates!.id ? { ...e, hp: result.enemyUpdates!.hp, isAlive: result.enemyUpdates!.isAlive } : e
         );
         if (!result.enemyUpdates.isAlive) updateStats({ enemiesKilled: state.stats.enemiesKilled + 1 });
-        const combatUpdate: Partial<CombatState> = { enemies: newEnemies, turnResources: spendAction() };
+        const combatUpdate: Partial<CombatState> = { enemies: newEnemies, turnResources: castResources() };
         if (result.effectsChanged) combatUpdate.activeEffects = result.effects;
         finishAction(combatUpdate);
       } else {
-        finishAction({ turnResources: spendAction() });
+        finishAction({ turnResources: castResources() });
       }
       return;
     }
 
-    finishAction({ turnResources: spendAction() });
+    finishAction({ turnResources: castResources() });
   }
 
   function handleDefend() {
@@ -477,14 +508,33 @@ export function useCombat(options: UseCombatOptions = {}) {
     const idx = activeCharacter.consumables.findIndex(c => c.id === itemId);
     if (idx === -1 || activeCharacter.consumables[idx].quantity <= 0) return;
     const item = activeCharacter.consumables[idx];
-    const target = state.party.find(c => c.id === targetId); if (!target) return;
-    const heal = hallowedHeal(rollDice('2d4') + 2, mods);
-    const newHp = Math.min(target.maxHp, target.hp + heal);
-    updateCharacter(target.id, { hp: newHp });
+    const def = getConsumable(item.id);
+    if (!def) return;
+
+    // Consume one charge regardless of effect.
     const newConsumables = [...activeCharacter.consumables];
     newConsumables[idx] = { ...item, quantity: item.quantity - 1 };
     updateCharacter(activeCharacter.id, { consumables: newConsumables });
-    addLog(logHeal(activeCharacter.name, item.name, target.name, heal, target.hp, newHp), 'combat');
+
+    if (def.effect === 'heal') {
+      const target = state.party.find(c => c.id === targetId);
+      if (!target) { finishAction({ turnResources: spendAction() }); return; }
+      const heal = hallowedHeal(rollDice(def.healDice || '2d4+2'), mods);
+      const newHp = Math.min(target.maxHp, target.hp + heal);
+      updateCharacter(target.id, { hp: newHp });
+      addLog(logHeal(activeCharacter.name, def.name, target.name, heal, target.hp, newHp), 'combat');
+      finishAction({ turnResources: spendAction() });
+      return;
+    }
+
+    // Scroll — cast its spell as the reader (no slot cost, fixed DC).
+    // handleCast spends the turn's action via its own finishAction.
+    if (def.effect === 'spell' && def.spellIndex) {
+      addLog(`${activeCharacter.name} reads the ${def.name}.`, 'combat');
+      void handleCast(def.spellIndex, targetId, false, true);
+      return;
+    }
+
     finishAction({ turnResources: spendAction() });
   }
 
@@ -589,6 +639,13 @@ export function useCombat(options: UseCombatOptions = {}) {
       if (newHp <= 0) {
         addLog(logDeath(activeCharacter.name), 'death');
         updateStats({ charactersLost: state.stats.charactersLost + 1 });
+        if (state.party.filter(c => c.isAlive && c.id !== activeCharacter.id).length === 0) {
+          addLog('Total Party Kill!', 'death');
+          setPhase('game-over');
+        } else {
+          advanceTurn(undefined, [activeCharacter.id]);
+        }
+        return;
       }
     }
 

@@ -4,35 +4,16 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/components/atoms/cn';
 import { motion } from 'motion/react';
 import { GameIcon } from '@/components/atoms/GameIcon';
-import { onCombatFeedback } from '@/data/combat-events';
+import { onCombatFeedback, DEATH_HOLD_MS } from '@/data/combat-events';
 import { AcShield } from './AcShield';
-import { StatusStack, type StatusEffect } from './StatusStack';
-import type { GameCondition } from '@/data/status-effects';
+import { StatusStack } from './StatusStack';
+import { CONDITION_VISUALS, type VisualState } from '@/data/condition-visuals';
+import { INTENT_VISUALS } from '@/data/intent-visuals';
+import { TokenFeedbackOverlay } from '@/components/game/feedback';
 import type { IntentType } from '@/data/game-types';
-import { Heart, Sword, Crosshair, Flame, Zap, Moon } from 'lucide-react';
-import { resourceColors, statusColors } from '@/data/game-colors';
-
-/** Priority-ordered condition tints for token background */
-const CONDITION_TINTS: Record<string, string> = {
-  burning: statusColors.burning,
-  frozen: statusColors.frozen,
-  poisoned: statusColors.poisoned,
-  paralyzed: statusColors.stunned,
-  unconscious: statusColors.stunned,
-  petrified: statusColors.frozen,
-  staggered: '#f97316',
-  restrained: statusColors.cursed,
-  blessed: statusColors.blessed,
-  raging: statusColors.raging,
-};
-
-const INTENT_ICON: Record<IntentType, { icon: React.ComponentType<{ className?: string }>; color: string; label: string }> = {
-  melee:     { icon: Sword,     color: '#ef4444', label: 'Melee Attack' },
-  ranged:    { icon: Crosshair, color: '#f59e0b', label: 'Ranged Attack' },
-  breath:    { icon: Flame,     color: '#f97316', label: 'Breath / AoE' },
-  condition: { icon: Zap,       color: '#a78bfa', label: 'Status Effect' },
-  skip:      { icon: Moon,      color: '#64748b', label: 'Disabled' },
-};
+import { Heart } from 'lucide-react';
+import { resourceColors } from '@/data/game-colors';
+import { tint } from '@/data/color-utils';
 
 /** Compute swing direction based on zone relationship */
 function getSwingMotion(attackerZone: number, targetZone: number): { x: number[]; y: number[] } {
@@ -60,7 +41,7 @@ type ZoneTokenProps = {
   hp: number;
   maxHp: number;
   ac: number;
-  statusEffects?: (StatusEffect | GameCondition)[];
+  statusEffects?: VisualState[];
   intent?: IntentType;
   isActive?: boolean;
   isDead?: boolean;
@@ -80,11 +61,15 @@ export function ZoneToken({
   const [shaking, setShaking] = useState(false);
   const [swingAnim, setSwingAnim] = useState<{ x: number[]; y: number[] } | null>(null);
   const [pulseKey, setPulseKey] = useState(0);
+  // Holds the card visually alive after a kill event, so the damage overlay
+  // can play out before the grayscale/scale-down transition kicks in.
+  const [deathPending, setDeathPending] = useState(false);
+  const visualDead = isDead && !deathPending;
 
   // Compute condition tint (first matching condition wins)
   const conditionTint = statusEffects.reduce<string | null>((tint, effect) => {
     if (tint) return tint;
-    return CONDITION_TINTS[effect as string] || null;
+    return CONDITION_VISUALS[effect]?.color || null;
   }, null);
 
   // Pulse on becoming active
@@ -96,10 +81,15 @@ export function ZoneToken({
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
     const unsub = onCombatFeedback((event) => {
-      // Crit shake (on target)
-      if (event.targetId === entityId && event.type === 'crit') {
+      // Crit shake (on target) — fires off the damage qualifier now
+      if (event.targetId === entityId && event.type === 'damage' && event.qualifier === 'crit') {
         setShaking(true);
         timers.push(setTimeout(() => setShaking(false), 300));
+      }
+      // Death hold — keep visual alive while the kill animation plays
+      if (event.targetId === entityId && event.type === 'kill') {
+        setDeathPending(true);
+        timers.push(setTimeout(() => setDeathPending(false), DEATH_HOLD_MS));
       }
       // Attack swing (on attacker)
       if (event.attackerId === entityId && event.type === 'attack-swing') {
@@ -118,7 +108,7 @@ export function ZoneToken({
       layoutId={entityId}
       initial={false}
       key={`${entityId}-${pulseKey}`}
-      animate={isDead
+      animate={visualDead
         ? { scale: 0.8, opacity: 0.2, filter: 'grayscale(1)', x: 0 }
         : isActive
           ? { scale: [1.08, 1], opacity: 1, filter: 'grayscale(0)', x: shaking ? [0, -5, 5, -5, 3, 0] : 0 }
@@ -138,7 +128,7 @@ export function ZoneToken({
       onClick={onClick}
       disabled={isDead}
       className={cn(
-        'flex flex-col items-center gap-1 p-2 rounded-card transition-all cursor-pointer w-[110px]',
+        'relative flex flex-col items-center gap-1 p-2 rounded-card transition-all cursor-pointer w-[110px]',
         isDead && 'cursor-not-allowed',
         isCharacter
           ? 'bg-surface-2 border-2 border-primary/20 hover:border-primary/60'
@@ -146,11 +136,11 @@ export function ZoneToken({
         isActive && isCharacter && 'scale-110 border-primary shadow-[0_0_20px_var(--primary)] ring-2 ring-primary/50 z-10',
         isActive && !isCharacter && 'scale-110 border-error shadow-[0_0_20px_var(--error)] ring-2 ring-error/50 z-10',
       )}
-      style={conditionTint && !isDead ? { boxShadow: `inset 0 0 20px ${conditionTint}25` } : undefined}
+      style={conditionTint && !visualDead ? { boxShadow: `inset 0 0 20px ${tint(conditionTint, 15)}` } : undefined}
     >
       {/* Intent badge (enemies only) */}
       {intent && !isDead && (() => {
-        const cfg = INTENT_ICON[intent];
+        const cfg = INTENT_VISUALS[intent];
         const IntentIcon = cfg.icon;
         return (
           <span
@@ -194,6 +184,9 @@ export function ZoneToken({
       {statusEffects.length > 0 && (
         <StatusStack effects={statusEffects} size="sm" />
       )}
+
+      {/* Consolidated feedback overlay (damage / heal / miss / immune / spell-cast / defend) */}
+      <TokenFeedbackOverlay entityId={entityId} />
     </button>
     </motion.div>
     </motion.div>

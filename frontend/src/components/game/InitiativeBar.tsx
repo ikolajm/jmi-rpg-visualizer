@@ -19,7 +19,7 @@ export function InitiativeBar() {
         const hp = isChar ? char?.hp || 0 : enemy?.hp || 0;
         const maxHp = isChar ? char?.maxHp || 1 : enemy?.maxHp || 1;
         const hpPct = maxHp > 0 ? hp / maxHp : 0;
-        const hpColor = isDead ? '#6b7280' : hpPct <= 0.1 ? resourceColors.hpCritical : hpPct <= 0.25 ? resourceColors.hpLow : resourceColors.hp;
+        const hpColor = isDead ? resourceColors.hpDead : hpPct <= 0.1 ? resourceColors.hpCritical : hpPct <= 0.25 ? resourceColors.hpLow : resourceColors.hp;
 
         return (
           <div

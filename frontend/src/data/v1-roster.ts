@@ -8,7 +8,7 @@
  * Philosophy: FF GBA / BG1 / Fallout 1 — small scope, everything works.
  */
 
-// ─── Monsters (19 curated from 304) ────────────────────────────
+// ─── Monsters (18 curated from 304) ────────────────────────────
 //
 // Curation rule: every entry either offers a strategy loop the engine
 // actually wires (a damage-type weakness/immunity, or a condition the
@@ -25,7 +25,6 @@ export const V1_MONSTERS = new Set([
   'wolf',               // 0.25  — Bite inflicts prone (STR save)
 
   // ─ Floor 2 — CR 0.5–1 ─
-  'cockatrice',         // 0.5   — Bite inflicts petrified (CON save)
   'shadow',             // 0.5   — resists nonmagical physical, vulnerable to radiant
   'ghoul',              // 1     — Claws inflict paralyzed (CON save)
   'giant-spider',       // 1     — Bite inflicts poisoned (CON save); the poison creature

@@ -6,7 +6,7 @@
  * but mutable during gameplay (HP changes, equipment swaps, etc.)
  */
 
-import type { StatusEffect } from '@/components/molecules/StatusStack';
+import type { StatusFlag } from './condition-visuals';
 
 // ─── Zones ───────────────────────────────────────────────────
 // Zones are numeric positions (1, 2, 3). Distance between entities
@@ -105,7 +105,7 @@ export interface Character {
 
   // Combat state
   zone: Zone;
-  statusEffects: StatusEffect[];
+  statusEffects: StatusFlag[];
   isAlive: boolean;
 }
 
@@ -163,7 +163,7 @@ export interface Enemy {
 
   // Combat state
   zone: Zone;
-  statusEffects: StatusEffect[];
+  statusEffects: StatusFlag[];
   isAlive: boolean;
 }
 

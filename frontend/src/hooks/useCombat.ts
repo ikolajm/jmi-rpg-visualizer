@@ -18,7 +18,7 @@ import { getModifiers, hallowedHeal } from './combat-modifiers';
 import { getClericAuraBonus } from '@/data/zone-synergies';
 import { resolvePlayerAttack, resolveSpellDamage } from './combat-resolvers';
 import { executeEnemyTurn } from './enemy-turn';
-import { emitCombatFeedback, delay } from '@/data/combat-events';
+import { emitCombatFeedback, delay, CAST_CHARGE_MS, type DamageQualifier } from '@/data/combat-events';
 import { getConsumable } from '@/data/v1-roster';
 import type { Zone, CombatState, Enemy, BoundaryKey, TurnResources, Character } from '@/data/game-types';
 
@@ -278,10 +278,9 @@ export function useCombat(options: UseCombatOptions = {}) {
       emitCombatFeedback({ type: 'immune', targetId });
     } else if (result.damage > 0) {
       const isCrit = result.logs.some(l => l.message.includes('CRIT') || l.message.includes('critical'));
-      emitCombatFeedback({ type: isCrit ? 'crit' : 'damage', targetId, value: result.damage, damageType: attacker.equipment.weapon.damageType });
-      emitCombatFeedback({ type: 'impact', targetId, damageType: attacker.equipment.weapon.damageType });
-      if (result.isVulnerable) emitCombatFeedback({ type: 'vulnerable', targetId });
-      if (result.isResisted) emitCombatFeedback({ type: 'resisted', targetId });
+      const qualifier: DamageQualifier | undefined =
+        isCrit ? 'crit' : result.isVulnerable ? 'vulnerable' : result.isResisted ? 'resisted' : undefined;
+      emitCombatFeedback({ type: 'damage', targetId, value: result.damage, damageType: attacker.equipment.weapon.damageType, qualifier });
       if (result.enemyUpdates && !result.enemyUpdates.isAlive) {
         emitCombatFeedback({ type: 'kill', targetId, isPartyMember: false });
       }
@@ -318,9 +317,9 @@ export function useCombat(options: UseCombatOptions = {}) {
     // Capture snapshot before async delay
     const caster = activeCharacter;
 
-    // Spell cast glow before resolving
+    // Caster charge-up plays for CAST_CHARGE_MS before the spell impacts
     emitCombatFeedback({ type: 'spell-cast', targetId: caster.id, spellSchool: meta.school });
-    await delay(200);
+    await delay(CAST_CHARGE_MS);
     // Scrolls cast at a flat DC and never spend a slot; otherwise use the caster's.
     const rawSc = fromScroll ? SCROLL_SC : caster.spellcasting!;
     const sc = mods.thinVeil ? { ...rawSc, spellSaveDC: rawSc.spellSaveDC - 2 } : rawSc;
@@ -469,10 +468,12 @@ export function useCombat(options: UseCombatOptions = {}) {
         emitCombatFeedback({ type: 'immune', targetId });
       } else if (result.damage > 0) {
         const isCrit = result.logs.some(l => l.message.includes('CRIT') || l.message.includes('critical'));
-        emitCombatFeedback({ type: isCrit ? 'crit' : 'damage', targetId, value: result.damage, damageType: meta.damageType });
-        emitCombatFeedback({ type: 'impact', targetId, damageType: meta.damageType });
-        if (result.isVulnerable) emitCombatFeedback({ type: 'vulnerable', targetId });
-        if (result.isResisted) emitCombatFeedback({ type: 'resisted', targetId });
+        const qualifier: DamageQualifier | undefined =
+          isCrit ? 'crit' : result.isVulnerable ? 'vulnerable' : result.isResisted ? 'resisted' : undefined;
+        emitCombatFeedback({ type: 'damage', targetId, value: result.damage, damageType: meta.damageType, qualifier });
+        if (result.enemyUpdates && !result.enemyUpdates.isAlive) {
+          emitCombatFeedback({ type: 'kill', targetId, isPartyMember: false });
+        }
       } else if (result.enemyUpdates === null) {
         emitCombatFeedback({ type: 'miss', targetId });
       }

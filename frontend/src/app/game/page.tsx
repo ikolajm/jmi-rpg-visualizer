@@ -18,8 +18,7 @@ import { LootScreen } from '@/components/game/LootScreen';
 import { LevelUpScreen } from '@/components/game/LevelUpScreen';
 import { RestScreen } from '@/components/game/RestScreen';
 import { GameOverScreen } from '@/components/game/GameOverScreen';
-import { CombatFeedback } from '@/components/game/CombatFeedback';
-import { CombatOverlays } from '@/components/game/CombatOverlays';
+import { GlobalFeedbackOverlay } from '@/components/game/feedback';
 import { PhaseBanner } from '@/components/game/PhaseBanner';
 import { VictoryOverlay } from '@/components/game/VictoryOverlay';
 import { AnimatePresence, motion } from 'motion/react';
@@ -302,8 +301,7 @@ export default function GamePage() {
 
       {state.combat && <InitiativeBar />}
       <GameLog />
-      {state.phase === 'combat' && <CombatFeedback />}
-      {state.phase === 'combat' && <CombatOverlays />}
+      {state.phase === 'combat' && <GlobalFeedbackOverlay />}
       {state.phase === 'combat' && <PhaseBanner />}
       <AnimatePresence>
         {victoryXp !== null && <VictoryOverlay xpGained={victoryXp} />}

@@ -13,7 +13,8 @@ import { V1_FEATURES, V1_FEATURE_SUMMARIES, getConsumable } from '@/data/v1-rost
 import { getWeaponIcon } from '@/data/weapon-helpers';
 import { statMod } from '@/data/dice';
 import { XP_THRESHOLDS, proficiencyBonus } from '@/data/progression';
-import { statusColors } from '@/data/game-colors';
+import { CONDITION_VISUALS } from '@/data/condition-visuals';
+import { tint } from '@/data/color-utils';
 import { ConditionList } from '@/components/molecules/ConditionList';
 import { useGame } from '@/components/providers/GameProvider';
 import type { Character } from '@/data/game-types';
@@ -197,8 +198,8 @@ export function CharacterInspect({ char, mode = 'combat' }: CharacterInspectProp
                       </div>
                     ))}
                     {char.statusEffects.includes('raging') && (
-                      <div className="flex items-center gap-2 p-2 rounded-component" style={{ backgroundColor: `${statusColors.raging}12` }}>
-                        <span className="text-body-sm font-semibold" style={{ color: statusColors.raging }}>Rage Active</span>
+                      <div className="flex items-center gap-2 p-2 rounded-component" style={{ backgroundColor: tint(CONDITION_VISUALS.raging.color, 7) }}>
+                        <span className="text-body-sm font-semibold" style={{ color: CONDITION_VISUALS.raging.color }}>Rage Active</span>
                         <span className="text-label-sm text-on-surface-variant">+2 melee damage, resistance to physical damage.</span>
                       </div>
                     )}

@@ -13,8 +13,7 @@ import { LootScreen } from '@/components/game/LootScreen';
 import { LevelUpScreen } from '@/components/game/LevelUpScreen';
 import { RestScreen } from '@/components/game/RestScreen';
 import { GameOverScreen } from '@/components/game/GameOverScreen';
-import { CombatFeedback } from '@/components/game/CombatFeedback';
-import { CombatOverlays } from '@/components/game/CombatOverlays';
+import { GlobalFeedbackOverlay } from '@/components/game/feedback';
 import { PhaseBanner } from '@/components/game/PhaseBanner';
 import type { Character, Enemy, Zone, GamePhase } from '@/data/game-types';
 import type { LootItem } from '@/data/loot-generator';
@@ -193,7 +192,7 @@ function DevHarness() {
       {state.phase === 'combat' && state.combat && (
         <div className="absolute top-10 left-0 right-0 z-50 flex items-center gap-1 px-3 py-1.5 bg-black/70 backdrop-blur-sm overflow-x-auto">
           <span className="text-label-sm text-error font-semibold uppercase tracking-wider mr-2 shrink-0">Inflict</span>
-          {(['paralyzed', 'unconscious', 'restrained', 'poisoned', 'frightened', 'prone', 'petrified', 'burning', 'frozen', 'commanded', 'staggered', 'hunterMarked'] as GameCondition[]).map(cond => (
+          {(['paralyzed', 'unconscious', 'restrained', 'poisoned', 'frightened', 'prone', 'burning', 'frozen', 'commanded', 'staggered', 'hunterMarked'] as GameCondition[]).map(cond => (
             <button key={cond} onClick={() => {
               // Apply to first alive enemy
               const target = state.combat!.enemies.find(e => e.isAlive);
@@ -205,7 +204,6 @@ function DevHarness() {
                 ...(cond === 'paralyzed' ? { saveDC: 12, saveAbility: 'wis' } : {}),
                 ...(cond === 'restrained' ? { saveDC: 12, saveAbility: 'dex' } : {}),
                 ...(cond === 'shielded' ? { value: 5 } : {}),
-                ...(cond === 'spiritGuarded' ? { damagePerTurn: '3d8', damageType: 'radiant', saveDC: 12, saveAbility: 'wis' } : {}),
                 ...(cond === 'burning' ? { damagePerTurn: '1d6', damageType: 'fire', turnsRemaining: 3 } : {}),
               };
               const { effects: newEffects, applied, reason } = applyCondition(state.combat!.activeEffects, effect);
@@ -222,7 +220,7 @@ function DevHarness() {
             </button>
           ))}
           <span className="text-label-sm text-primary font-semibold uppercase tracking-wider mx-2 shrink-0">Buff Ally</span>
-          {(['blessed', 'shielded', 'spiritGuarded'] as GameCondition[]).map(cond => (
+          {(['blessed', 'shielded'] as GameCondition[]).map(cond => (
             <button key={`ally-${cond}`} onClick={() => {
               const target = state.party.find(c => c.isAlive);
               if (!target) return;
@@ -326,8 +324,7 @@ function DevHarness() {
 
       {state.combat && <InitiativeBar />}
       <GameLog />
-      {state.phase === 'combat' && <CombatFeedback />}
-      {state.phase === 'combat' && <CombatOverlays />}
+      {state.phase === 'combat' && <GlobalFeedbackOverlay />}
       {state.phase === 'combat' && <PhaseBanner />}
 
       {state.phase === 'combat' && combat.isPlayerTurn && combat.activeCharacter && (

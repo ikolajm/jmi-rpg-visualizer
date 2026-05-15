@@ -78,11 +78,7 @@ export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
   // ─── Turn-start DoT ─────────────────────────────────────
   const dotEffects = combat.activeEffects.filter(e => e.damagePerTurn);
   for (const dot of dotEffects) {
-    if (dot.condition === 'spiritGuarded') {
-      const caster = party.find(c => c.id === dot.sourceId);
-      if (!caster || !caster.isAlive || enemy.zone !== caster.zone) continue;
-    }
-    if (dot.condition !== 'spiritGuarded' && dot.targetId !== enemy.id) continue;
+    if (dot.targetId !== enemy.id) continue;
 
     let dmg = rollDice(dot.damagePerTurn!);
     if (dot.saveDC && dot.saveAbility) {
@@ -94,6 +90,7 @@ export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
       addLog(logDot(enemy.name, dot.name, dmg, dot.damageType || 'fire'), 'combat');
     }
     const newHp = Math.max(0, enemy.hp - dmg);
+    if (newHp <= 0) emitCombatFeedback({ type: 'kill', targetId: enemy.id, isPartyMember: false });
     workingCombat = {
       ...workingCombat,
       enemies: workingCombat.enemies.map(e => e.id === enemy.id ? { ...e, hp: newHp, isAlive: newHp > 0 } : e),
@@ -233,6 +230,7 @@ export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
     addLog(logBreathWeapon(currentEnemy.name, action.name, target.name, damage, action.damageType || 'fire', passed, `${saveAbility.toUpperCase()} ${saveRoll} vs DC ${action.saveDC}`), 'combat');
     if (damage > 0) emitCombatFeedback({ type: 'damage', targetId: target.id, value: damage, damageType: action.damageType || 'fire' });
     const newHp = Math.max(0, target.hp - damage);
+    if (newHp <= 0) emitCombatFeedback({ type: 'kill', targetId: target.id, isPartyMember: true });
     updateCharacter(target.id, { hp: newHp, isAlive: newHp > 0 });
     updateStats({ totalDamageTaken: ctx.stats.totalDamageTaken + damage });
     if (newHp <= 0) {
@@ -282,8 +280,7 @@ export async function executeEnemyTurn(enemy: Enemy, ctx: EnemyTurnContext) {
     const newHp = Math.max(0, target.hp - damage);
     const isKill = newHp <= 0;
     addLog(logAttackHit(currentEnemy.name, target.name, action.name, damage, action.damageType || 'slashing', total, effectiveAC, isCrit, isKill), 'combat');
-    emitCombatFeedback({ type: isCrit ? 'crit' : 'damage', targetId: target.id, value: damage, damageType: action.damageType || 'slashing' });
-    emitCombatFeedback({ type: 'impact', targetId: target.id, damageType: action.damageType || 'slashing' });
+    emitCombatFeedback({ type: 'damage', targetId: target.id, value: damage, damageType: action.damageType || 'slashing', qualifier: isCrit ? 'crit' : undefined });
     updateCharacter(target.id, { hp: newHp, isAlive: !isKill });
     updateStats({ totalDamageTaken: ctx.stats.totalDamageTaken + damage });
 

@@ -3,7 +3,7 @@
 import { cn } from '@/components/atoms/cn';
 import { GameIcon } from '@/components/atoms/GameIcon';
 import { MoveDiagonal } from 'lucide-react';
-import { damageColors } from '@/data/game-colors';
+import { DAMAGE_VISUALS } from '@/data/damage-visuals';
 import { DamageInline } from './DamageIcon';
 
 type AttackLineProps = {
@@ -34,7 +34,7 @@ export function AttackLine({ iconName, label, toHit, damage, damageType, zone, c
         <div className="flex items-center gap-3 flex-wrap">
           {/* To hit */}
           <span className="inline-flex items-center gap-0.5 text-label-sm tabular-nums text-on-surface-variant">
-            <span className="font-semibold" style={{ color: damageColors.radiant }}>+{toHit}</span> to hit
+            <span className="font-semibold" style={{ color: DAMAGE_VISUALS.radiant.color }}>+{toHit}</span> to hit
           </span>
 
           {/* Damage with type icon */}

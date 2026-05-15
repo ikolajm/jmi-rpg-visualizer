@@ -4,9 +4,8 @@ import { useGame } from '@/components/providers/GameProvider';
 import { ZoneToken } from '@/components/molecules';
 import { zoneLabel } from '@/data/zones';
 import type { Zone } from '@/data/game-types';
-import type { GameCondition } from '@/data/status-effects';
-import type { StatusEffect } from '@/components/molecules/StatusStack';
-import { boundaryColors } from '@/data/game-colors';
+import type { StatusFlag, VisualState } from '@/data/condition-visuals';
+import { BOUNDARY_VISUALS, type BoundaryElement } from '@/data/boundary-visuals';
 
 export function ZoneLayout({ onSelectTarget }: {
   onSelectTarget: (id: string, type: 'character' | 'enemy') => void;
@@ -15,11 +14,11 @@ export function ZoneLayout({ onSelectTarget }: {
   if (!state.combat) return null;
 
   /** Get display status effects by merging character statusEffects + combat activeEffects */
-  function getDisplayEffects(entityId: string, baseEffects: StatusEffect[]): (StatusEffect | GameCondition)[] {
+  function getDisplayEffects(entityId: string, baseEffects: StatusFlag[]): VisualState[] {
     const fromCombat = state.combat!.activeEffects
       .filter(e => e.targetId === entityId)
       .map(e => e.condition);
-    const merged = new Set<StatusEffect | GameCondition>([...baseEffects, ...fromCombat]);
+    const merged = new Set<VisualState>([...baseEffects, ...fromCombat]);
     return [...merged];
   }
 
@@ -107,14 +106,22 @@ export function ZoneLayout({ onSelectTarget }: {
           i < 2 && (() => {
             const bKey = `${zone}|${zone + 1}` as import('@/data/game-types').BoundaryKey;
             const b = state.combat!.boundaries[bKey];
+            const bv = b ? BOUNDARY_VISUALS[b.element as BoundaryElement] : null;
+            const BoundaryIcon = bv?.icon;
             return (
               <div key={`wall-${bKey}`} className="flex items-center justify-center w-3">
-                {b ? (
+                {b && bv ? (
                   <div
-                    className="w-1 h-3/4 rounded-full animate-pulse"
-                    style={{ backgroundColor: boundaryColors[b.element] || '#ef4444', boxShadow: `0 0 8px ${boundaryColors[b.element] || '#ef4444'}` }}
+                    className="relative w-2 h-3/4 rounded-full animate-pulse flex items-center justify-center"
+                    style={{ backgroundColor: bv.color, boxShadow: `0 0 8px ${bv.color}` }}
                     title={`${b.name} — ${b.damage} ${b.damageType} on crossing`}
-                  />
+                  >
+                    {BoundaryIcon && (
+                      <span style={{ filter: 'drop-shadow(0 0 1px rgba(0,0,0,0.6))' }}>
+                        <BoundaryIcon className="size-2.5 text-white/95" />
+                      </span>
+                    )}
+                  </div>
                 ) : (
                   <div className="w-px h-1/3 bg-outline-subtle/30" />
                 )}

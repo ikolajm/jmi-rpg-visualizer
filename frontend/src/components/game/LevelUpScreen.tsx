@@ -3,6 +3,8 @@
 import { motion } from 'motion/react';
 import { GameIcon } from '@/components/atoms/GameIcon';
 import { Button } from '@/components/atoms/Button';
+import { classColor } from '@/data/class-visuals';
+import { tint } from '@/data/color-utils';
 import type { LevelUpResult } from '@/data/progression';
 
 // ─── Variants ────────────────────────────────────────────────
@@ -71,18 +73,21 @@ export function LevelUpScreen({ results, onContinue }: LevelUpScreenProps) {
         animate="show"
         transition={{ delayChildren: titleDuration }}
       >
-        {results.map((r) => (
+        {results.map((r) => {
+          const accent = classColor(r.character.classIndex);
+          return (
           <motion.div
             key={r.character.id}
-            className="flex items-start gap-3 p-4 rounded-card bg-surface-2 overflow-hidden"
+            className="flex items-start gap-3 p-4 rounded-card border-2 overflow-hidden"
+            style={{ borderColor: accent, backgroundColor: tint(accent, 8) }}
             variants={cardVariant}
           >
-            <GameIcon category="class" name={r.character.classIndex} size="lg" className="text-primary shrink-0 mt-0.5" />
+            <GameIcon category="class" name={r.character.classIndex} size="lg" className="shrink-0 mt-0.5" style={{ color: accent }} />
             <div className="flex flex-col gap-1.5 flex-1 min-w-0">
               {/* Name + Level */}
               <motion.div className="flex items-baseline gap-2" variants={lineVariant}>
                 <span className="text-body-md font-semibold text-on-surface">{r.character.name}</span>
-                <span className="font-heading text-label-sm text-primary uppercase tracking-widest">
+                <span className="font-heading text-label-sm uppercase tracking-widest" style={{ color: accent }}>
                   Level {r.newLevel}
                 </span>
               </motion.div>
@@ -111,7 +116,7 @@ export function LevelUpScreen({ results, onContinue }: LevelUpScreenProps) {
                   className="flex items-center gap-2"
                   variants={lineVariant}
                 >
-                  <span className="text-label-sm font-semibold uppercase tracking-widest text-primary">New</span>
+                  <span className="text-label-sm font-semibold uppercase tracking-widest" style={{ color: accent }}>New</span>
                   <span className="text-body-sm text-on-surface">{feat}</span>
                 </motion.div>
               ))}
@@ -123,13 +128,14 @@ export function LevelUpScreen({ results, onContinue }: LevelUpScreenProps) {
                   className="flex items-center gap-2"
                   variants={lineVariant}
                 >
-                  <span className="text-label-sm font-semibold uppercase tracking-widest text-primary">Spell</span>
+                  <span className="text-label-sm font-semibold uppercase tracking-widest" style={{ color: accent }}>Spell</span>
                   <span className="text-body-sm text-on-surface">{formatSpell(spell)}</span>
                 </motion.div>
               ))}
             </div>
           </motion.div>
-        ))}
+          );
+        })}
       </motion.div>
 
       {/* Continue button — appears after all cards */}

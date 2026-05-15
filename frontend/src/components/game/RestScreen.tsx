@@ -2,6 +2,7 @@
 
 import { motion } from 'motion/react';
 import { GameIcon } from '@/components/atoms/GameIcon';
+import { tint } from '@/data/color-utils';
 
 // ─── Variants ────────────────────────────────────────────────
 
@@ -37,8 +38,7 @@ const REST_OPTIONS = [
     id: 'full',
     label: 'Full Rest',
     title: 'Deep Recovery',
-    accent: 'text-success',
-    borderHover: 'hover:border-primary',
+    color: 'var(--success)',
     items: [
       { text: 'Heal 50% max HP', highlight: true },
       { text: 'Restore all spell slots', highlight: true },
@@ -49,8 +49,7 @@ const REST_OPTIONS = [
     id: 'quick',
     label: 'Quick Rest',
     title: 'Brief Respite',
-    accent: 'text-on-surface-variant',
-    borderHover: 'hover:border-primary',
+    color: 'var(--on-surface-variant)',
     items: [
       { text: 'Heal 25% max HP', highlight: false },
       { text: 'Restore 1 spell slot', highlight: false },
@@ -61,8 +60,7 @@ const REST_OPTIONS = [
     id: 'train',
     label: 'Train',
     title: 'Hone Your Edge',
-    accent: 'text-primary',
-    borderHover: 'hover:border-primary',
+    color: 'var(--primary)',
     items: [
       { text: 'No healing', highlight: false, warn: true },
       { text: 'No spell slot restore', highlight: false, warn: true },
@@ -146,27 +144,32 @@ export function RestScreen({ flavorText, onFullRest, onQuickRest, onTrain }: Res
               key={opt.id}
               variants={cardDrop}
               onClick={handlers[opt.id]}
-              className={`flex flex-col items-start gap-2 p-5 rounded-card bg-surface-2 border-2 border-outline-subtle ${opt.borderHover} transition-colors w-56 text-left`}
-              whileHover={{ y: -4 }}
+              className="flex flex-col items-start gap-2 p-5 rounded-card border-2 transition-colors w-56 text-left"
+              style={{ borderColor: opt.color, backgroundColor: tint(opt.color, 5) }}
+              whileHover={{ y: -4, boxShadow: `0 0 18px ${tint(opt.color, 25)}` }}
               whileTap={{ scale: 0.98 }}
             >
-              <span className={`text-label-sm font-semibold uppercase tracking-widest ${opt.accent}`}>
+              <span className="text-label-sm font-semibold uppercase tracking-widest" style={{ color: opt.color }}>
                 {opt.label}
               </span>
               <span className="text-body-md text-on-surface font-semibold">{opt.title}</span>
               <ul className="flex flex-col gap-1 mt-1">
-                {opt.items.map((item, i) => (
-                  <li
-                    key={i}
-                    className={`text-label-sm ${
-                      item.highlight ? 'text-primary font-semibold'
-                      : 'warn' in item && item.warn ? 'text-error/70'
-                      : 'text-on-surface-variant'
-                    }`}
-                  >
-                    {item.text}
-                  </li>
-                ))}
+                {opt.items.map((item, i) => {
+                  const isWarn = 'warn' in item && item.warn;
+                  return (
+                    <li
+                      key={i}
+                      className="text-label-sm"
+                      style={
+                        item.highlight ? { color: opt.color, fontWeight: 600 }
+                        : isWarn ? { color: 'var(--error)', opacity: 0.7 }
+                        : undefined
+                      }
+                    >
+                      {item.text}
+                    </li>
+                  );
+                })}
               </ul>
             </motion.button>
           ))}

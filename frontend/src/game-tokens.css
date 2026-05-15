@@ -85,6 +85,14 @@
   --rarity-legendary: #e8c263;
   --rarity-artifact:  #e8723a;
 
+  /* ─── Class identities (6 classes, used in draft + party UI) ─── */
+  --class-fighter:   #c43c3c;
+  --class-rogue:     #8b7fd4;
+  --class-wizard:    #5b9bd5;
+  --class-cleric:    #e8c263;
+  --class-ranger:    #5bad5a;
+  --class-barbarian: #e8723a;
+
   /* ─── Feature types (left border accents) ─── */
   --feature-attack:   #c43c3c;
   --feature-defense:  #e8c263;
